@@ -39,8 +39,9 @@ pub fn read_music_files(
             .map(|s| s.to_string())
             .collect()
     };
-
     let found_files = get_files_with_extensions(path, &formats);
+
+    println!("{:?}", found_files);
 
     Ok(found_files)
 }
