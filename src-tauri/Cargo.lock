@@ -825,6 +825,7 @@ dependencies = [
 name = "drakn"
 version = "0.1.0"
 dependencies = [
+ "parking_lot",
  "serde",
  "serde_json",
  "tauri",

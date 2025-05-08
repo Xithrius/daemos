@@ -41,7 +41,7 @@ pub fn read_music_files(
     };
     let found_files = get_files_with_extensions(path, &formats);
 
-    println!("{:?}", found_files);
+    println!("Found {:?} file(s)", found_files.len());
 
     Ok(found_files)
 }
