@@ -83,7 +83,13 @@ const rowSelection = ref<Record<string, boolean>>({});
 
 function onSelect(row: TableRow<FileRow>, _e?: Event) {
   row.toggleSelected(!row.getIsSelected());
-  console.log("Selected row:", row.original);
+
+
+  const filePath = row.original.fullPath;
+
+  console.log("Selected row:", filePath);
+
+  invoke("create_player", { filePath });
 }
 </script>
 

@@ -18,7 +18,10 @@ pub fn run() {
         .setup(create_state)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![commands::files::read_music_files])
+        .invoke_handler(tauri::generate_handler![
+            commands::files::read_music_files,
+            commands::playback::create::create_player
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
