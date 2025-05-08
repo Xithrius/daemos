@@ -1,5 +1,6 @@
 use std::{path::Path, sync::LazyLock};
 
+use tauri::command;
 use walkdir::WalkDir;
 
 pub static DEFAULT_ALLOWED_FORMATS: LazyLock<Vec<&str>> = LazyLock::new(|| vec!["flac", "mp3"]);
@@ -24,7 +25,7 @@ fn get_files_with_extensions<P: AsRef<Path>>(dir: P, extensions: &[String]) -> V
     result
 }
 
-#[tauri::command]
+#[command]
 pub fn read_music_files(
     file_path: String,
     allowed_formats: Option<Vec<String>>,

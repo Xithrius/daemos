@@ -1,19 +1,21 @@
 mod commands;
 mod context;
 
+use std::error::Error;
+
+use context::ContextInner;
 use parking_lot::Mutex;
-use tauri::Manager;
+use tauri::{App, Manager};
 
-use crate::context::Context;
+fn create_state(app: &mut App) -> Result<(), Box<dyn Error>> {
+    app.manage(Mutex::new(ContextInner::new()));
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
-        .setup(|app| {
-            app.manage(Mutex::new(Context::default()));
-
-            Ok(())
-        })
+        .setup(create_state)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![commands::files::read_music_files])

@@ -4,7 +4,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { TableColumn, TableRow } from "@nuxt/ui";
 
-// Optional Nuxt UI button for sortable header icon
 const UButton = resolveComponent("UButton");
 
 type FileRow = {
