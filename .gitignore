@@ -19,3 +19,8 @@ dist-ssr
 .data
 .output
 .nuxt
+
+
+# Added by cargo
+
+/target

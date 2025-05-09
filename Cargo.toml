@@ -1,0 +1,9 @@
+[package]
+name = "drakn"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+iced = { version = "0.13.1", features = ["svg"] }
+rfd = "0.15.3"
+walkdir = "2.5.0"

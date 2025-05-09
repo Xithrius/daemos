@@ -1,13 +1,11 @@
-# Frontend
+# TODO
 
-- [ ] Playback
-    - [ ] Buttons
-        - [ ] Play/Pause
-    - [ ] Shuffle
-        - [ ] Random (no repeats)
-        - [ ] True random (pick anything, repeats allowed)
-
-# Backend
-
-- [ ] Playback commands
-    - [ ] Play/Pause
+- [ ] Basic UI
+    - [ ] List of items
+        - [ ] All available music
+        - [ ] Playlists
+    - [ ] Playback
+        - [ ] Play
+        - [ ] Pause
+        - [ ] Next track
+        - [ ] Previous track
