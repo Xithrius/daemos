@@ -5,6 +5,7 @@ use std::error::Error;
 
 use context::ContextInner;
 use parking_lot::Mutex;
+use rodio::{OutputStream, Sink};
 use tauri::{App, Manager};
 
 fn create_state(app: &mut App) -> Result<(), Box<dyn Error>> {
@@ -15,7 +16,7 @@ fn create_state(app: &mut App) -> Result<(), Box<dyn Error>> {
 
 pub fn run() {
     tauri::Builder::default()
-        .setup(create_state)
+        .setup(|app| create_state(app))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![

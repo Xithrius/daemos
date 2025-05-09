@@ -1,65 +1,62 @@
 use std::{fs::File, io::BufReader};
 
 use parking_lot::Mutex;
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, Sink, Source};
 
 pub struct ContextInner {
-    sink: Sink,
+    sink: Option<Sink>,
 }
 
 pub type Context = Mutex<ContextInner>;
 
 impl ContextInner {
     pub fn new() -> Self {
-        let (_, handle) = OutputStream::try_default().unwrap();
-        let sink = Sink::try_new(&handle).unwrap();
-
-        Self { sink }
+        Self { sink: None }
     }
 
-    // TODO: Return result
-    pub fn create(&mut self, file_path: String) {
-        self.sink.clear();
+    // pub fn create(&mut self, file_path: String) {
+    //     self.sink.clear();
 
-        let file = File::open(file_path).unwrap();
-        let decoder = Decoder::new(BufReader::new(file)).unwrap();
+    //     let decoder = Decoder::new(File::open(file_path).unwrap())
+    //         .unwrap()
+    //         .buffered();
 
-        self.sink.append(decoder);
-    }
+    //     self.sink.append(decoder);
+    // }
 
-    pub fn play(&self) {
-        self.sink.play();
-    }
+    // pub fn play(&self) {
+    //     self.sink.play();
+    // }
 
-    pub fn pause(&self) {
-        self.sink.pause();
-    }
+    // pub fn pause(&self) {
+    //     self.sink.pause();
+    // }
 
-    pub fn toggle(&self) {
-        if self.sink.is_paused() {
-            self.sink.play();
-        } else {
-            self.sink.pause();
-        }
-    }
+    // pub fn toggle(&self) {
+    //     if self.sink.is_paused() {
+    //         self.sink.play();
+    //     } else {
+    //         self.sink.pause();
+    //     }
+    // }
 
-    pub fn volume_up(&self, value_delta: f32) {
-        let new_volume = (self.sink.volume() + value_delta).min(1.0);
+    // pub fn volume_up(&self, value_delta: f32) {
+    //     let new_volume = (self.sink.volume() + value_delta).min(1.0);
 
-        self.sink.set_volume(new_volume);
-    }
+    //     self.sink.set_volume(new_volume);
+    // }
 
-    pub fn volume_down(&self, value_delta: f32) {
-        let new_volume = (self.sink.volume() - value_delta).max(0.0);
+    // pub fn volume_down(&self, value_delta: f32) {
+    //     let new_volume = (self.sink.volume() - value_delta).max(0.0);
 
-        self.sink.set_volume(new_volume);
-    }
+    //     self.sink.set_volume(new_volume);
+    // }
 
-    pub fn set_volume(&self, value: f32) {
-        self.sink.set_volume(value);
-    }
+    // pub fn set_volume(&self, value: f32) {
+    //     self.sink.set_volume(value);
+    // }
 
-    pub fn stop(&self) {
-        self.sink.clear();
-    }
+    // pub fn stop(&self) {
+    //     self.sink.clear();
+    // }
 }
