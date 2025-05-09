@@ -14,31 +14,53 @@ impl ContextInner {
         Self { sink: None }
     }
 
-    // pub fn create(&mut self, file_path: String) {
-    //     self.sink.clear();
+    pub fn set_sink(&mut self, sink: Sink) {
+        self.sink = Some(sink);
+    }
 
-    //     let decoder = Decoder::new(File::open(file_path).unwrap())
-    //         .unwrap()
-    //         .buffered();
+    pub fn sink(&self) -> Option<&Sink> {
+        self.sink.as_ref()
+    }
 
-    //     self.sink.append(decoder);
-    // }
+    pub fn new_track(&mut self, file_path: String) {
+        let Some(sink) = self.sink.as_mut() else {
+            println!("SINK NOT FOUND");
+            return;
+        };
 
-    // pub fn play(&self) {
-    //     self.sink.play();
-    // }
+        let data = Decoder::new(File::open(file_path).unwrap())
+            .unwrap()
+            .buffered();
+
+        sink.append(data);
+        sink.play();
+    }
+
+    pub fn play(&self) {
+        let Some(sink) = self.sink.as_ref() else {
+            println!("SINK NOT FOUND");
+            return;
+        };
+
+        sink.play();
+    }
 
     // pub fn pause(&self) {
     //     self.sink.pause();
     // }
 
-    // pub fn toggle(&self) {
-    //     if self.sink.is_paused() {
-    //         self.sink.play();
-    //     } else {
-    //         self.sink.pause();
-    //     }
-    // }
+    pub fn toggle(&self) {
+        let Some(sink) = self.sink.as_ref() else {
+            println!("SINK NOT FOUND");
+            return;
+        };
+
+        if sink.is_paused() {
+            sink.play();
+        } else {
+            sink.pause();
+        }
+    }
 
     // pub fn volume_up(&self, value_delta: f32) {
     //     let new_volume = (self.sink.volume() + value_delta).min(1.0);

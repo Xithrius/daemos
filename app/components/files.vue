@@ -84,22 +84,21 @@ const rowSelection = ref<Record<string, boolean>>({});
 function onSelect(row: TableRow<FileRow>, _e?: Event) {
   row.toggleSelected(!row.getIsSelected());
 
-
   const filePath = row.original.fullPath;
 
-  console.log("Selected row:", filePath);
-
-  invoke("create_player", { filePath });
+  invoke("play_audio", { filePath });
 }
 </script>
 
 <template>
-  <div class="p-4 space-y-4 h-screen flex flex-col w-full">
+  <div class="p-4 space-y-4 flex flex-col w-full">
     <div class="w-full flex justify-end">
       <UButton label="Add folder" icon="i-lucide-plus" @click="file_dialog" />
     </div>
 
-    <div class="flex-1 overflow-auto border rounded w-full">
+    <div
+      class="flex-1 overflow-auto border rounded w-full max-h-[calc(10vh-200px)] min-h-[calc(100vh-200px)]"
+    >
       <UTable
         ref="table"
         v-model:sorting="sorting"
