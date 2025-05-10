@@ -1,7 +1,10 @@
 use egui_extras::{Column, TableBuilder};
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
-use crate::files::open::{get_audio_files, select_folders_dialog};
+use crate::files::open::{get_audio_tracks, select_folders_dialog};
+
+const TABLE_ROW_HEIGHT: f32 = 20.0;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct Table {
@@ -18,9 +21,14 @@ impl Table {
 
         let mut tracks = Vec::new();
         for folder in folders {
-            let folder_tracks = get_audio_files(folder);
+            let folder_tracks = get_audio_tracks(&folder);
+            debug!(
+                "Directory {:?} found audio tracks {:?}",
+                folder, folder_tracks
+            );
             tracks.extend(folder_tracks);
         }
+        debug!("All tracks found: {:?}", tracks);
 
         Self { tracks }
     }
@@ -30,9 +38,9 @@ impl Table {
 
         TableBuilder::new(ui)
             .max_scroll_height(available_height)
-            .column(Column::auto().resizable(false))
+            .column(Column::auto())
             .column(Column::remainder())
-            .header(20.0, |mut header| {
+            .header(TABLE_ROW_HEIGHT, |mut header| {
                 header.col(|ui| {
                     ui.heading("Index");
                 });
@@ -41,15 +49,21 @@ impl Table {
                 });
             })
             .body(|body| {
-                let row_height = 20.0;
                 let num_rows = self.tracks.len();
-                body.rows(row_height, num_rows, |mut row| {
+
+                body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
                     let row_index = row.index();
+
+                    let Some(track) = self.tracks.get(row_index) else {
+                        return;
+                    };
+
                     row.col(|ui| {
                         ui.label(row_index.to_string());
                     });
+
                     row.col(|ui| {
-                        ui.label(self.tracks.get(row_index).map_or("No track found", |v| v));
+                        ui.label(track);
                     });
                 });
             });

@@ -14,8 +14,8 @@ pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
         .pick_folders()
 }
 
-pub fn get_audio_files<P: AsRef<Path>>(dir: P) -> Vec<String> {
-    let mut result = Vec::new();
+pub fn get_audio_tracks<P: AsRef<Path>>(dir: &P) -> Vec<String> {
+    let mut tracks = Vec::new();
 
     for entry in WalkDir::new(dir).into_iter().filter_map(Result::ok) {
         let path = entry.path();
@@ -24,12 +24,12 @@ pub fn get_audio_files<P: AsRef<Path>>(dir: P) -> Vec<String> {
             if let Some(extension) = path.extension() {
                 if let Some(ext_str) = extension.to_str() {
                     if ALLOWED_AUDIO_FORMATS.contains(&ext_str) {
-                        result.push(path.display().to_string());
+                        tracks.push(path.display().to_string());
                     }
                 }
             }
         }
     }
 
-    result
+    tracks
 }
