@@ -1,14 +1,17 @@
+use std::path::PathBuf;
+
 use egui_extras::{Column, TableBuilder};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
-use crate::files::open::{get_audio_tracks, select_folders_dialog};
+use crate::files::open::{get_track_file_name, get_tracks, select_folders_dialog};
 
+const TABLE_HEADER_HEIGHT: f32 = 25.0;
 const TABLE_ROW_HEIGHT: f32 = 20.0;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct Table {
-    tracks: Vec<String>,
+    tracks: Vec<PathBuf>,
 }
 
 impl Table {
@@ -21,7 +24,7 @@ impl Table {
 
         let mut tracks = Vec::new();
         for folder in folders {
-            let folder_tracks = get_audio_tracks(&folder);
+            let folder_tracks = get_tracks(&folder);
             debug!(
                 "Directory {:?} found audio tracks {:?}",
                 folder, folder_tracks
@@ -38,9 +41,9 @@ impl Table {
 
         TableBuilder::new(ui)
             .max_scroll_height(available_height)
-            .column(Column::auto())
+            .column(Column::auto().at_least(50.0).resizable(true))
             .column(Column::remainder())
-            .header(TABLE_ROW_HEIGHT, |mut header| {
+            .header(TABLE_HEADER_HEIGHT, |mut header| {
                 header.col(|ui| {
                     ui.heading("Index");
                 });
@@ -58,12 +61,16 @@ impl Table {
                         return;
                     };
 
+                    let Some(track_file_name) = get_track_file_name(track.to_path_buf()) else {
+                        return;
+                    };
+
                     row.col(|ui| {
                         ui.label(row_index.to_string());
                     });
 
                     row.col(|ui| {
-                        ui.label(track);
+                        ui.label(track_file_name);
                     });
                 });
             });
