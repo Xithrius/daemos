@@ -1,3 +1,3 @@
 # Drakn
 
-A music player built with Tauri and Vue
+A music player built with Rust and egui
