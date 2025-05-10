@@ -1,18 +1,25 @@
-mod app;
-mod files;
-mod logging;
+#![forbid(unsafe_code)]
+#![warn(clippy::nursery, clippy::pedantic)]
+// hide console window on Windows in release
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use color_eyre::{Result, eyre::Context};
-use logging::initialize_logging;
+use drakn::Context;
 
-use crate::app::Application;
+#[cfg(not(target_arch = "wasm32"))]
+fn main() -> eframe::Result {
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
+        ..Default::default()
+    };
 
-pub fn main() -> Result<()> {
-    initialize_logging()?;
+    eframe::run_native(
+        "eframe template",
+        options,
+        Box::new(|cc| Ok(Box::new(Context::new(cc)))),
+    )
+}
 
-    iced::application("Drakn", Application::update, Application::view)
-        .subscription(Application::subscription)
-        .theme(Application::theme)
-        .run_with(Application::new)
-        .context("Application failed to launch")
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    unimplemented!("Wasm32 is not implemented for Drakn")
 }
