@@ -5,5 +5,8 @@ edition = "2024"
 
 [dependencies]
 iced = { version = "0.13.1", features = ["svg"] }
+color-eyre = "0.6.4"
 rfd = "0.15.3"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 walkdir = "2.5.0"
