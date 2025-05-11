@@ -36,11 +36,9 @@ impl Table {
         Self { tracks }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui) {
-        let available_height = ui.available_height();
-
+    pub fn ui(&mut self, ui: &mut egui::Ui, height: f32) {
         TableBuilder::new(ui)
-            .max_scroll_height(available_height)
+            .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
             .column(Column::remainder())
             .header(TABLE_HEADER_HEIGHT, |mut header| {

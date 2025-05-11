@@ -2,31 +2,35 @@ use egui::Separator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    components::{table::Table, tree::Tree},
-    vertical_separator,
+    components::{playback::PlaybackBar, table::Table, tree::Tree},
+    config::core::CoreConfig,
+    horizontal_separator, vertical_separator,
 };
 
 #[derive(Deserialize, Serialize)]
 #[serde(default)]
 pub struct Context {
-    #[serde(skip)]
+    config: CoreConfig,
+
+    // Widgets
     track_table: Table,
-    #[serde(skip)]
     playlist_tree: Tree,
+    playback_bar: PlaybackBar,
 }
 
-#[allow(clippy::derivable_impls)]
 impl Default for Context {
     fn default() -> Self {
         Self {
             track_table: Table::new(),
             playlist_tree: Tree::new(),
+            playback_bar: PlaybackBar::new(),
+            config: CoreConfig::default(),
         }
     }
 }
 
 impl Context {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, config: CoreConfig) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -35,7 +39,10 @@ impl Context {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        Default::default()
+        Self {
+            config,
+            ..Default::default()
+        }
     }
 }
 
@@ -49,6 +56,10 @@ impl eframe::App for Context {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        if self.config.debug != ctx.debug_on_hover() {
+            ctx.set_debug_on_hover(self.config.debug);
+        }
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 // Adding files, folders, playlists, importing, exporting, etc
@@ -59,41 +70,59 @@ impl eframe::App for Context {
                 });
 
                 // Something to do with editing things
-                ui.menu_button("Edit", |_ui| todo!());
+                ui.menu_button("Edit", |_ui| {
+                    todo!();
+                });
 
                 // Something to do with the window
-                ui.menu_button("Window", |_ui| todo!());
+                ui.menu_button("Window", |_ui| {
+                    todo!();
+                });
 
                 // Useful links
                 ui.menu_button("Help", |ui| {
                     ui.hyperlink_to("Github Repository", "https://github.com/Xithrius/drakn");
                 });
 
-                // Theme switcher
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
-                    egui::widgets::global_theme_preference_switch(ui);
+                    ui.horizontal(|ui| {
+                        // Theme switcher
+                        egui::widgets::global_theme_preference_switch(ui);
+
+                        // Debug build status
+                        egui::warn_if_debug_build(ui);
+                    })
                 });
             });
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::LEFT), |ui| {
-                // Playlist tree
-                self.playlist_tree.ui(ui);
+            let total_height = ui.available_height();
+            let playback_bar_height = 60.0;
 
-                vertical_separator!(ui);
+            let table_area_height = (total_height - playback_bar_height).max(100.0);
 
-                // Audio table
+            let width = ui.available_width();
+
+            ui.allocate_ui(egui::vec2(width, total_height), |ui| {
                 ui.vertical(|ui| {
-                    self.track_table.ui(ui);
+                    ui.allocate_ui(egui::vec2(width, table_area_height), |ui| {
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            self.playlist_tree.ui(ui);
+                            vertical_separator!(ui);
+
+                            ui.vertical(|ui| {
+                                self.track_table.ui(ui, table_area_height);
+                            });
+                        });
+                    });
+
+                    horizontal_separator!(ui);
+
+                    ui.allocate_ui(egui::vec2(width, playback_bar_height), |ui| {
+                        self.playback_bar.ui(ui);
+                    });
                 });
-                // ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
-
-                // });
-            });
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                egui::warn_if_debug_build(ui);
             });
         });
     }
