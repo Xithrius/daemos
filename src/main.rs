@@ -5,7 +5,10 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-    use drakn::{config::load::load_config, database::connection::Database, logging::initialize_logging, Context};
+    use drakn::{
+        Context, config::load::load_config, database::connection::Database,
+        logging::initialize_logging,
+    };
 
     initialize_logging().expect("Failed to initialize logger");
 

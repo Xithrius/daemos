@@ -4,7 +4,7 @@ use egui::{Key, Separator};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    components::{playback::PlaybackBar, table::Table, tree::Tree},
+    components::{menu_bar::MenuBar, playback::PlaybackBar, table::Table, tree::Tree},
     config::core::CoreConfig,
     database::connection::{Database, SharedDatabase},
     horizontal_separator, vertical_separator,
@@ -18,7 +18,8 @@ pub struct Context {
     #[allow(dead_code)]
     database: SharedDatabase,
 
-    // Widgets
+    // Components
+    top_menu_bar: MenuBar,
     track_table: Table,
     playlist_tree: Tree,
     playback_bar: PlaybackBar,
@@ -40,6 +41,7 @@ impl Context {
             config,
             database: shared_database.clone(),
 
+            top_menu_bar: Default::default(),
             track_table: Table::new(shared_database),
             playlist_tree: Default::default(),
             playback_bar: Default::default(),
@@ -67,37 +69,7 @@ impl eframe::App for Context {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                // Adding files, folders, playlists, importing, exporting, etc
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-
-                // Something to do with editing things
-                ui.menu_button("Edit", |_ui| {
-                    todo!();
-                });
-
-                // Something to do with the window
-                ui.menu_button("Window", |_ui| {
-                    todo!();
-                });
-
-                // Useful links
-                ui.menu_button("Help", |ui| {
-                    ui.hyperlink_to("Github Repository", "https://github.com/Xithrius/drakn");
-                });
-
-                ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
-                    ui.horizontal(|ui| {
-                        // Theme switcher
-                        egui::widgets::global_theme_preference_switch(ui);
-
-                        // Debug build status
-                        egui::warn_if_debug_build(ui);
-                    })
-                });
+                self.top_menu_bar.ui(ctx, ui);
             });
         });
 
