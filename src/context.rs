@@ -64,13 +64,16 @@ impl eframe::App for Context {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        #[cfg(debug_assertions)]
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             self.config.debug = !self.config.debug;
 
             if self.config.debug != ctx.debug_on_hover() {
                 ctx.set_debug_on_hover(self.config.debug);
             }
-        } else if ctx.input_mut(|i| {
+        }
+
+        if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL | Modifiers::SHIFT,
                 logical_key: Key::O,
