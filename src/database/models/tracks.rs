@@ -30,27 +30,29 @@ impl Default for Track {
         }
     }
 }
-
 impl TryFrom<&Row<'_>> for Track {
     type Error = rusqlite::Error;
 
     fn try_from(row: &Row) -> Result<Self, Self::Error> {
-        Ok(Track {
-            id: row
-                .get::<_, String>("id")?
+        let parse_date = |value: String| {
+            value
+                .parse::<DateTime<Utc>>()
+                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
+        };
+
+        let parse_uuid = |value: String| {
+            value
                 .parse::<Uuid>()
-                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))?,
+                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
+        };
+
+        Ok(Track {
+            id: parse_uuid(row.get::<_, String>("id")?)?,
             path: PathBuf::from(row.get::<_, String>("path")?),
             hash: row.get("hash")?,
             valid: row.get("valid")?,
-            created_at: row
-                .get::<_, String>("created_at")?
-                .parse::<DateTime<Utc>>()
-                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))?,
-            updated_at: row
-                .get::<_, String>("updated_at")?
-                .parse::<DateTime<Utc>>()
-                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))?,
+            created_at: parse_date(row.get::<_, String>("created_at")?)?,
+            updated_at: parse_date(row.get::<_, String>("updated_at")?)?,
         })
     }
 }
