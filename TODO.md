@@ -28,11 +28,8 @@
         - [x] Should not query once per frame
             - [x] At startup query once then put into vector
         - [x] Hashing
-            - [x] At first startup hash the track
+            - [x] On track insert, hash said track
             - [ ] Perhaps have a tab for tracking duplicates
-            - [ ] Settings
-                - [ ] Toggle to hash tracks on insert
-                - [ ] (re)calculation of all track hashes
         - [ ] Querying/inserting should be done on another thread
         - [ ] Validation of tracks (via settings)
             - [ ] At startup
@@ -46,10 +43,14 @@
 - [ ] Playback
     - [ ] Control
         - [ ] Playback
-            - [ ] Play
-            - [ ] Pause
+            - [x] Play
+            - [x] Pause
+            - [ ] Convert to
             - [ ] Next track
             - [ ] Previous track
+        - [ ] Volume bar
+            - [ ] Click to set time
+            - [ ] Drag to set time
         - [ ] Seek bar
             - [ ] Click to set time
             - [ ] Drag to set time
@@ -57,12 +58,18 @@
         - [ ] Seek bar elapsed and total track duration
 
 - [ ] Settings
-    - [ ] Popup widget (another window)
+    - [x] Popup widget (another window)
     - [ ] Default volume on startup
     - [ ] Default ordering of tracks
         - [ ] By full name
         - [ ] By regex group
     - [ ] Default folder to open when adding tracks
+    - [ ] Toggle to hash tracks on insert
+    - [ ] (re)calculation of all track hashes
+
+- [ ] First time setup
+    - [ ] Offline stats to local storage
+        - [ ] Times a track has been played
 
 ## Later
 

@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct MenuBar;
 
 impl MenuBar {
-    pub fn ui(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    pub fn ui(&mut self, ctx: &egui::Context, ui: &mut egui::Ui, visible_settings: &mut bool) {
         // Adding files, folders, playlists, importing, exporting, etc
-        self.ui_file(ctx, ui);
+        self.ui_file(ctx, ui, visible_settings);
 
         // Something to do with editing things
         self.ui_edit(ui);
@@ -21,9 +21,11 @@ impl MenuBar {
         self.ui_extra(ui);
     }
 
-    fn ui_file(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn ui_file(&mut self, ctx: &egui::Context, ui: &mut egui::Ui, visible_settings: &mut bool) {
         ui.menu_button("File", |ui| {
-            if ui.button("Quit").clicked() {
+            if ui.button("Preferences").clicked() {
+                *visible_settings = true;
+            } else if ui.button("Quit").clicked() {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
         });

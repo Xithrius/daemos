@@ -47,7 +47,7 @@ impl Context {
 
         let shared_database = Rc::new(RefCell::new(database));
 
-        let components = Components::new(shared_database.clone(), tx);
+        let components = Components::new(config.clone(), shared_database.clone(), tx);
 
         Self {
             config,
@@ -109,7 +109,7 @@ impl eframe::App for Context {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                self.components.top_menu_bar.ui(ctx, ui);
+                self.components.top_menu_bar.ui(ctx, ui, self.components.settings.visible_mut());
             });
         });
 
@@ -142,5 +142,7 @@ impl eframe::App for Context {
                 });
             });
         });
+
+        self.components.settings.ui(ctx);
     }
 }
