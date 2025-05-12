@@ -2,36 +2,30 @@ use std::path::PathBuf;
 
 use egui_extras::{Column, TableBuilder};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 
-use crate::files::open::{get_track_file_name, get_tracks, select_folders_dialog};
+use crate::{
+    database::{connection::SharedDatabase, models::tracks::Track},
+    files::open::get_track_file_name,
+};
 
 const TABLE_HEADER_HEIGHT: f32 = 25.0;
 const TABLE_ROW_HEIGHT: f32 = 20.0;
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Table {
     tracks: Vec<PathBuf>,
 }
 
 impl Table {
-    pub fn new() -> Self {
-        let selected_folders = select_folders_dialog();
-
-        let Some(folders) = selected_folders else {
-            return Self { tracks: Vec::new() };
-        };
-
-        let mut tracks = Vec::new();
-        for folder in folders {
-            let folder_tracks = get_tracks(&folder);
-            debug!(
-                "Directory {:?} found audio tracks {:?}",
-                folder, folder_tracks
-            );
-            tracks.extend(folder_tracks);
-        }
-        debug!("All tracks found: {:?}", tracks);
+    pub fn new(database: SharedDatabase) -> Self {
+        let tracks = Track::select_all(database)
+            .map(|tracks| {
+                tracks
+                    .iter()
+                    .map(|track| track.path.clone())
+                    .collect::<Vec<PathBuf>>()
+            })
+            .unwrap_or_default();
 
         Self { tracks }
     }

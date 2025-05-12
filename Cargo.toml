@@ -21,3 +21,5 @@ walkdir = "2.5.0"
 serde = { version = "1.0.219", features = ["derive"] }
 rusqlite = { version = "0.35.0", features = ["bundled"] }
 config = { version = "0.15.11", default-features = false, features = ["toml"] }
+uuid = { version = "1.16.0", features = ["v4", "fast-rng", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }

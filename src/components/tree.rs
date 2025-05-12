@@ -11,13 +11,6 @@ pub enum Action {
 pub struct Tree(Vec<Tree>);
 
 impl Tree {
-    pub fn new() -> Self {
-        Self(vec![
-            Self(vec![Self::default(); 4]),
-            Self(vec![Self(vec![Self::default(); 2]); 3]),
-        ])
-    }
-
     pub fn ui(&mut self, ui: &mut Ui) -> Action {
         self.ui_impl(ui, 0, "root")
     }

@@ -5,7 +5,7 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-    use drakn::{Context, config::load::load_config, logging::initialize_logging};
+    use drakn::{config::load::load_config, database::connection::Database, logging::initialize_logging, Context};
 
     initialize_logging().expect("Failed to initialize logger");
 
@@ -22,11 +22,14 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
+    let database = Database::default();
+    database.create_tables().expect("Failed to create tables");
+
     eframe::run_native(
         "Drakn",
         options,
         Box::new(|cc| {
-            let context = Context::new(cc, config);
+            let context = Context::new(cc, config, database);
 
             Ok(Box::new(context))
         }),

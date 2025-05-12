@@ -1,16 +1,22 @@
+use std::{cell::RefCell, rc::Rc};
+
 use egui::{Key, Separator};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     components::{playback::PlaybackBar, table::Table, tree::Tree},
     config::core::CoreConfig,
+    database::connection::{Database, SharedDatabase},
     horizontal_separator, vertical_separator,
 };
 
 #[derive(Deserialize, Serialize)]
-#[serde(default)]
 pub struct Context {
     config: CoreConfig,
+
+    #[serde(skip)]
+    #[allow(dead_code)]
+    database: SharedDatabase,
 
     // Widgets
     track_table: Table,
@@ -18,19 +24,8 @@ pub struct Context {
     playback_bar: PlaybackBar,
 }
 
-impl Default for Context {
-    fn default() -> Self {
-        Self {
-            track_table: Table::new(),
-            playlist_tree: Tree::new(),
-            playback_bar: PlaybackBar::new(),
-            config: CoreConfig::default(),
-        }
-    }
-}
-
 impl Context {
-    pub fn new(_cc: &eframe::CreationContext<'_>, config: CoreConfig) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, config: CoreConfig, database: Database) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -39,9 +34,15 @@ impl Context {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
+        let shared_database = Rc::new(RefCell::new(database));
+
         Self {
             config,
-            ..Default::default()
+            database: shared_database.clone(),
+
+            track_table: Table::new(shared_database),
+            playlist_tree: Default::default(),
+            playback_bar: Default::default(),
         }
     }
 }

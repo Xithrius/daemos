@@ -14,10 +14,6 @@ pub struct PlaybackBar {
 }
 
 impl PlaybackBar {
-    pub fn new() -> Self {
-        Self { state: None }
-    }
-
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui
