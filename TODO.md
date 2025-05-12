@@ -56,6 +56,14 @@
     - [ ] Visualization
         - [ ] Seek bar elapsed and total track duration
 
+- [ ] Settings
+    - [ ] Popup widget (another window)
+    - [ ] Default volume on startup
+    - [ ] Default ordering of tracks
+        - [ ] By full name
+        - [ ] By regex group
+    - [ ] Default folder to open when adding tracks
+
 ## Later
 
 - Shuffle
