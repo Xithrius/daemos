@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
+use crossbeam::channel::Sender;
 use egui::{Key, KeyboardShortcut, Modifiers, Separator};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tracing::{debug, error};
 
 use crate::{
@@ -12,10 +13,12 @@ use crate::{
         models::tracks::Track,
     },
     files::open::{get_tracks, select_folders_dialog},
-    horizontal_separator, vertical_separator,
+    horizontal_separator,
+    playback::state::PlayerCommand,
+    vertical_separator,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Serialize)]
 pub struct Context {
     config: CoreConfig,
 
@@ -24,14 +27,23 @@ pub struct Context {
     database: SharedDatabase,
 
     // Components
+    #[serde(skip)]
     top_menu_bar: MenuBar,
+    #[serde(skip)]
     track_table: Table,
+    #[serde(skip)]
     playlist_tree: Tree,
+    #[serde(skip)]
     playback_bar: PlaybackBar,
 }
 
 impl Context {
-    pub fn new(_cc: &eframe::CreationContext<'_>, config: CoreConfig, database: Database) -> Self {
+    pub fn new(
+        _cc: &eframe::CreationContext<'_>,
+        config: CoreConfig,
+        database: Database,
+        tx: Sender<PlayerCommand>,
+    ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -47,9 +59,9 @@ impl Context {
             database: shared_database.clone(),
 
             top_menu_bar: Default::default(),
-            track_table: Table::new(shared_database),
+            track_table: Table::new(shared_database, tx.clone()),
             playlist_tree: Default::default(),
-            playback_bar: Default::default(),
+            playback_bar: PlaybackBar::new(tx),
         }
     }
 }

@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use rfd::FileDialog;
 use walkdir::WalkDir;
@@ -6,8 +9,12 @@ use walkdir::WalkDir;
 const ALLOWED_AUDIO_FORMATS: [&str; 3] = ["mp3", "wav", "flac"];
 
 pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
+    // TODO: Windows
+    let home = env::var("HOME").unwrap_or_default();
+
     FileDialog::new()
         // .add_filter("extensions", &ALLOWED_AUDIO_FORMATS)
+        .set_directory(home)
         .pick_folders()
 }
 

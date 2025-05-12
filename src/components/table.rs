@@ -1,31 +1,32 @@
-use std::path::PathBuf;
+use std::collections::HashSet;
 
 use color_eyre::Result;
+use crossbeam::channel::Sender;
 use egui_extras::{Column, TableBuilder};
-use serde::{Deserialize, Serialize};
 use tracing::{debug, error};
 
 use crate::{
     database::{connection::SharedDatabase, models::tracks::Track},
     files::open::get_track_file_name,
+    playback::state::PlayerCommand,
 };
 
 const TABLE_HEADER_HEIGHT: f32 = 25.0;
 const TABLE_ROW_HEIGHT: f32 = 20.0;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Table {
-    tracks: Vec<PathBuf>,
+    tracks: Vec<Track>,
+    #[allow(dead_code)]
+    selection: HashSet<usize>,
+    playing: Option<(usize, Track)>,
+
+    tx: Sender<PlayerCommand>,
 }
 
 impl Table {
-    pub fn new(database: SharedDatabase) -> Self {
-        let tracks = match Track::select_all(database).map(|tracks| {
-            tracks
-                .iter()
-                .map(|track| track.path.clone())
-                .collect::<Vec<PathBuf>>()
-        }) {
+    pub fn new(database: SharedDatabase, tx: Sender<PlayerCommand>) -> Self {
+        let tracks = match Track::select_all(database).map(|tracks| tracks.to_vec()) {
             Ok(tracks) => {
                 debug!(
                     "Initial load of track table found {} track(s)",
@@ -41,16 +42,16 @@ impl Table {
             }
         };
 
-        Self { tracks }
+        Self {
+            tracks,
+            selection: HashSet::default(),
+            playing: None,
+            tx,
+        }
     }
 
     pub fn refresh_tracks(&mut self, database: SharedDatabase) -> Result<()> {
-        let tracks = match Track::select_all(database).map(|tracks| {
-            tracks
-                .iter()
-                .map(|track| track.path.clone())
-                .collect::<Vec<PathBuf>>()
-        }) {
+        let tracks = match Track::select_all(database).map(|tracks| tracks.to_vec()) {
             Ok(tracks) => {
                 debug!("Refreshed tracks list with {} track(s)", tracks.len());
 
@@ -69,10 +70,14 @@ impl Table {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, height: f32) {
-        TableBuilder::new(ui)
+        let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
-            .column(Column::remainder())
+            .column(Column::remainder());
+
+        table = table.sense(egui::Sense::click());
+
+        table
             .header(TABLE_HEADER_HEIGHT, |mut header| {
                 header.col(|ui| {
                     ui.heading("Index");
@@ -87,23 +92,56 @@ impl Table {
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
                     let row_index = row.index();
 
-                    let Some(track) = self.tracks.get(row_index) else {
-                        return;
-                    };
+                    let track = self.tracks.get(row_index).cloned();
+                    let playing = self.playing.clone();
 
-                    let Some(track_file_name) = get_track_file_name(track.to_path_buf()) else {
-                        return;
-                    };
+                    if let Some(track) = track {
+                        if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
+                            row.set_selected(
+                                playing
+                                    .as_ref()
+                                    .is_some_and(|(index, _)| *index == row_index),
+                            );
 
-                    row.col(|ui| {
-                        ui.label(row_index.to_string());
-                    });
+                            row.col(|ui| {
+                                ui.label(row_index.to_string());
+                            });
 
-                    row.col(|ui| {
-                        ui.label(track_file_name);
-                    });
+                            row.col(|ui| {
+                                ui.label(track_file_name);
+                            });
+
+                            self.toggle_row_play(row_index, &track, &row.response());
+                        }
+                    }
                 });
             });
+    }
+
+    // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
+    //     if row_response.clicked() {
+    //         if self.selection.contains(&row_index) {
+    //             self.selection.remove(&row_index);
+    //         } else {
+    //             self.selection.insert(row_index);
+    //         }
+    //     }
+    // }
+
+    fn toggle_row_play(&mut self, row_index: usize, track: &Track, row_response: &egui::Response) {
+        if row_response.double_clicked() {
+            if self.playing.is_some() {
+                self.playing = None;
+                return;
+            }
+
+            if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
+                error!("Failed to start track on path {:?}: {}", track.path, err);
+                return;
+            }
+
+            self.playing = Some((row_index, track.clone()))
+        }
     }
 }
 

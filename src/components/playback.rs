@@ -1,5 +1,8 @@
+use crossbeam::channel::Sender;
 use egui::RichText;
 use serde::{Deserialize, Serialize};
+
+use crate::playback::state::PlayerCommand;
 
 const PLAYBACK_BUTTON_FONT_SIZE: f32 = 22.5;
 
@@ -8,12 +11,16 @@ const PLAY_SYMBOL: &str = "\u{25B6}"; // ▶
 const PAUSE_SYMBOL: &str = "\u{23F8}"; // ⏸
 const SKIP_FORWARD_SYMBOL: &str = "\u{23ED}"; // ⏭
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct PlaybackBar {
-    state: Option<String>,
+    tx: Sender<PlayerCommand>,
 }
 
 impl PlaybackBar {
+    pub fn new(tx: Sender<PlayerCommand>) -> Self {
+        Self { tx }
+    }
+
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui

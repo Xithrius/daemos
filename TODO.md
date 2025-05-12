@@ -46,7 +46,10 @@
 - [ ] Playback
     - [ ] Control
         - [ ] Playback
-            - [ ]
+            - [ ] Play
+            - [ ] Pause
+            - [ ] Next track
+            - [ ] Previous track
         - [ ] Seek bar
             - [ ] Click to set time
             - [ ] Drag to set time

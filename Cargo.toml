@@ -24,3 +24,6 @@ config = { version = "0.15.11", default-features = false, features = ["toml"] }
 uuid = { version = "1.16.0", features = ["v4", "fast-rng", "serde"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 blake3 = { version = "1.8.2", features = ["serde"] }
+crossbeam = "0.8.4"
+rodio = { version = "0.20.1", features = ["symphonia-all"] }
+symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
