@@ -17,20 +17,23 @@
 
 - [ ] Saving track/playlist data to disk
     - [ ] Sqlite database
-        - [ ] Connection
-        - [ ] Table definitions and creation
-            - [ ] Tracks
-            - [ ] Playlists
-        - [ ] CRUD for each table
-            - [ ] Tracks
+        - [x] Connection
+        - [x] Table definitions and creation
+            - [x] Tracks
+            - [x] Playlists
+        - [x] CRUD for each table
+            - [x] Tracks
             - [ ] Playlists
     - [ ] Tracks
-        - [ ] Each row has an ID
-        - [ ] Hashing
-            - [ ] At first startup and as a setting, hash the track
+        - [x] Should not query once per frame
+            - [x] At startup query once then put into vector
+        - [x] Hashing
+            - [x] At first startup hash the track
             - [ ] Perhaps have a tab for tracking duplicates
-            - [ ] Have a setting to (re)calculate all hashes
-        - [ ] Of course, have the file path to the track
+            - [ ] Settings
+                - [ ] Toggle to hash tracks on insert
+                - [ ] (re)calculation of all track hashes
+        - [ ] Querying/inserting should be done on another thread
         - [ ] Validation of tracks (via settings)
             - [ ] At startup
             - [ ] Every once in a while

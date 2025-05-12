@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
+use color_eyre::Result;
 use egui_extras::{Column, TableBuilder};
 use serde::{Deserialize, Serialize};
+use tracing::{debug, error};
 
 use crate::{
     database::{connection::SharedDatabase, models::tracks::Track},
@@ -18,16 +20,52 @@ pub struct Table {
 
 impl Table {
     pub fn new(database: SharedDatabase) -> Self {
-        let tracks = Track::select_all(database)
-            .map(|tracks| {
+        let tracks = match Track::select_all(database).map(|tracks| {
+            tracks
+                .iter()
+                .map(|track| track.path.clone())
+                .collect::<Vec<PathBuf>>()
+        }) {
+            Ok(tracks) => {
+                debug!(
+                    "Initial load of track table found {} track(s)",
+                    tracks.len()
+                );
+
                 tracks
-                    .iter()
-                    .map(|track| track.path.clone())
-                    .collect::<Vec<PathBuf>>()
-            })
-            .unwrap_or_default();
+            }
+            Err(err) => {
+                error!("Failed getting tracks: {}", err);
+
+                Vec::new()
+            }
+        };
 
         Self { tracks }
+    }
+
+    pub fn refresh_tracks(&mut self, database: SharedDatabase) -> Result<()> {
+        let tracks = match Track::select_all(database).map(|tracks| {
+            tracks
+                .iter()
+                .map(|track| track.path.clone())
+                .collect::<Vec<PathBuf>>()
+        }) {
+            Ok(tracks) => {
+                debug!("Refreshed tracks list with {} track(s)", tracks.len());
+
+                tracks
+            }
+            Err(err) => {
+                error!("Failed getting tracks: {}", err);
+
+                Vec::new()
+            }
+        };
+
+        self.tracks = tracks;
+
+        Ok(())
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, height: f32) {

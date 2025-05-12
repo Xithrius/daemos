@@ -6,7 +6,7 @@ const TRACKS_TABLE: &str = "
 CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
     path TEXT NOT NULL,
-    hash TEXT,
+    hash TEXT UNIQUE,
     valid BOOLEAN NOT NULL,
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

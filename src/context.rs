@@ -1,12 +1,17 @@
 use std::{cell::RefCell, rc::Rc};
 
-use egui::{Key, Separator};
+use egui::{Key, KeyboardShortcut, Modifiers, Separator};
 use serde::{Deserialize, Serialize};
+use tracing::{debug, error};
 
 use crate::{
     components::{menu_bar::MenuBar, playback::PlaybackBar, table::Table, tree::Tree},
     config::core::CoreConfig,
-    database::connection::{Database, SharedDatabase},
+    database::{
+        connection::{Database, SharedDatabase},
+        models::tracks::Track,
+    },
+    files::open::{get_tracks, select_folders_dialog},
     horizontal_separator, vertical_separator,
 };
 
@@ -64,6 +69,30 @@ impl eframe::App for Context {
 
             if self.config.debug != ctx.debug_on_hover() {
                 ctx.set_debug_on_hover(self.config.debug);
+            }
+        } else if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL | Modifiers::SHIFT,
+                logical_key: Key::O,
+            })
+        }) {
+            if let Some(selected_folders) = select_folders_dialog() {
+                let mut tracks = Vec::new();
+
+                for folder in selected_folders {
+                    let folder_tracks = get_tracks(&folder);
+                    tracks.extend(folder_tracks);
+                }
+
+                debug!("Found {} total track(s) in selected folders", tracks.len());
+
+                if let Err(err) = Track::insert_many(self.database.clone(), tracks) {
+                    error!("Failed to insert tracks into database: {}", err);
+                }
+
+                if let Err(err) = self.track_table.refresh_tracks(self.database.clone()) {
+                    error!("Failed to refresh tracks on track table: {}", err);
+                }
             }
         }
 

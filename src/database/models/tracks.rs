@@ -4,9 +4,10 @@ use chrono::{DateTime, Utc};
 use color_eyre::{Result, eyre::Context};
 use rusqlite::{Row, types::Type};
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use uuid::Uuid;
 
-use crate::database::connection::SharedDatabase;
+use crate::database::{connection::SharedDatabase, hash::hash_file};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Track {
@@ -62,10 +63,13 @@ impl Track {
         let db = database.borrow();
         let conn = &db.conn;
 
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4)";
+        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6)";
+
+        let hash = hash_file(&path)?.to_string();
 
         let args = Track {
             path,
+            hash: Some(hash),
             ..Default::default()
         };
 
@@ -76,6 +80,8 @@ impl Track {
                 args.path.to_str(),
                 args.hash,
                 args.valid,
+                args.created_at.to_string(),
+                args.updated_at.to_string(),
             ),
         )
         .context("Failed to execute insert on tracks table")?;
@@ -89,14 +95,19 @@ impl Track {
 
         let tx = conn.transaction()?;
 
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4)";
+        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6)";
+
+        let paths_amount = paths.len();
 
         {
             let mut stmt = tx.prepare(query)?;
 
             for path in paths {
+                let hash = hash_file(&path)?.to_string();
+
                 let args = Track {
                     path,
+                    hash: Some(hash),
                     ..Default::default()
                 };
 
@@ -105,10 +116,14 @@ impl Track {
                     args.path.to_str(),
                     args.hash,
                     args.valid,
+                    args.created_at.to_string(),
+                    args.updated_at.to_string(),
                 ))
                 .with_context(|| format!("Failed to insert track with path {:?}", args.path))?;
             }
         }
+
+        debug!("Inserting {} track(s) into database", paths_amount);
 
         tx.commit()
             .context("Failed to commit track insert transaction")?;
@@ -120,7 +135,7 @@ impl Track {
         let db = database.borrow();
         let conn = &db.conn;
 
-        let query = "SELECT id, path, valid, created_at, updated_at FROM tracks";
+        let query = "SELECT id, path, hash, valid, created_at, updated_at FROM tracks";
         let mut stmt = conn
             .prepare(query)
             .context("Failed to prepare query for select all from tracks")?;
@@ -128,6 +143,8 @@ impl Track {
         let tracks: Vec<Track> = stmt
             .query_map([], |row| Track::try_from(row))?
             .collect::<Result<_, _>>()?;
+
+        debug!("Found {} track(s) from table query", tracks.len());
 
         Ok(tracks)
     }
