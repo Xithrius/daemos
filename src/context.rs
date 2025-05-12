@@ -6,7 +6,7 @@ use serde::Serialize;
 use tracing::{debug, error};
 
 use crate::{
-    components::{menu_bar::MenuBar, playback::PlaybackBar, table::Table, tree::Tree},
+    components::Components,
     config::core::CoreConfig,
     database::{
         connection::{Database, SharedDatabase},
@@ -26,15 +26,8 @@ pub struct Context {
     #[allow(dead_code)]
     database: SharedDatabase,
 
-    // Components
     #[serde(skip)]
-    top_menu_bar: MenuBar,
-    #[serde(skip)]
-    track_table: Table,
-    #[serde(skip)]
-    playlist_tree: Tree,
-    #[serde(skip)]
-    playback_bar: PlaybackBar,
+    components: Components,
 }
 
 impl Context {
@@ -54,14 +47,13 @@ impl Context {
 
         let shared_database = Rc::new(RefCell::new(database));
 
+        let components = Components::new(shared_database.clone(), tx);
+
         Self {
             config,
             database: shared_database.clone(),
 
-            top_menu_bar: Default::default(),
-            track_table: Table::new(shared_database, tx.clone()),
-            playlist_tree: Default::default(),
-            playback_bar: PlaybackBar::new(tx),
+            components,
         }
     }
 }
@@ -105,7 +97,11 @@ impl eframe::App for Context {
                     error!("Failed to insert tracks into database: {}", err);
                 }
 
-                if let Err(err) = self.track_table.refresh_tracks(self.database.clone()) {
+                if let Err(err) = self
+                    .components
+                    .track_table
+                    .refresh_tracks(self.database.clone())
+                {
                     error!("Failed to refresh tracks on track table: {}", err);
                 }
             }
@@ -113,7 +109,7 @@ impl eframe::App for Context {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                self.top_menu_bar.ui(ctx, ui);
+                self.components.top_menu_bar.ui(ctx, ui);
             });
         });
 
@@ -129,11 +125,11 @@ impl eframe::App for Context {
                 ui.vertical(|ui| {
                     ui.allocate_ui(egui::vec2(width, table_area_height), |ui| {
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            self.playlist_tree.ui(ui);
+                            self.components.playlist_tree.ui(ui);
                             vertical_separator!(ui);
 
                             ui.vertical(|ui| {
-                                self.track_table.ui(ui, table_area_height);
+                                self.components.track_table.ui(ui, table_area_height);
                             });
                         });
                     });
@@ -141,7 +137,7 @@ impl eframe::App for Context {
                     horizontal_separator!(ui);
 
                     ui.allocate_ui(egui::vec2(width, playback_bar_height), |ui| {
-                        self.playback_bar.ui(ui);
+                        self.components.playback_bar.ui(ui);
                     });
                 });
             });

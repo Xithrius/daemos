@@ -101,8 +101,6 @@ impl Player {
 
                 debug!("Appended file to sink, and playing");
 
-                self.sink.sleep_until_end();
-
                 Ok(())
             }
             PlayerCommand::Play => {
