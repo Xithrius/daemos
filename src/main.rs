@@ -11,8 +11,13 @@ fn main() -> eframe::Result {
 
     let config = load_config().expect("Failed to load config");
 
+    let icon_data =
+        eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon.png")).unwrap_or_default();
+
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([320.0, 240.0])
+            .with_icon(icon_data),
         vsync: config.vsync,
         ..Default::default()
     };
