@@ -8,8 +8,8 @@ use config::{Config, File};
 use tracing::warn;
 
 use super::core::CoreConfig;
+use crate::BINARY_NAME;
 
-const BINARY_NAME: &str = "drakn";
 const CONFIG_FILE_NAME: &str = "config.toml";
 
 pub fn get_config_path() -> Result<PathBuf> {
