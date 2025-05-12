@@ -80,9 +80,23 @@ impl Player {
         }
     }
 
-    #[allow(dead_code)]
-    fn create_player_track(&self) {
-        todo!()
+    fn create_player_track(&self, track: &Track) -> Result<()> {
+        if !self.sink.empty() {
+            self.sink.clear();
+        }
+
+        let track_file_path = track.path.clone();
+
+        debug!("Appended file {:?} to sink, and playing", track.path);
+
+        let file = File::open(track_file_path)?;
+        let decoder = Decoder::new(BufReader::new(file))?;
+
+        self.sink.append(decoder);
+        self.sink.set_volume(0.5);
+        self.sink.play();
+
+        Ok(())
     }
 
     fn handle_command(&self, command: &PlayerCommand) -> Result<()> {
@@ -90,19 +104,10 @@ impl Player {
 
         match command {
             PlayerCommand::Create(track) => {
-                let track_file_path = track.path.clone();
-
-                let file = File::open(track_file_path)?;
-                let decoder = Decoder::new(BufReader::new(file))?;
-
-                self.sink.append(decoder);
-                self.sink.set_volume(0.5);
-                self.sink.play();
-
-                debug!("Appended file to sink, and playing");
+                self.create_player_track(track)?;
 
                 Ok(())
-            }
+            },
             PlayerCommand::Play => {
                 self.sink.play();
 
