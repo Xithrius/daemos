@@ -1,11 +1,5 @@
-use std::path::PathBuf;
-
-use egui::{Color32, RichText};
-use egui_extras::{Column, TableBuilder};
+use egui::RichText;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
-
-use crate::files::open::{get_track_file_name, get_tracks, select_folders_dialog};
 
 const PLAYBACK_BUTTON_FONT_SIZE: f32 = 22.5;
 

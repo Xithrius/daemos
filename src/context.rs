@@ -1,4 +1,4 @@
-use egui::Separator;
+use egui::{Key, Separator};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -56,8 +56,12 @@ impl eframe::App for Context {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
-        if self.config.debug != ctx.debug_on_hover() {
-            ctx.set_debug_on_hover(self.config.debug);
+        if ctx.input(|i| i.key_pressed(Key::F3)) {
+            self.config.debug = !self.config.debug;
+
+            if self.config.debug != ctx.debug_on_hover() {
+                ctx.set_debug_on_hover(self.config.debug);
+            }
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
