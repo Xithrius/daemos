@@ -104,14 +104,26 @@ impl Table {
                             );
 
                             row.col(|ui| {
-                                ui.label(row_index.to_string());
+                                let label = ui
+                                    .label(row_index.to_string())
+                                    .on_hover_cursor(egui::CursorIcon::Default);
+                                if label.double_clicked() {
+                                    self.toggle_row_play(row_index, &track);
+                                }
                             });
 
                             row.col(|ui| {
-                                ui.label(track_file_name);
+                                let label = ui
+                                    .label(track_file_name)
+                                    .on_hover_cursor(egui::CursorIcon::Default);
+                                if label.double_clicked() {
+                                    self.toggle_row_play(row_index, &track);
+                                }
                             });
 
-                            self.toggle_row_play(row_index, &track, &row.response());
+                            if row.response().double_clicked() {
+                                self.toggle_row_play(row_index, &track);
+                            }
                         }
                     }
                 });
@@ -128,29 +140,29 @@ impl Table {
     //     }
     // }
 
-    fn toggle_row_play(&mut self, row_index: usize, track: &Track, row_response: &egui::Response) {
-        if row_response.double_clicked() {
-            if self
-                .playing
-                .as_ref()
-                .is_some_and(|(playing_index, playing_track)| {
-                    (*playing_index == row_index) && (*playing_track == *track)
-                })
-            {
-                if let Err(err) = self.tx.send(PlayerCommand::Pause) {
-                    error!("Failed to pause track on path {:?}: {}", track.path, err);
-                }
-
-                return;
+    fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
+        // TODO: If paused, and you hit double click again, then it will send another pause.
+        // TODO: Keep track of track state.
+        if self
+            .playing
+            .as_ref()
+            .is_some_and(|(playing_index, playing_track)| {
+                (*playing_index == row_index) && (*playing_track == *track)
+            })
+        {
+            if let Err(err) = self.tx.send(PlayerCommand::Pause) {
+                error!("Failed to pause track on path {:?}: {}", track.path, err);
             }
 
-            if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
-                error!("Failed to start track on path {:?}: {}", track.path, err);
-                return;
-            }
-
-            self.playing = Some((row_index, track.clone()))
+            return;
         }
+
+        if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
+            error!("Failed to start track on path {:?}: {}", track.path, err);
+            return;
+        }
+
+        self.playing = Some((row_index, track.clone()))
     }
 }
 
