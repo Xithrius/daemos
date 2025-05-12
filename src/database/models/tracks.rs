@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::database::{connection::SharedDatabase, hash::hash_file};
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Track {
     pub id: Uuid,
     pub path: PathBuf,

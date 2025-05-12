@@ -130,8 +130,17 @@ impl Table {
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track, row_response: &egui::Response) {
         if row_response.double_clicked() {
-            if self.playing.is_some() {
-                self.playing = None;
+            if self
+                .playing
+                .as_ref()
+                .is_some_and(|(playing_index, playing_track)| {
+                    (*playing_index == row_index) && (*playing_track == *track)
+                })
+            {
+                if let Err(err) = self.tx.send(PlayerCommand::Pause) {
+                    error!("Failed to pause track on path {:?}: {}", track.path, err);
+                }
+
                 return;
             }
 
