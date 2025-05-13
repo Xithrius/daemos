@@ -97,12 +97,15 @@ impl PlaybackBar {
             }
 
             // TODO: Make sure this is synced with the handler for player events
-            if self.track_state.playing {
-                if button(ui, PAUSE_SYMBOL) {
-                    let _ = self.player_cmd_tx.send(PlayerCommand::Pause);
-                }
-            } else if button(ui, PLAY_SYMBOL) {
-                let _ = self.player_cmd_tx.send(PlayerCommand::Play);
+            let toggle_playing_button = if self.track_state.playing {
+                PLAY_SYMBOL
+            } else {
+                PAUSE_SYMBOL
+            };
+
+            if button(ui, toggle_playing_button) {
+                let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
+                self.track_state.playing = !self.track_state.playing;
             }
 
             if button(ui, SKIP_FORWARD_SYMBOL) {

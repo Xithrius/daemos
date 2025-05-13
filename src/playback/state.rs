@@ -27,6 +27,7 @@ pub enum PlayerCommand {
     Create(Track),
     Play,
     Pause,
+    Toggle,
     Resume,
     SkipNext,
     SkipPrevious,
@@ -133,6 +134,15 @@ impl Player {
             }
             PlayerCommand::Play => {
                 self.sink.play();
+
+                Ok(())
+            }
+            PlayerCommand::Toggle => {
+                if self.sink.is_paused() {
+                    self.sink.play();
+                } else {
+                    self.sink.pause();
+                }
 
                 Ok(())
             }
