@@ -33,7 +33,7 @@ impl TrackState {
         Self {
             track: None,
             progress: None,
-            playing: false,
+            playing: true,
             volume,
             last_volume_sent: volume,
         }
@@ -57,7 +57,10 @@ impl PlaybackBar {
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
-        debug!("Playback bar UI component received event: {:?}", player_event);
+        debug!(
+            "Playback bar UI component received event: {:?}",
+            player_event
+        );
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
@@ -97,14 +100,15 @@ impl PlaybackBar {
                 let _ = self.player_cmd_tx.send(PlayerCommand::SkipPrevious);
             }
 
-            // TODO: Make sure this is synced with the handler for player events
-            let toggle_playing_button = if self.track_state.playing {
-                PLAY_SYMBOL
-            } else {
+            let current_track = self.track_state.track.is_some();
+
+            let toggle_playing_button = if self.track_state.playing && current_track {
                 PAUSE_SYMBOL
+            } else {
+                PLAY_SYMBOL
             };
 
-            if button(ui, toggle_playing_button) {
+            if button(ui, toggle_playing_button) && current_track {
                 let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
             }
 
