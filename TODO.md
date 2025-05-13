@@ -52,6 +52,7 @@
             - [x] Click to set volume
             - [x] Drag to set volume
         - [ ] Seek bar
+            - [ ] See live elapsed and total duration updates
             - [ ] Click to set time
             - [ ] Drag to set time
     - [ ] Visualization

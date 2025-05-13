@@ -27,10 +27,6 @@ pub struct Context {
     database: SharedDatabase,
 
     #[serde(skip)]
-    #[allow(dead_code)]
-    player_cmd_tx: Sender<PlayerCommand>,
-    #[serde(skip)]
-    #[allow(dead_code)]
     player_event_rx: Receiver<PlayerEvent>,
 
     #[serde(skip)]
@@ -64,10 +60,7 @@ impl Context {
         Self {
             config,
             database: shared_database.clone(),
-
-            player_cmd_tx,
             player_event_rx,
-
             components,
         }
     }
@@ -148,7 +141,11 @@ impl eframe::App for Context {
                             vertical_separator!(ui);
 
                             ui.vertical(|ui| {
-                                self.components.track_table.ui(ui, table_area_height, &player_event);
+                                self.components.track_table.ui(
+                                    ui,
+                                    table_area_height,
+                                    &player_event,
+                                );
                             });
                         });
                     });

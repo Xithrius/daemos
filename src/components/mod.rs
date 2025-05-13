@@ -3,12 +3,14 @@ pub mod playback;
 pub mod settings;
 pub mod track_table;
 pub mod tree;
+pub mod utils;
 
 use crossbeam::channel::Sender;
 
 use crate::{
     components::{
-        menu_bar::MenuBar, playback::PlaybackBar, settings::Settings, track_table::TrackTable, tree::Tree,
+        menu_bar::MenuBar, playback::PlaybackBar, settings::Settings, track_table::TrackTable,
+        tree::Tree,
     },
     config::core::CoreConfig,
     database::connection::SharedDatabase,
