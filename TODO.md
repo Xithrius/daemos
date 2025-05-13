@@ -45,7 +45,7 @@
         - [ ] Playback
             - [x] Play
             - [x] Pause
-            - [ ] Convert to
+            - [ ] Toggle
             - [ ] Next track
             - [ ] Previous track
         - [ ] Volume bar

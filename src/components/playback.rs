@@ -21,29 +21,22 @@ impl PlaybackBar {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            if ui
-                .button(RichText::new(SKIP_BACKWARD_SYMBOL).size(PLAYBACK_BUTTON_FONT_SIZE))
+        let button = |ui: &mut egui::Ui, text: &str| -> bool {
+            ui.button(RichText::new(text).size(PLAYBACK_BUTTON_FONT_SIZE))
                 .clicked()
-            {
+        };
+
+        ui.horizontal(|ui| {
+            if button(ui, SKIP_BACKWARD_SYMBOL) {
                 let _ = self.tx.send(PlayerCommand::SkipPrevious);
             }
-            if ui
-                .button(RichText::new(PLAY_SYMBOL).size(PLAYBACK_BUTTON_FONT_SIZE))
-                .clicked()
-            {
+            if button(ui, PLAY_SYMBOL) {
                 let _ = self.tx.send(PlayerCommand::Play);
             }
-            if ui
-                .button(RichText::new(PAUSE_SYMBOL).size(PLAYBACK_BUTTON_FONT_SIZE))
-                .clicked()
-            {
+            if button(ui, PAUSE_SYMBOL) {
                 let _ = self.tx.send(PlayerCommand::Pause);
             }
-            if ui
-                .button(RichText::new(SKIP_FORWARD_SYMBOL).size(PLAYBACK_BUTTON_FONT_SIZE))
-                .clicked()
-            {
+            if button(ui, SKIP_FORWARD_SYMBOL) {
                 let _ = self.tx.send(PlayerCommand::SkipNext);
             }
         });
