@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
     path TEXT NOT NULL,
     hash TEXT UNIQUE,
+    duration_secs REAL NOT NULL,
     valid BOOLEAN NOT NULL,
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

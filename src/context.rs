@@ -27,6 +27,8 @@ pub struct Context {
     database: SharedDatabase,
 
     #[serde(skip)]
+    player_cmd_tx: Sender<PlayerCommand>,
+    #[serde(skip)]
     player_event_rx: Receiver<PlayerEvent>,
 
     #[serde(skip)]
@@ -60,6 +62,7 @@ impl Context {
         Self {
             config,
             database: shared_database.clone(),
+            player_cmd_tx,
             player_event_rx,
             components,
         }
@@ -76,6 +79,8 @@ impl eframe::App for Context {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        let player_event = self.player_event_rx.try_recv().ok();
+
         #[cfg(debug_assertions)]
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             self.config.debug = !self.config.debug;
@@ -84,8 +89,6 @@ impl eframe::App for Context {
                 ctx.set_debug_on_hover(self.config.debug);
             }
         }
-
-        let player_event = self.player_event_rx.try_recv().ok();
 
         if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
@@ -115,6 +118,10 @@ impl eframe::App for Context {
                     error!("Failed to refresh tracks on track table: {}", err);
                 }
             }
+        }
+
+        if ctx.input(|i| i.key_pressed(Key::Space)) {
+            let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {

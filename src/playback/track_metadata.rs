@@ -1,4 +1,4 @@
-use std::{fs::File, time::Duration};
+use std::{fs::File, path::PathBuf, time::Duration};
 
 use color_eyre::{Result, eyre::ContextCompat};
 use symphonia::{
@@ -12,7 +12,7 @@ use symphonia::{
     default::get_probe,
 };
 
-pub fn extract_track_metadata(file_path: &str) -> Result<CodecParameters> {
+pub fn extract_track_metadata(file_path: &PathBuf) -> Result<CodecParameters> {
     let file = File::open(file_path).expect("Failed to open file");
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
 
