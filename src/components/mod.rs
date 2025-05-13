@@ -1,9 +1,9 @@
 pub mod menu_bar;
 pub mod playback;
-pub mod volume_bar;
 pub mod settings;
 pub mod table;
 pub mod tree;
+pub mod volume_bar;
 
 use crossbeam::channel::Sender;
 
@@ -31,9 +31,9 @@ impl Components {
         tx: Sender<PlayerCommand>,
     ) -> Self {
         Self {
-            top_menu_bar: Default::default(),
+            top_menu_bar: MenuBar::default(),
             track_table: Table::new(shared_database, tx.clone()),
-            playlist_tree: Default::default(),
+            playlist_tree: Tree::default(),
             playback_bar: PlaybackBar::new(tx),
             settings: Settings::new(config),
         }
