@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-const DEFAULT_PLAYER_VOLUME: f32 = 50.0;
+const DEFAULT_PLAYER_VOLUME: f32 = 0.5;
 
 fn clamp_volume<'de, D>(deserializer: D) -> Result<f32, D::Error>
 where
@@ -8,7 +8,7 @@ where
 {
     let value = f32::deserialize(deserializer)?;
 
-    Ok(value.clamp(0.0, 100.0))
+    Ok(value.clamp(0.0, 1.0))
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

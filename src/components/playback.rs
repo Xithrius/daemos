@@ -1,14 +1,16 @@
-use std::time::Duration;
+use std::{ops::RangeInclusive, time::Duration};
 
 use crossbeam::channel::Sender;
 use egui::RichText;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::{
     config::core::CoreConfig,
     database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
 };
+
+const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
 
 const PLAYBACK_BUTTON_FONT_SIZE: f32 = 22.5;
 
@@ -19,8 +21,9 @@ const SKIP_FORWARD_SYMBOL: &str = "\u{23ED}"; // ⏭
 
 #[derive(Debug, Clone)]
 struct TrackState {
-    playing: Option<Track>,
+    track: Option<Track>,
     progress: Option<Duration>,
+    playing: bool,
     volume: f32,
     last_volume_sent: f32,
 }
@@ -28,8 +31,9 @@ struct TrackState {
 impl TrackState {
     pub fn new(volume: f32) -> Self {
         Self {
-            playing: None,
+            track: None,
             progress: None,
+            playing: false,
             volume,
             last_volume_sent: volume,
         }
@@ -57,13 +61,20 @@ impl PlaybackBar {
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
-                self.track_state.playing = Some(track);
+                self.track_state.track = Some(track);
+                self.track_state.playing = true;
             }
             PlayerEvent::TrackProgress(duration) => {
                 self.track_state.progress = Some(duration);
             }
             PlayerEvent::CurrentVolume(volume) => {
-                self.track_state.volume = volume;
+                if self.track_state.volume != volume {
+                    warn!(
+                        "Volume desync detected UI track state does not equal player volume ({} != {})",
+                        self.track_state.volume, volume
+                    );
+                    self.track_state.volume = volume;
+                }
             }
         }
     }
@@ -85,26 +96,30 @@ impl PlaybackBar {
                 let _ = self.player_cmd_tx.send(PlayerCommand::SkipPrevious);
             }
 
-            if button(ui, PLAY_SYMBOL) {
+            // TODO: Make sure this is synced with the handler for player events
+            if self.track_state.playing {
+                if button(ui, PAUSE_SYMBOL) {
+                    let _ = self.player_cmd_tx.send(PlayerCommand::Pause);
+                }
+            } else if button(ui, PLAY_SYMBOL) {
                 let _ = self.player_cmd_tx.send(PlayerCommand::Play);
-            }
-
-            if button(ui, PAUSE_SYMBOL) {
-                let _ = self.player_cmd_tx.send(PlayerCommand::Pause);
             }
 
             if button(ui, SKIP_FORWARD_SYMBOL) {
                 let _ = self.player_cmd_tx.send(PlayerCommand::SkipNext);
             }
 
-            ui.add(egui::Slider::new(&mut self.track_state.volume, 0.0..=100.0).text("Volume"));
+            ui.add(
+                egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE)
+                    .text("Volume"),
+            );
 
             let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
 
             if volume_dx > f32::EPSILON {
-                let volume = self.track_state.volume / 100.0;
-
-                let _ = self.player_cmd_tx.send(PlayerCommand::SetVolume(volume));
+                let _ = self
+                    .player_cmd_tx
+                    .send(PlayerCommand::SetVolume(self.track_state.volume));
 
                 self.track_state.last_volume_sent = self.track_state.volume;
             }

@@ -114,6 +114,11 @@ impl Player {
         self.sink.set_volume(0.5);
         self.sink.play();
 
+        // TODO: In another thread, send updates of track duration
+
+        self.player_event_tx
+            .send(PlayerEvent::TrackChanged(track.clone()))?;
+
         Ok(())
     }
 
@@ -156,23 +161,24 @@ impl Player {
             PlayerCommand::Volume => {
                 let volume = self.sink.volume();
 
-                let _ = self
-                    .player_event_tx
-                    .send(PlayerEvent::CurrentVolume(volume));
+                self.player_event_tx
+                    .send(PlayerEvent::CurrentVolume(volume))?;
 
                 Ok(())
             }
             PlayerCommand::SetVolume(volume_value) => {
                 self.sink.set_volume(*volume_value);
 
+                self.player_event_tx
+                    .send(PlayerEvent::CurrentVolume(*volume_value))?;
+
                 Ok(())
             }
             PlayerCommand::Position => {
                 let position = self.sink.get_pos();
 
-                let _ = self
-                    .player_event_tx
-                    .send(PlayerEvent::TrackProgress(position));
+                self.player_event_tx
+                    .send(PlayerEvent::TrackProgress(position))?;
 
                 Ok(())
             }
@@ -183,9 +189,8 @@ impl Player {
 
                 let position = self.sink.get_pos();
 
-                let _ = self
-                    .player_event_tx
-                    .send(PlayerEvent::TrackProgress(position));
+                self.player_event_tx
+                    .send(PlayerEvent::TrackProgress(position))?;
 
                 Ok(())
             }
