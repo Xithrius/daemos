@@ -41,7 +41,7 @@ impl Settings {
             .show(ctx, |ui| {
                 ui.set_min_size(DEFAULT_SETTINGS_WINDOW_SIZE.into());
 
-                ui.label("This is a resizable popup window!");
+                ui.label("Placeholder for the settings window");
             });
     }
 }
