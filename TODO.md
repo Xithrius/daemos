@@ -45,12 +45,12 @@
         - [ ] Playback
             - [x] Play
             - [x] Pause
-            - [ ] Toggle
+            - [x] Toggle
             - [ ] Next track
             - [ ] Previous track
-        - [ ] Volume bar
-            - [ ] Click to set time
-            - [ ] Drag to set time
+        - [x] Volume bar
+            - [x] Click to set volume
+            - [x] Drag to set volume
         - [ ] Seek bar
             - [ ] Click to set time
             - [ ] Drag to set time

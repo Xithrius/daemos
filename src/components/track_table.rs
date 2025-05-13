@@ -21,6 +21,16 @@ struct TrackState {
     playing: bool,
 }
 
+impl TrackState {
+    fn new(index: usize, track: Track, playing: bool) -> Self {
+        Self {
+            index,
+            track,
+            playing,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     tracks: Vec<Track>,
@@ -191,6 +201,9 @@ impl TrackTable {
         if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
             error!("Failed to start track on path {:?}: {}", track.path, err);
         }
+
+        let new_track_state = TrackState::new(row_index, track.clone(), true);
+        self.playing = Some(new_track_state)
     }
 }
 
