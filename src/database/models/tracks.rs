@@ -39,6 +39,7 @@ impl Default for Track {
         }
     }
 }
+
 impl TryFrom<&Row<'_>> for Track {
     type Error = rusqlite::Error;
 
@@ -68,11 +69,11 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
-    pub fn insert(database: SharedDatabase, path: PathBuf) -> Result<()> {
+    pub fn insert(database: SharedDatabase, path: PathBuf) -> Result<usize> {
         let db = database.borrow();
         let conn = &db.conn;
 
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)";
+        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
 
         let hash = hash_file(&path)?.to_string();
 
@@ -88,33 +89,39 @@ impl Track {
             ..Default::default()
         };
 
-        conn.execute(
-            query,
-            (
-                args.id.to_string(),
-                args.path.to_str(),
-                args.hash,
-                args.duration_secs,
-                args.valid,
-                args.created_at.to_string(),
-                args.updated_at.to_string(),
-            ),
-        )
-        .context("Failed to execute insert on tracks table")?;
+        let inserted = conn
+            .execute(
+                query,
+                (
+                    args.id.to_string(),
+                    args.path.to_str(),
+                    args.hash,
+                    args.duration_secs,
+                    args.valid,
+                    args.created_at.to_string(),
+                    args.updated_at.to_string(),
+                ),
+            )
+            .context("Failed to execute insert on tracks table")?;
 
-        debug!("Inserted track {:?} into database", path);
+        if inserted == 1 {
+            debug!("Inserted track into database: {:?}", path);
+        } else {
+            debug!("Skipped duplicate track: {:?}", path);
+        }
 
-        Ok(())
+        Ok(inserted)
     }
 
-    pub fn insert_many(database: SharedDatabase, paths: Vec<PathBuf>) -> Result<()> {
+    pub fn insert_many(database: SharedDatabase, paths: Vec<PathBuf>) -> Result<usize> {
         let mut db = database.borrow_mut();
         let conn = &mut db.conn;
 
         let tx = conn.transaction()?;
 
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)";
+        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
 
+        let mut total_inserted = 0usize;
         let paths_amount = paths.len();
 
         {
@@ -135,27 +142,36 @@ impl Track {
                     ..Default::default()
                 };
 
-                stmt.execute((
-                    args.id.to_string(),
-                    args.path.to_str(),
-                    args.hash,
-                    args.duration_secs,
-                    args.valid,
-                    args.created_at.to_string(),
-                    args.updated_at.to_string(),
-                ))
-                .with_context(|| format!("Failed to insert track with path {:?}", args.path))?;
+                let inserted = stmt
+                    .execute((
+                        args.id.to_string(),
+                        args.path.to_str(),
+                        args.hash,
+                        args.duration_secs,
+                        args.valid,
+                        args.created_at.to_string(),
+                        args.updated_at.to_string(),
+                    ))
+                    .with_context(|| format!("Failed to insert track with path {:?}", args.path))?;
 
-                debug!("Preparing track to be inserted into database: {:?}", path);
+                if inserted == 1 {
+                    debug!("Inserted track into database: {:?}", path);
+                    total_inserted = total_inserted.saturating_add(1);
+                } else {
+                    debug!("Skipped duplicate track: {:?}", path);
+                }
             }
         }
 
         tx.commit()
             .context("Failed to commit track insert transaction")?;
 
-        debug!("Inserted {} track(s) into database", paths_amount);
+        debug!(
+            "Inserted {} of {} track(s) into database",
+            total_inserted, paths_amount
+        );
 
-        Ok(())
+        Ok(total_inserted)
     }
 
     pub fn select_all(database: SharedDatabase) -> Result<Vec<Track>> {

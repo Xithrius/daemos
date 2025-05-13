@@ -106,16 +106,24 @@ impl eframe::App for Context {
 
                 debug!("Found {} total track(s) in selected folders", tracks.len());
 
-                if let Err(err) = Track::insert_many(self.database.clone(), tracks) {
-                    error!("Failed to insert tracks into database: {}", err);
-                }
+                let total_new_tracks = match Track::insert_many(self.database.clone(), tracks) {
+                    Err(err) => {
+                        error!("Failed to insert tracks into database: {}", err);
+                        None
+                    }
+                    Ok(total_inserted) => Some(total_inserted),
+                };
 
-                if let Err(err) = self
-                    .components
-                    .track_table
-                    .refresh_tracks(self.database.clone())
-                {
-                    error!("Failed to refresh tracks on track table: {}", err);
+                if total_new_tracks.is_some_and(|new_tracks| new_tracks > 0) {
+                    if let Err(err) = self
+                        .components
+                        .track_table
+                        .refresh_tracks(self.database.clone())
+                    {
+                        error!("Failed to refresh tracks on track table: {}", err);
+                    }
+                } else {
+                    debug!("Skipping refresh, no new tracks found");
                 }
             }
         }
