@@ -32,13 +32,15 @@ fn main() -> eframe::Result {
     let database = Database::default();
     database.create_tables().expect("Failed to create tables");
 
-    let (tx, rx) = channel::unbounded();
+    let (player_cmd_tx, player_cmd_rx) = channel::unbounded();
+    let (player_event_tx, player_event_rx) = channel::unbounded();
+
     let (err_tx, err_rx) = channel::bounded(1);
 
     thread::spawn(move || {
         info!("Spawned player thread");
 
-        let player = match Player::new(rx) {
+        let player = match Player::new(player_event_tx, player_cmd_rx) {
             Err(e) => {
                 let _ = err_tx.send(Some(e));
                 return;
@@ -61,7 +63,7 @@ fn main() -> eframe::Result {
         "Drakn",
         options,
         Box::new(|cc| {
-            let context = Context::new(cc, config, database, tx);
+            let context = Context::new(cc, config, database, player_cmd_tx, player_event_rx);
 
             Ok(Box::new(context))
         }),

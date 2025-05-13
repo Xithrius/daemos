@@ -28,13 +28,13 @@ impl Components {
     pub fn new(
         config: CoreConfig,
         shared_database: SharedDatabase,
-        tx: Sender<PlayerCommand>,
+        player_cmd_tx: Sender<PlayerCommand>,
     ) -> Self {
         Self {
             top_menu_bar: MenuBar::default(),
-            track_table: Table::new(shared_database, tx.clone()),
+            track_table: Table::new(shared_database, player_cmd_tx.clone()),
             playlist_tree: Tree::default(),
-            playback_bar: PlaybackBar::new(tx),
+            playback_bar: PlaybackBar::new(&config, player_cmd_tx),
             settings: Settings::new(config),
         }
     }

@@ -5,12 +5,22 @@ use std::{
 };
 
 use color_eyre::{Result, eyre::bail};
-use crossbeam::{channel::Receiver, utils::Backoff};
+use crossbeam::{
+    channel::{Receiver, Sender},
+    utils::Backoff,
+};
 use rodio::{Decoder, OutputStream, Sink};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
 use crate::database::models::tracks::Track;
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum PlayerEvent {
+    TrackChanged(Track),
+    TrackProgress(Duration),
+    CurrentVolume(f32),
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum PlayerCommand {
@@ -20,22 +30,29 @@ pub enum PlayerCommand {
     Resume,
     SkipNext,
     SkipPrevious,
+    Volume,
     SetVolume(f32),
+    Position,
+    SetPosition(Duration),
 }
 
 pub struct Player {
     #[allow(dead_code)]
     stream: OutputStream,
     sink: Sink,
-    rx: Receiver<PlayerCommand>,
 
-    // TODO: Mutex the queue between this and the main thread
+    player_event_tx: Sender<PlayerEvent>,
+    player_cmd_rx: Receiver<PlayerCommand>,
+
     #[allow(dead_code)]
     track_queue: Vec<Track>,
 }
 
 impl Player {
-    pub fn new(rx: Receiver<PlayerCommand>) -> Result<Self> {
+    pub fn new(
+        player_event_tx: Sender<PlayerEvent>,
+        player_cmd_rx: Receiver<PlayerCommand>,
+    ) -> Result<Self> {
         let backoff = Backoff::new();
         let timeout = Instant::now() + Duration::from_secs(10);
 
@@ -64,13 +81,14 @@ impl Player {
         Ok(Self {
             stream,
             sink,
-            rx,
+            player_event_tx,
+            player_cmd_rx,
             track_queue: Vec::new(),
         })
     }
 
     pub fn create(&self) {
-        while let Ok(command) = self.rx.recv() {
+        while let Ok(command) = self.player_cmd_rx.recv() {
             if let Err(err) = self.handle_command(&command) {
                 error!(
                     "Processing player command {:?} failed with error {}",
@@ -107,7 +125,7 @@ impl Player {
                 self.create_player_track(track)?;
 
                 Ok(())
-            },
+            }
             PlayerCommand::Play => {
                 self.sink.play();
 
@@ -135,8 +153,39 @@ impl Player {
             PlayerCommand::SkipPrevious => {
                 todo!();
             }
+            PlayerCommand::Volume => {
+                let volume = self.sink.volume();
+
+                let _ = self
+                    .player_event_tx
+                    .send(PlayerEvent::CurrentVolume(volume));
+
+                Ok(())
+            }
             PlayerCommand::SetVolume(volume_value) => {
                 self.sink.set_volume(*volume_value);
+
+                Ok(())
+            }
+            PlayerCommand::Position => {
+                let position = self.sink.get_pos();
+
+                let _ = self
+                    .player_event_tx
+                    .send(PlayerEvent::TrackProgress(position));
+
+                Ok(())
+            }
+            PlayerCommand::SetPosition(duration) => {
+                if let Err(err) = self.sink.try_seek(*duration) {
+                    bail!("Failed to set duration: {:?}", err);
+                };
+
+                let position = self.sink.get_pos();
+
+                let _ = self
+                    .player_event_tx
+                    .send(PlayerEvent::TrackProgress(position));
 
                 Ok(())
             }

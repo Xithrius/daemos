@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crossbeam::channel::Sender;
+use crossbeam::channel::{Receiver, Sender};
 use egui::{Key, KeyboardShortcut, Modifiers, Separator};
 use serde::Serialize;
 use tracing::{debug, error};
@@ -14,7 +14,7 @@ use crate::{
     },
     files::open::{get_tracks, select_folders_dialog},
     horizontal_separator,
-    playback::state::PlayerCommand,
+    playback::state::{PlayerCommand, PlayerEvent},
     vertical_separator,
 };
 
@@ -27,6 +27,13 @@ pub struct Context {
     database: SharedDatabase,
 
     #[serde(skip)]
+    #[allow(dead_code)]
+    player_cmd_tx: Sender<PlayerCommand>,
+    #[serde(skip)]
+    #[allow(dead_code)]
+    player_event_rx: Receiver<PlayerEvent>,
+
+    #[serde(skip)]
     components: Components,
 }
 
@@ -35,7 +42,8 @@ impl Context {
         _cc: &eframe::CreationContext<'_>,
         config: CoreConfig,
         database: Database,
-        tx: Sender<PlayerCommand>,
+        player_cmd_tx: Sender<PlayerCommand>,
+        player_event_rx: Receiver<PlayerEvent>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
@@ -47,11 +55,18 @@ impl Context {
 
         let shared_database = Rc::new(RefCell::new(database));
 
-        let components = Components::new(config.clone(), shared_database.clone(), tx);
+        let components = Components::new(
+            config.clone(),
+            shared_database.clone(),
+            player_cmd_tx.clone(),
+        );
 
         Self {
             config,
             database: shared_database.clone(),
+
+            player_cmd_tx,
+            player_event_rx,
 
             components,
         }
@@ -76,6 +91,8 @@ impl eframe::App for Context {
                 ctx.set_debug_on_hover(self.config.debug);
             }
         }
+
+        let player_event = self.player_event_rx.try_recv().ok();
 
         if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
@@ -109,7 +126,9 @@ impl eframe::App for Context {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                self.components.top_menu_bar.ui(ctx, ui, self.components.settings.visible_mut());
+                self.components
+                    .top_menu_bar
+                    .ui(ctx, ui, self.components.settings.visible_mut());
             });
         });
 
@@ -137,7 +156,7 @@ impl eframe::App for Context {
                     horizontal_separator!(ui);
 
                     ui.allocate_ui(egui::vec2(width, playback_bar_height), |ui| {
-                        self.components.playback_bar.ui(ui);
+                        self.components.playback_bar.ui(ui, player_event);
                     });
                 });
             });
