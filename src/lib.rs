@@ -7,5 +7,6 @@ pub mod database;
 pub mod files;
 pub mod logging;
 pub mod playback;
+pub mod utils;
 
 const BINARY_NAME: &str = "drakn";

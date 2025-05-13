@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Duration};
 
 use color_eyre::Result;
 use crossbeam::channel::Sender;
@@ -9,6 +9,7 @@ use crate::{
     database::{connection::SharedDatabase, models::tracks::Track},
     files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
+    utils::formatting::human_duration,
 };
 
 const TABLE_HEADER_HEIGHT: f32 = 25.0;
@@ -111,7 +112,8 @@ impl TrackTable {
         let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
-            .column(Column::remainder());
+            .column(Column::remainder())
+            .column(Column::auto().at_least(50.0));
 
         table = table.sense(egui::Sense::click());
 
@@ -122,6 +124,9 @@ impl TrackTable {
                 });
                 header.col(|ui| {
                     ui.heading("Track");
+                });
+                header.col(|ui| {
+                    ui.heading("Duration");
                 });
             })
             .body(|body| {
@@ -156,6 +161,19 @@ impl TrackTable {
                                 let label = ui
                                     .label(track_file_name)
                                     .on_hover_cursor(egui::CursorIcon::Default);
+                                if label.double_clicked() {
+                                    self.toggle_row_play(row_index, &track);
+                                }
+                            });
+
+                            row.col(|ui| {
+                                let track_duration = Duration::from_secs_f64(track.duration_secs);
+                                let readable_track_duration = human_duration(track_duration);
+
+                                let label = ui
+                                    .label(readable_track_duration)
+                                    .on_hover_cursor(egui::CursorIcon::Default);
+
                                 if label.double_clicked() {
                                     self.toggle_row_play(row_index, &track);
                                 }

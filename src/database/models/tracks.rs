@@ -82,7 +82,7 @@ impl Track {
             .as_secs_f64();
 
         let args = Track {
-            path,
+            path: path.clone(),
             hash: Some(hash),
             duration_secs,
             ..Default::default()
@@ -101,6 +101,8 @@ impl Track {
             ),
         )
         .context("Failed to execute insert on tracks table")?;
+
+        debug!("Inserted track {:?} into database", path);
 
         Ok(())
     }
@@ -127,7 +129,7 @@ impl Track {
                     .as_secs_f64();
 
                 let args = Track {
-                    path,
+                    path: path.clone(),
                     hash: Some(hash),
                     duration_secs,
                     ..Default::default()
@@ -143,13 +145,15 @@ impl Track {
                     args.updated_at.to_string(),
                 ))
                 .with_context(|| format!("Failed to insert track with path {:?}", args.path))?;
+
+                debug!("Preparing track to be inserted into database: {:?}", path);
             }
         }
 
-        debug!("Inserting {} track(s) into database", paths_amount);
-
         tx.commit()
             .context("Failed to commit track insert transaction")?;
+
+        debug!("Inserted {} track(s) into database", paths_amount);
 
         Ok(())
     }
