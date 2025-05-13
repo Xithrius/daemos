@@ -148,7 +148,7 @@ impl eframe::App for Context {
                             vertical_separator!(ui);
 
                             ui.vertical(|ui| {
-                                self.components.track_table.ui(ui, table_area_height);
+                                self.components.track_table.ui(ui, table_area_height, &player_event);
                             });
                         });
                     });
@@ -156,7 +156,7 @@ impl eframe::App for Context {
                     horizontal_separator!(ui);
 
                     ui.allocate_ui(egui::vec2(width, playback_bar_height), |ui| {
-                        self.components.playback_bar.ui(ui, player_event);
+                        self.components.playback_bar.ui(ui, &player_event);
                     });
                 });
             });

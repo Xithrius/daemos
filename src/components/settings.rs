@@ -4,6 +4,7 @@ const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 
 #[derive(Debug, Clone)]
 pub struct Settings {
+    #[allow(dead_code)]
     config: CoreConfig,
     visible: bool,
 }

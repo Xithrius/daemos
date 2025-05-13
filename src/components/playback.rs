@@ -57,12 +57,15 @@ impl PlaybackBar {
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
-        debug!("UI received event: {:?}", player_event);
+        debug!("Playback bar UI component received event: {:?}", player_event);
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
                 self.track_state.track = Some(track);
                 self.track_state.playing = true;
+            }
+            PlayerEvent::TrackPlayingStatus(playing) => {
+                self.track_state.playing = playing;
             }
             PlayerEvent::TrackProgress(duration) => {
                 self.track_state.progress = Some(duration);
@@ -79,11 +82,9 @@ impl PlaybackBar {
         }
     }
 
-    // fn ui_button()
-
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: Option<PlayerEvent>) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
         if let Some(event) = player_event {
-            self.handle_player_event(event);
+            self.handle_player_event(event.clone());
         }
 
         let button = |ui: &mut egui::Ui, text: &str| -> bool {
@@ -105,7 +106,6 @@ impl PlaybackBar {
 
             if button(ui, toggle_playing_button) {
                 let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
-                self.track_state.playing = !self.track_state.playing;
             }
 
             if button(ui, SKIP_FORWARD_SYMBOL) {

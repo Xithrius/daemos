@@ -19,6 +19,7 @@ use crate::database::models::tracks::Track;
 pub enum PlayerEvent {
     TrackChanged(Track),
     TrackProgress(Duration),
+    TrackPlayingStatus(bool),
     CurrentVolume(f32),
 }
 
@@ -138,11 +139,16 @@ impl Player {
                 Ok(())
             }
             PlayerCommand::Toggle => {
-                if self.sink.is_paused() {
+                let is_paused = self.sink.is_paused();
+
+                if is_paused {
                     self.sink.play();
                 } else {
                     self.sink.pause();
                 }
+
+                self.player_event_tx
+                    .send(PlayerEvent::TrackPlayingStatus(is_paused))?;
 
                 Ok(())
             }

@@ -8,23 +8,30 @@ use tracing::{debug, error};
 use crate::{
     database::{connection::SharedDatabase, models::tracks::Track},
     files::open::get_track_file_name,
-    playback::state::PlayerCommand,
+    playback::state::{PlayerCommand, PlayerEvent},
 };
 
 const TABLE_HEADER_HEIGHT: f32 = 25.0;
 const TABLE_ROW_HEIGHT: f32 = 20.0;
 
 #[derive(Debug, Clone)]
-pub struct Table {
+struct TrackState {
+    index: usize,
+    track: Track,
+    playing: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct TrackTable {
     tracks: Vec<Track>,
     #[allow(dead_code)]
     selection: HashSet<usize>,
-    playing: Option<(usize, Track)>,
+    playing: Option<TrackState>,
 
     tx: Sender<PlayerCommand>,
 }
 
-impl Table {
+impl TrackTable {
     pub fn new(database: SharedDatabase, tx: Sender<PlayerCommand>) -> Self {
         let tracks = match Track::select_all(database).map(|tracks| tracks.to_vec()) {
             Ok(tracks) => {
@@ -69,7 +76,28 @@ impl Table {
         Ok(())
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, height: f32) {
+    fn handle_player_event(&mut self, player_event: PlayerEvent) {
+        debug!(
+            "Track table UI component received event: {:?}",
+            player_event
+        );
+
+        #[allow(clippy::single_match)]
+        match player_event {
+            PlayerEvent::TrackPlayingStatus(playing) => {
+                if let Some(track_state) = self.playing.as_mut() {
+                    track_state.playing = playing;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui, height: f32, player_event: &Option<PlayerEvent>) {
+        if let Some(event) = player_event {
+            self.handle_player_event(event.clone());
+        }
+
         let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
@@ -97,11 +125,13 @@ impl Table {
 
                     if let Some(track) = track {
                         if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
-                            row.set_selected(
-                                playing
-                                    .as_ref()
-                                    .is_some_and(|(index, _)| *index == row_index),
-                            );
+                            row.set_selected(playing.as_ref().is_some_and(
+                                |TrackState {
+                                     index,
+                                     track: _,
+                                     playing: _,
+                                 }| *index == row_index,
+                            ));
 
                             row.col(|ui| {
                                 let label = ui
@@ -141,17 +171,18 @@ impl Table {
     // }
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
-        // TODO: If paused, and you hit double click again, then it will send another pause.
-        // TODO: Keep track of track state.
-        if self
-            .playing
-            .as_ref()
-            .is_some_and(|(playing_index, playing_track)| {
-                (*playing_index == row_index) && (*playing_track == *track)
-            })
-        {
-            if let Err(err) = self.tx.send(PlayerCommand::Pause) {
-                error!("Failed to pause track on path {:?}: {}", track.path, err);
+        if self.playing.as_ref().is_some_and(
+            |TrackState {
+                 index: playing_index,
+                 track: playing_track,
+                 playing: _,
+             }| { (*playing_index == row_index) && (*playing_track == *track) },
+        ) {
+            if let Err(err) = self.tx.send(PlayerCommand::Toggle) {
+                error!(
+                    "Failed to toggle track state on path {:?}: {}",
+                    track.path, err
+                );
             }
 
             return;
@@ -159,10 +190,7 @@ impl Table {
 
         if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
             error!("Failed to start track on path {:?}: {}", track.path, err);
-            return;
         }
-
-        self.playing = Some((row_index, track.clone()))
     }
 }
 
