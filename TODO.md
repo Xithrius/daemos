@@ -15,7 +15,7 @@
         - [x] Next track
         - [x] Previous track
 
-- [ ] Saving track/playlist data to disk
+- [ ] Tracks and playlists
     - [ ] Sqlite database
         - [x] Connection
         - [x] Table definitions and creation
@@ -40,6 +40,12 @@
         - If a row doesn't have a parent, that means it's the root
         - Create some query that would create a vector of vectors for the playlist tree UI
 
+- [ ] Track UI table
+    - [ ] Sort by different columns
+    - [ ] Track name sorting
+        - [ ] By full name
+        - [ ] By regex group
+
 - [ ] Playback
     - [ ] Control
         - [ ] Playback
@@ -62,8 +68,7 @@
     - [x] Popup widget (another window)
     - [ ] Default volume on startup
     - [ ] Default ordering of tracks
-        - [ ] By full name
-        - [ ] By regex group
+
     - [ ] Default folder to open when adding tracks
     - [ ] Toggle to hash tracks on insert
     - [ ] (re)calculation of all track hashes
