@@ -104,10 +104,12 @@ impl TrackTable {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, height: f32, player_event: &Option<PlayerEvent>) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
         if let Some(event) = player_event {
             self.handle_player_event(event.clone());
         }
+
+        let height = ui.available_height();
 
         let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)

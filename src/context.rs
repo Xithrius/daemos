@@ -13,7 +13,6 @@ use crate::{
         models::tracks::Track,
     },
     files::open::{get_tracks, select_folders_dialog},
-    horizontal_separator,
     playback::state::{PlayerCommand, PlayerEvent},
     vertical_separator,
 };
@@ -141,37 +140,20 @@ impl eframe::App for Context {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let total_height = ui.available_height();
-            let playback_bar_height = 60.0;
+            ui.vertical(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    self.components.playlist_tree.ui(ui);
+                    vertical_separator!(ui);
 
-            let table_area_height = (total_height - playback_bar_height).max(100.0);
-
-            let width = ui.available_width();
-
-            ui.allocate_ui(egui::vec2(width, total_height), |ui| {
-                ui.vertical(|ui| {
-                    ui.allocate_ui(egui::vec2(width, table_area_height), |ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            self.components.playlist_tree.ui(ui);
-                            vertical_separator!(ui);
-
-                            ui.vertical(|ui| {
-                                self.components.track_table.ui(
-                                    ui,
-                                    table_area_height,
-                                    &player_event,
-                                );
-                            });
-                        });
-                    });
-
-                    horizontal_separator!(ui);
-
-                    ui.allocate_ui(egui::vec2(width, playback_bar_height), |ui| {
-                        self.components.playback_bar.ui(ui, &player_event);
+                    ui.vertical(|ui| {
+                        self.components.track_table.ui(ui, &player_event);
                     });
                 });
             });
+        });
+
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            self.components.playback_bar.ui(ui, &player_event);
         });
 
         self.components.settings.ui(ctx);

@@ -4,7 +4,7 @@ use std::{
 };
 
 use crossbeam::channel::Sender;
-use egui::RichText;
+use egui::{Align, Layout, RichText, Vec2};
 use tracing::{debug, warn};
 
 use crate::{
@@ -192,10 +192,28 @@ impl PlaybackBar {
             self.handle_player_event(event.clone());
         }
 
-        ui.horizontal(|ui| {
-            self.ui_playback_controls(ui);
-            self.ui_volume(ui);
-            self.ui_seek(ui);
+        let width = ui.available_width();
+        let playback_bar_height = 60.0;
+
+        ui.allocate_ui(Vec2::new(width, playback_bar_height), |ui| {
+            ui.horizontal(|ui| {
+                ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    self.ui_playback_controls(ui);
+                });
+
+                let seek_bar_width = 300.0;
+                let remaining_width = ui.available_width();
+                let left_padding = (remaining_width - seek_bar_width) / 2.0;
+
+                ui.add_space(left_padding.max(0.0));
+                ui.allocate_ui(Vec2::new(seek_bar_width, playback_bar_height), |ui| {
+                    self.ui_seek(ui);
+                });
+
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    self.ui_volume(ui);
+                });
+            });
         });
     }
 }
