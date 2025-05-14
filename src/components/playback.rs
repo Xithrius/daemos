@@ -85,51 +85,56 @@ impl PlaybackBar {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        if let Some(event) = player_event {
-            self.handle_player_event(event.clone());
-        }
+    fn ui_volume(&mut self, ui: &mut egui::Ui) {
+        ui.add(
+            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE).text("Volume"),
+        );
 
+        let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
+
+        if volume_dx > f32::EPSILON {
+            let _ = self
+                .player_cmd_tx
+                .send(PlayerCommand::SetVolume(self.track_state.volume));
+
+            self.track_state.last_volume_sent = self.track_state.volume;
+        }
+    }
+
+    pub fn ui_playback_controls(&mut self, ui: &mut egui::Ui) {
         let button = |ui: &mut egui::Ui, text: &str| -> bool {
             ui.button(RichText::new(text).size(PLAYBACK_BUTTON_FONT_SIZE))
                 .clicked()
         };
 
+        if button(ui, SKIP_BACKWARD_SYMBOL) {
+            let _ = self.player_cmd_tx.send(PlayerCommand::SkipPrevious);
+        }
+
+        let current_track = self.track_state.track.is_some();
+
+        let toggle_playing_button = if self.track_state.playing && current_track {
+            PAUSE_SYMBOL
+        } else {
+            PLAY_SYMBOL
+        };
+
+        if button(ui, toggle_playing_button) && current_track {
+            let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
+        }
+
+        if button(ui, SKIP_FORWARD_SYMBOL) {
+            let _ = self.player_cmd_tx.send(PlayerCommand::SkipNext);
+        }
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
+        if let Some(event) = player_event {
+            self.handle_player_event(event.clone());
+        }
+
         ui.horizontal(|ui| {
-            if button(ui, SKIP_BACKWARD_SYMBOL) {
-                let _ = self.player_cmd_tx.send(PlayerCommand::SkipPrevious);
-            }
-
-            let current_track = self.track_state.track.is_some();
-
-            let toggle_playing_button = if self.track_state.playing && current_track {
-                PAUSE_SYMBOL
-            } else {
-                PLAY_SYMBOL
-            };
-
-            if button(ui, toggle_playing_button) && current_track {
-                let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
-            }
-
-            if button(ui, SKIP_FORWARD_SYMBOL) {
-                let _ = self.player_cmd_tx.send(PlayerCommand::SkipNext);
-            }
-
-            ui.add(
-                egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE)
-                    .text("Volume"),
-            );
-
-            let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
-
-            if volume_dx > f32::EPSILON {
-                let _ = self
-                    .player_cmd_tx
-                    .send(PlayerCommand::SetVolume(self.track_state.volume));
-
-                self.track_state.last_volume_sent = self.track_state.volume;
-            }
+            self.ui_volume(ui);
         });
     }
 }
