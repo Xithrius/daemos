@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::BufReader,
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -41,7 +42,7 @@ pub enum PlayerCommand {
 pub struct Player {
     #[allow(dead_code)]
     stream: OutputStream,
-    sink: Sink,
+    sink: Arc<Sink>,
 
     player_event_tx: Sender<PlayerEvent>,
     player_cmd_rx: Receiver<PlayerCommand>,
@@ -82,7 +83,7 @@ impl Player {
 
         Ok(Self {
             stream,
-            sink,
+            sink: Arc::new(sink),
             player_event_tx,
             player_cmd_rx,
             track_queue: Vec::new(),
@@ -116,10 +117,20 @@ impl Player {
         self.sink.set_volume(0.5);
         self.sink.play();
 
-        // TODO: In another thread, send updates of track duration
-
         self.player_event_tx
             .send(PlayerEvent::TrackChanged(track.clone()))?;
+
+        let sink = Arc::clone(&self.sink);
+        let event_tx = self.player_event_tx.clone();
+
+        std::thread::spawn(move || {
+            while !sink.empty() && !sink.is_paused() {
+                let position = sink.get_pos();
+
+                let _ = event_tx.send(PlayerEvent::TrackProgress(position));
+                std::thread::sleep(Duration::from_millis(500));
+            }
+        });
 
         Ok(())
     }
