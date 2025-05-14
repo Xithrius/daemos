@@ -1,4 +1,7 @@
-use std::{ops::RangeInclusive, time::Duration};
+use std::{
+    ops::RangeInclusive,
+    time::{Duration, Instant},
+};
 
 use crossbeam::channel::Sender;
 use egui::RichText;
@@ -8,6 +11,7 @@ use crate::{
     config::core::CoreConfig,
     database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
+    utils::formatting::human_duration,
 };
 
 const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
@@ -26,6 +30,7 @@ struct TrackState {
     playing: bool,
     volume: f32,
     last_volume_sent: f32,
+    last_progress_poll: Option<Instant>,
 }
 
 impl TrackState {
@@ -36,6 +41,7 @@ impl TrackState {
             playing: true,
             volume,
             last_volume_sent: volume,
+            last_progress_poll: None,
         }
     }
 }
@@ -146,16 +152,42 @@ impl PlaybackBar {
                         std::time::Duration::from_secs_f64(playback_secs),
                     ));
                 }
+
+                let current_time = Duration::from_secs_f64(playback_secs.ceil());
+                let total_time = Duration::from_secs_f64(total_duration_secs.ceil());
+
+                ui.label(format!(
+                    "{}/{}",
+                    human_duration(current_time),
+                    human_duration(total_time)
+                ));
             } else {
                 let mut dummy = 0.0;
                 let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).text("Playback");
 
                 ui.add_enabled(false, slider);
+                ui.label("00:00/00:00");
             }
         });
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
+        ui.ctx().request_repaint_after(Duration::from_millis(100));
+
+        if self.track_state.track.is_some() && self.track_state.playing {
+            let now = Instant::now();
+            let poll_interval = Duration::from_millis(500);
+
+            if self
+                .track_state
+                .last_progress_poll
+                .map_or_else(|| true, |last| now.duration_since(last) >= poll_interval)
+            {
+                let _ = self.player_cmd_tx.send(PlayerCommand::Position);
+                self.track_state.last_progress_poll = Some(now);
+            }
+        }
+
         if let Some(event) = player_event {
             self.handle_player_event(event.clone());
         }

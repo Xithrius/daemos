@@ -120,18 +120,6 @@ impl Player {
         self.player_event_tx
             .send(PlayerEvent::TrackChanged(track.clone()))?;
 
-        let sink = Arc::clone(&self.sink);
-        let event_tx = self.player_event_tx.clone();
-
-        std::thread::spawn(move || {
-            while !sink.empty() && !sink.is_paused() {
-                let position = sink.get_pos();
-
-                let _ = event_tx.send(PlayerEvent::TrackProgress(position));
-                std::thread::sleep(Duration::from_millis(500));
-            }
-        });
-
         Ok(())
     }
 
