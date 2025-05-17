@@ -119,13 +119,23 @@ impl PlaybackBar {
                 self.track_state.playing = playing;
             }
             PlayerEvent::TrackProgress(duration) => {
-                self.track_state.progress_base = Some(duration);
-                self.track_state.progress_timestamp = Some(Instant::now());
+                // If duration is not synced properly, do it here
+                if self
+                    .track_state
+                    .progress_base
+                    .is_some_and(|progress_base| progress_base < duration)
+                {
+                    warn!(
+                        "Track progress desync detected, setting progress base to received player position"
+                    );
+                    self.track_state.progress_base = Some(duration);
+                    self.track_state.progress_timestamp = Some(Instant::now());
+                }
             }
             PlayerEvent::CurrentVolume(volume) => {
                 if self.track_state.volume != volume {
                     warn!(
-                        "Volume desync detected UI track state does not equal player volume ({} != {})",
+                        "Volume desync detected, UI track state does not equal player volume ({} != {})",
                         self.track_state.volume, volume
                     );
                     self.track_state.volume = volume;
@@ -192,6 +202,9 @@ impl PlaybackBar {
             let response = ui.add(slider);
 
             if response.drag_stopped() {
+                self.track_state.progress_base = Some(Duration::from_secs_f64(playback_secs));
+                self.track_state.progress_timestamp = Some(Instant::now());
+
                 let _ = self.player_command_tx.send(PlayerCommand::SetPosition(
                     std::time::Duration::from_secs_f64(playback_secs),
                 ));
