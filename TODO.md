@@ -87,3 +87,6 @@
 ## Issues
 
 Centering playback bar controls: https://github.com/emilk/egui/discussions/1197
+
+- [ ] Playback seek bar skips a second, or pauses on a duration for too long
+- [ ] Vertically center the playback previous/toggle/next controls

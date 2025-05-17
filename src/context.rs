@@ -6,7 +6,7 @@ use serde::Serialize;
 use tracing::{debug, error};
 
 use crate::{
-    components::Components,
+    components::{Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
     database::{
         connection::{Database, SharedDatabase},
@@ -139,6 +139,12 @@ impl eframe::App for Context {
             });
         });
 
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            ui.set_height(PLAYBACK_BAR_HEIGHT);
+
+            self.components.playback_bar.ui(ui, &player_event);
+        });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
@@ -150,10 +156,6 @@ impl eframe::App for Context {
                     });
                 });
             });
-        });
-
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            self.components.playback_bar.ui(ui, &player_event);
         });
 
         self.components.settings.ui(ctx);
