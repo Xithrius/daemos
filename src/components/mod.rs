@@ -13,7 +13,7 @@ use crate::{
         tree::Tree,
     },
     config::core::CoreConfig,
-    database::connection::SharedDatabase,
+    database::connection::DatabaseCommand,
     playback::state::PlayerCommand,
 };
 
@@ -28,14 +28,14 @@ pub struct Components {
 impl Components {
     pub fn new(
         config: CoreConfig,
-        shared_database: SharedDatabase,
-        player_cmd_tx: Sender<PlayerCommand>,
+        database_command_tx: Sender<DatabaseCommand>,
+        player_command_tx: Sender<PlayerCommand>,
     ) -> Self {
         Self {
             top_menu_bar: MenuBar::default(),
-            track_table: TrackTable::new(shared_database, player_cmd_tx.clone()),
+            track_table: TrackTable::new(database_command_tx, player_command_tx.clone()),
             playlist_tree: Tree::default(),
-            playback_bar: PlaybackBar::new(&config, player_cmd_tx),
+            playback_bar: PlaybackBar::new(&config, player_command_tx),
             settings: Settings::new(config),
         }
     }

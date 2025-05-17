@@ -1,4 +1,5 @@
 use color_eyre::Result;
+use rusqlite::Connection;
 
 use super::connection::Database;
 
@@ -28,8 +29,8 @@ CREATE TABLE IF NOT EXISTS playlists (
 ";
 
 impl Database {
-    pub fn create_tables(&self) -> Result<()> {
-        self.conn.execute_batch(&format!(
+    pub(crate) fn create_tables(conn: &mut Connection) -> Result<()> {
+        conn.execute_batch(&format!(
             "
             BEGIN;
             {}

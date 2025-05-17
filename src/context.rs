@@ -9,7 +9,7 @@ use crate::{
     components::{Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
     database::{
-        connection::{Database, SharedDatabase},
+        connection::{DatabaseCommand, DatabaseEvent},
         models::tracks::Track,
     },
     files::open::{get_tracks, select_folders_dialog},
@@ -22,11 +22,12 @@ pub struct Context {
     config: CoreConfig,
 
     #[serde(skip)]
-    #[allow(dead_code)]
-    database: SharedDatabase,
+    database_command_tx: Sender<DatabaseCommand>,
+    #[serde(skip)]
+    database_event_rx: Receiver<DatabaseEvent>,
 
     #[serde(skip)]
-    player_cmd_tx: Sender<PlayerCommand>,
+    player_command_tx: Sender<PlayerCommand>,
     #[serde(skip)]
     player_event_rx: Receiver<PlayerEvent>,
 
@@ -38,8 +39,9 @@ impl Context {
     pub fn new(
         _cc: &eframe::CreationContext<'_>,
         config: CoreConfig,
-        database: Database,
-        player_cmd_tx: Sender<PlayerCommand>,
+        database_command_tx: Sender<DatabaseCommand>,
+        database_event_rx: Receiver<DatabaseEvent>,
+        player_command_tx: Sender<PlayerCommand>,
         player_event_rx: Receiver<PlayerEvent>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -50,36 +52,63 @@ impl Context {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        let shared_database = Rc::new(RefCell::new(database));
-
         let components = Components::new(
             config.clone(),
-            shared_database.clone(),
-            player_cmd_tx.clone(),
+            database_command_tx.clone(),
+            player_command_tx.clone(),
         );
 
         Self {
             config,
-            database: shared_database.clone(),
-            player_cmd_tx,
-            player_event_rx,
             components,
+
+            database_command_tx,
+            database_event_rx,
+
+            player_command_tx,
+            player_event_rx,
         }
     }
-}
 
-impl eframe::App for Context {
-    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
-    //     eframe::set_value(storage, eframe::APP_KEY, self);
-    // }
+    fn handle_database_events(&mut self) {
+        let Some(database_event) = self.database_event_rx.try_recv().ok() else {
+            return;
+        };
 
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        // if total_new_tracks.is_some_and(|new_tracks| new_tracks > 0) {
+        //     if let Err(err) = self
+        //         .components
+        //         .track_table
+        //         .refresh_tracks(self.database.clone())
+        //     {
+        //         error!("Failed to refresh tracks on track table: {}", err);
+        //     }
+        // } else {
+        //     debug!("Skipping refresh, no new tracks found");
+        // }
 
-        let player_event = self.player_event_rx.try_recv().ok();
+        match database_event {
+            DatabaseEvent::InsertTracks(new_tracks) => match new_tracks {
+                Ok(new_track_amount) => {
+                    if new_track_amount > 0 {
+                        // Refresh the track list
+                        let _ = self
+                            .database_command_tx
+                            .send(DatabaseCommand::QueryAllTracks);
+                    }
+                }
+                Err(err) => {
+                    error!("Error when inserting tracks: {}", err);
+                }
+            },
+            DatabaseEvent::QueryAllTracks(tracks) => match tracks {
+                Ok(tracks) => self.components.track_table.set_tracks(tracks),
+                Err(_) => todo!(),
+            },
+        }
+    }
 
+    fn handle_keybinds(&mut self, ctx: &egui::Context) {
         #[cfg(debug_assertions)]
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             self.config.general.debug = !self.config.general.debug;
@@ -105,31 +134,35 @@ impl eframe::App for Context {
 
                 debug!("Found {} total track(s) in selected folders", tracks.len());
 
-                let total_new_tracks = match Track::insert_many(self.database.clone(), tracks) {
-                    Err(err) => {
-                        error!("Failed to insert tracks into database: {}", err);
-                        None
-                    }
-                    Ok(total_inserted) => Some(total_inserted),
-                };
-
-                if total_new_tracks.is_some_and(|new_tracks| new_tracks > 0) {
-                    if let Err(err) = self
-                        .components
-                        .track_table
-                        .refresh_tracks(self.database.clone())
-                    {
-                        error!("Failed to refresh tracks on track table: {}", err);
-                    }
-                } else {
-                    debug!("Skipping refresh, no new tracks found");
+                if let Err(err) = self
+                    .database_command_tx
+                    .send(DatabaseCommand::InsertTracks(tracks))
+                {
+                    error!("Failed to send insert tracks command to database: {}", err);
                 }
             }
         }
+    }
+}
+
+impl eframe::App for Context {
+    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
+    //     eframe::set_value(storage, eframe::APP_KEY, self);
+    // }
+
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
+        // For inspiration and more examples, go to https://emilk.github.io/egui
+
+        let player_event = self.player_event_rx.try_recv().ok();
+
+        self.handle_keybinds(ctx);
+        self.handle_database_events();
 
         if ctx.input(|i| i.key_pressed(Key::Space)) && !self.components.track_table.search_focused()
         {
-            let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
+            let _ = self.player_command_tx.send(PlayerCommand::Toggle);
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {

@@ -5,13 +5,13 @@ use color_eyre::{
     Result,
     eyre::{Context, ContextCompat},
 };
-use rusqlite::{Row, types::Type};
+use rusqlite::{Connection, Row, types::Type};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
-    database::{connection::SharedDatabase, hash::hash_file},
+    database::hash::hash_file,
     playback::track_metadata::{extract_track_duration, extract_track_metadata},
 };
 
@@ -69,10 +69,7 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
-    pub fn insert(database: SharedDatabase, path: PathBuf) -> Result<usize> {
-        let db = database.borrow();
-        let conn = &db.conn;
-
+    pub fn insert(conn: &mut Connection, path: PathBuf) -> Result<usize> {
         let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
 
         let hash = hash_file(&path)?.to_string();
@@ -113,73 +110,10 @@ impl Track {
         Ok(inserted)
     }
 
-    pub fn insert_many(database: SharedDatabase, paths: Vec<PathBuf>) -> Result<usize> {
-        let mut db = database.borrow_mut();
-        let conn = &mut db.conn;
-
-        let tx = conn.transaction()?;
-
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
-
-        let mut total_inserted = 0usize;
-        let paths_amount = paths.len();
-
-        {
-            let mut stmt = tx.prepare(query)?;
-
-            for path in paths {
-                let hash = hash_file(&path)?.to_string();
-
-                let track_metadata = extract_track_metadata(&path)?;
-                let duration_secs = extract_track_duration(track_metadata)
-                    .context(format!("Failed to get duration from track {:?}", path))?
-                    .as_secs_f64();
-
-                let args = Track {
-                    path: path.clone(),
-                    hash: Some(hash),
-                    duration_secs,
-                    ..Default::default()
-                };
-
-                let inserted = stmt
-                    .execute((
-                        args.id.to_string(),
-                        args.path.to_str(),
-                        args.hash,
-                        args.duration_secs,
-                        args.valid,
-                        args.created_at.to_string(),
-                        args.updated_at.to_string(),
-                    ))
-                    .with_context(|| format!("Failed to insert track with path {:?}", args.path))?;
-
-                if inserted == 1 {
-                    debug!("Inserted track into database: {:?}", path);
-                    total_inserted = total_inserted.saturating_add(1);
-                } else {
-                    debug!("Skipped duplicate track: {:?}", path);
-                }
-            }
-        }
-
-        tx.commit()
-            .context("Failed to commit track insert transaction")?;
-
-        debug!(
-            "Inserted {} of {} track(s) into database",
-            total_inserted, paths_amount
-        );
-
-        Ok(total_inserted)
-    }
-
-    pub fn select_all(database: SharedDatabase) -> Result<Vec<Track>> {
-        let db = database.borrow();
-        let conn = &db.conn;
-
+    pub fn select_all(conn: &mut Connection) -> Result<Vec<Track>> {
         let query =
             "SELECT id, path, hash, duration_secs, valid, created_at, updated_at FROM tracks";
+
         let mut stmt = conn
             .prepare(query)
             .context("Failed to prepare query for select all from tracks")?;

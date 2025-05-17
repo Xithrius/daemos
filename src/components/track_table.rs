@@ -6,7 +6,7 @@ use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 
 use crate::{
-    database::{connection::SharedDatabase, models::tracks::Track},
+    database::{connection::DatabaseCommand, models::tracks::Track},
     files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
@@ -35,7 +35,9 @@ impl TrackState {
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     tracks: Vec<Track>,
-    tx: Sender<PlayerCommand>,
+    #[allow(dead_code)]
+    database_command_tx: Sender<DatabaseCommand>,
+    player_command_tx: Sender<PlayerCommand>,
 
     #[allow(dead_code)]
     selection: HashSet<usize>,
@@ -46,26 +48,16 @@ pub struct TrackTable {
 }
 
 impl TrackTable {
-    pub fn new(database: SharedDatabase, tx: Sender<PlayerCommand>) -> Self {
-        let tracks = match Track::select_all(database).map(|tracks| tracks.to_vec()) {
-            Ok(tracks) => {
-                debug!(
-                    "Initial load of track table found {} track(s)",
-                    tracks.len()
-                );
-
-                tracks
-            }
-            Err(err) => {
-                error!("Failed getting tracks: {}", err);
-
-                Vec::new()
-            }
-        };
+    pub fn new(
+        database_command_tx: Sender<DatabaseCommand>,
+        player_command_tx: Sender<PlayerCommand>,
+    ) -> Self {
+        let _ = database_command_tx.send(DatabaseCommand::QueryAllTracks);
 
         Self {
-            tracks,
-            tx,
+            tracks: Vec::new(),
+            database_command_tx,
+            player_command_tx,
             selection: HashSet::default(),
             playing: None,
             search_text: String::new(),
@@ -77,23 +69,8 @@ impl TrackTable {
         self.search_focused
     }
 
-    pub fn refresh_tracks(&mut self, database: SharedDatabase) -> Result<()> {
-        let tracks = match Track::select_all(database).map(|tracks| tracks.to_vec()) {
-            Ok(tracks) => {
-                debug!("Refreshed tracks list with {} track(s)", tracks.len());
-
-                tracks
-            }
-            Err(err) => {
-                error!("Failed getting tracks: {}", err);
-
-                Vec::new()
-            }
-        };
-
+    pub fn set_tracks(&mut self, tracks: Vec<Track>) {
         self.tracks = tracks;
-
-        Ok(())
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
@@ -131,7 +108,7 @@ impl TrackTable {
                  playing: _,
              }| { (*playing_index == row_index) && (*playing_track == *track) },
         ) {
-            if let Err(err) = self.tx.send(PlayerCommand::Toggle) {
+            if let Err(err) = self.player_command_tx.send(PlayerCommand::Toggle) {
                 error!(
                     "Failed to toggle track state on path {:?}: {}",
                     track.path, err
@@ -141,7 +118,10 @@ impl TrackTable {
             return;
         }
 
-        if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
+        if let Err(err) = self
+            .player_command_tx
+            .send(PlayerCommand::Create(track.clone()))
+        {
             error!("Failed to start track on path {:?}: {}", track.path, err);
         }
 

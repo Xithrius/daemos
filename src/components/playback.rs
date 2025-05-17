@@ -60,17 +60,17 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
-    player_cmd_tx: Sender<PlayerCommand>,
+    player_command_tx: Sender<PlayerCommand>,
     track_state: TrackState,
     debug: bool,
 }
 
 impl PlaybackBar {
-    pub fn new(config: &CoreConfig, player_cmd_tx: Sender<PlayerCommand>) -> Self {
+    pub fn new(config: &CoreConfig, player_command_tx: Sender<PlayerCommand>) -> Self {
         let track_state = TrackState::new(config.volume.default);
 
         Self {
-            player_cmd_tx,
+            player_command_tx,
             track_state,
             debug: false,
         }
@@ -141,7 +141,7 @@ impl PlaybackBar {
         };
 
         if button(ui, SKIP_BACKWARD_SYMBOL) {
-            let _ = self.player_cmd_tx.send(PlayerCommand::SkipPrevious);
+            let _ = self.player_command_tx.send(PlayerCommand::SkipPrevious);
         }
 
         let current_track = self.track_state.track.is_some();
@@ -153,11 +153,11 @@ impl PlaybackBar {
         };
 
         if button(ui, toggle_playing_button) && current_track {
-            let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
+            let _ = self.player_command_tx.send(PlayerCommand::Toggle);
         }
 
         if button(ui, SKIP_FORWARD_SYMBOL) {
-            let _ = self.player_cmd_tx.send(PlayerCommand::SkipNext);
+            let _ = self.player_command_tx.send(PlayerCommand::SkipNext);
         }
     }
 
@@ -172,7 +172,7 @@ impl PlaybackBar {
 
         if volume_dx > f32::EPSILON {
             let _ = self
-                .player_cmd_tx
+                .player_command_tx
                 .send(PlayerCommand::SetVolume(self.track_state.volume));
 
             self.track_state.last_volume_sent = self.track_state.volume;
@@ -192,7 +192,7 @@ impl PlaybackBar {
             let response = ui.add(slider);
 
             if response.drag_stopped() {
-                let _ = self.player_cmd_tx.send(PlayerCommand::SetPosition(
+                let _ = self.player_command_tx.send(PlayerCommand::SetPosition(
                     std::time::Duration::from_secs_f64(playback_secs),
                 ));
             }

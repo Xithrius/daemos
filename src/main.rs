@@ -29,10 +29,9 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    let database = Database::default();
-    database.create_tables().expect("Failed to create tables");
+    let (database_command_tx, database_event_rx) = Database::start();
 
-    let (player_cmd_tx, player_cmd_rx) = channel::unbounded();
+    let (player_command_tx, player_cmd_rx) = channel::unbounded();
     let (player_event_tx, player_event_rx) = channel::unbounded();
 
     let (err_tx, err_rx) = channel::bounded(1);
@@ -65,7 +64,14 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             set_fonts(cc);
 
-            let context = Context::new(cc, config, database, player_cmd_tx, player_event_rx);
+            let context = Context::new(
+                cc,
+                config,
+                database_command_tx,
+                database_event_rx,
+                player_command_tx,
+                player_event_rx,
+            );
 
             Ok(Box::new(context))
         }),
