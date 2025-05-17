@@ -1,6 +1,5 @@
 use std::{collections::HashSet, time::Duration};
 
-use color_eyre::Result;
 use crossbeam::channel::Sender;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};

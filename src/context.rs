@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crossbeam::channel::{Receiver, Sender};
 use egui::{Key, KeyboardShortcut, Modifiers, Separator};
 use serde::Serialize;
@@ -8,10 +6,7 @@ use tracing::{debug, error};
 use crate::{
     components::{Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
-    database::{
-        connection::{DatabaseCommand, DatabaseEvent},
-        models::tracks::Track,
-    },
+    database::connection::{DatabaseCommand, DatabaseEvent},
     files::open::{get_tracks, select_folders_dialog},
     playback::state::{PlayerCommand, PlayerEvent},
     vertical_separator,
@@ -74,18 +69,6 @@ impl Context {
         let Some(database_event) = self.database_event_rx.try_recv().ok() else {
             return;
         };
-
-        // if total_new_tracks.is_some_and(|new_tracks| new_tracks > 0) {
-        //     if let Err(err) = self
-        //         .components
-        //         .track_table
-        //         .refresh_tracks(self.database.clone())
-        //     {
-        //         error!("Failed to refresh tracks on track table: {}", err);
-        //     }
-        // } else {
-        //     debug!("Skipping refresh, no new tracks found");
-        // }
 
         match database_event {
             DatabaseEvent::InsertTracks(new_tracks) => match new_tracks {

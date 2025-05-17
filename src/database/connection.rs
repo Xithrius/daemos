@@ -4,7 +4,7 @@ use color_eyre::Result;
 use crossbeam::channel::{Receiver, Sender, unbounded};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
 
@@ -34,7 +34,10 @@ impl Database {
             let mut conn =
                 Connection::open(&database_path).expect("Failed to open database connection");
 
-            Database::create_tables(&mut conn);
+            if let Err(err) = Database::create_tables(&mut conn) {
+                error!("Failed to create tables: {}", err);
+                std::process::exit(1);
+            }
 
             info!(
                 "Database thread running with connection at {:?}",
