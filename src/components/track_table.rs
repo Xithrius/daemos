@@ -173,18 +173,22 @@ impl TrackTable {
 
         if *select_next_track {
             if let Some(playing) = &self.playing {
+                *select_next_track = false;
+
                 let Some(index) = filtered_tracks
                     .iter()
                     .position(|track| track.hash == playing.track.hash)
                 else {
                     // Could not find a new track to play, clearing sink
                     let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                    self.playing = None;
                     return;
                 };
 
                 let new_index = (index + 1) % filtered_tracks.len();
                 let Some(new_track) = filtered_tracks.get(new_index) else {
                     let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                    self.playing = None;
                     return;
                 };
 
@@ -193,8 +197,6 @@ impl TrackTable {
                     .send(PlayerCommand::Create(new_track.clone()));
 
                 self.playing = Some(TrackState::new(new_index, new_track.clone(), true));
-
-                *select_next_track = false;
             }
         }
 
