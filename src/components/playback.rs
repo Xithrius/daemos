@@ -27,22 +27,33 @@ const SKIP_FORWARD_SYMBOL: &str = "\u{23ED}"; // ⏭
 #[derive(Debug, Clone)]
 struct TrackState {
     track: Option<Track>,
-    progress: Option<Duration>,
     playing: bool,
     volume: f32,
     last_volume_sent: f32,
-    last_progress_poll: Option<Instant>,
+
+    progress_base: Option<Duration>,
+    progress_timestamp: Option<Instant>,
 }
 
 impl TrackState {
     pub fn new(volume: f32) -> Self {
         Self {
             track: None,
-            progress: None,
             playing: true,
             volume,
             last_volume_sent: volume,
-            last_progress_poll: None,
+            progress_base: None,
+            progress_timestamp: None,
+        }
+    }
+
+    fn current_progress(&self) -> Option<Duration> {
+        match (self.progress_base, self.progress_timestamp) {
+            (Some(base), Some(ts)) if self.playing => {
+                Some(base + Instant::now().duration_since(ts))
+            }
+            (Some(base), _) => Some(base),
+            _ => None,
         }
     }
 }
@@ -51,6 +62,7 @@ impl TrackState {
 pub struct PlaybackBar {
     player_cmd_tx: Sender<PlayerCommand>,
     track_state: TrackState,
+    debug: bool,
 }
 
 impl PlaybackBar {
@@ -60,6 +72,7 @@ impl PlaybackBar {
         Self {
             player_cmd_tx,
             track_state,
+            debug: false,
         }
     }
 
@@ -71,14 +84,17 @@ impl PlaybackBar {
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
-                self.track_state.track = Some(track);
+                self.track_state.track = Some(track.clone());
                 self.track_state.playing = true;
+                self.track_state.progress_base = Some(Duration::ZERO);
+                self.track_state.progress_timestamp = Some(Instant::now());
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
                 self.track_state.playing = playing;
             }
             PlayerEvent::TrackProgress(duration) => {
-                self.track_state.progress = Some(duration);
+                self.track_state.progress_base = Some(duration);
+                self.track_state.progress_timestamp = Some(Instant::now());
             }
             PlayerEvent::CurrentVolume(volume) => {
                 if self.track_state.volume != volume {
@@ -136,7 +152,8 @@ impl PlaybackBar {
     }
 
     fn ui_seek(&mut self, ui: &mut egui::Ui) {
-        if let (Some(progress), Some(track)) = (&self.track_state.progress, &self.track_state.track)
+        if let (Some(progress), Some(track)) =
+            (self.track_state.current_progress(), &self.track_state.track)
         {
             let mut playback_secs = progress.as_secs_f64();
             let total_duration_secs = track.duration_secs;
@@ -167,33 +184,86 @@ impl PlaybackBar {
         }
     }
 
+    fn debug_window(&mut self, ui: &mut egui::Ui) {
+        egui::Window::new("Playback Debug Info")
+            .open(&mut self.debug)
+            .collapsible(true)
+            .resizable(true)
+            .default_size([400.0, 250.0])
+            .show(ui.ctx(), |ui| {
+                let ts = &self.track_state;
+
+                ui.group(|ui| {
+                    ui.label("🎵 Track Info:");
+                    ui.label(format!("Loaded: {}", ts.track.is_some()));
+                    if let Some(track) = &ts.track {
+                        ui.label(format!("Path: {:?}", track.path));
+                        ui.label(format!("Duration: {} seconds", track.duration_secs));
+                    }
+                });
+
+                ui.separator();
+
+                ui.group(|ui| {
+                    ui.label("⏯ Playback State:");
+                    ui.label(format!("Playing: {}", ts.playing));
+
+                    if let Some(base) = ts.progress_base {
+                        ui.label(format!("Progress Base: {:.2?}", base));
+                    } else {
+                        ui.label("Progress Base: None");
+                    }
+
+                    if let Some(ts) = ts.progress_timestamp {
+                        ui.label(format!("Progress Timestamp: {:?}", ts));
+                    } else {
+                        ui.label("Progress Timestamp: None");
+                    }
+
+                    if let Some(simulated) = ts.current_progress() {
+                        ui.label(format!("Simulated Current Progress: {:.2?}", simulated));
+                    } else {
+                        ui.label("Simulated Current Progress: None");
+                    }
+                });
+
+                ui.separator();
+
+                ui.group(|ui| {
+                    ui.label("🔊 Volume State:");
+                    ui.label(format!("Volume: {:.2}", ts.volume));
+                    ui.label(format!("Last Volume Sent: {:.2}", ts.last_volume_sent));
+                });
+            });
+    }
+
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        if self.track_state.track.is_some() && self.track_state.playing {
-            let now = Instant::now();
-            let poll_interval = Duration::from_millis(500);
-
-            if self
-                .track_state
-                .last_progress_poll
-                .map_or_else(|| true, |last| now.duration_since(last) >= poll_interval)
-            {
-                let _ = self.player_cmd_tx.send(PlayerCommand::Position);
-                self.track_state.last_progress_poll = Some(now);
-            }
-
+        if let Some(event) = player_event {
+            self.handle_player_event(event.clone());
             ui.ctx().request_repaint();
         }
 
-        if let Some(event) = player_event {
-            self.handle_player_event(event.clone());
+        if self.track_state.track.is_some() && self.track_state.playing {
+            ui.ctx().request_repaint();
         }
 
-        ui.horizontal(|ui| {
+        if self.debug {
+            self.debug_window(ui);
+        }
+
+        let playback_bar = ui.horizontal_centered(|ui| {
             self.ui_playback_controls(ui);
 
             self.ui_seek(ui);
 
             self.ui_volume(ui);
+        });
+
+        playback_bar.response.context_menu(|ui| {
+            if ui.button("Toggle Debug Info").clicked() {
+                self.debug = !self.debug;
+                ui.close_menu();
+            }
         });
     }
 }
