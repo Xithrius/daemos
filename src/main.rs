@@ -25,7 +25,7 @@ fn main() -> eframe::Result {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([320.0, 240.0])
             .with_icon(icon_data),
-        vsync: config.vsync,
+        vsync: config.general.vsync,
         ..Default::default()
     };
 

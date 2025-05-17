@@ -82,10 +82,10 @@ impl eframe::App for Context {
 
         #[cfg(debug_assertions)]
         if ctx.input(|i| i.key_pressed(Key::F3)) {
-            self.config.debug = !self.config.debug;
+            self.config.general.debug = !self.config.general.debug;
 
-            if self.config.debug != ctx.debug_on_hover() {
-                ctx.set_debug_on_hover(self.config.debug);
+            if self.config.general.debug != ctx.debug_on_hover() {
+                ctx.set_debug_on_hover(self.config.general.debug);
             }
         }
 

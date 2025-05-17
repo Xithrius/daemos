@@ -32,7 +32,6 @@
       - [x] At startup query once then put into vector
     - [x] Hashing
       - [x] On track insert, hash said track
-      - [ ] Perhaps have a tab for tracking duplicates
     - [ ] Validation of tracks (via settings)
       - [ ] At startup
       - [ ] Every once in a while

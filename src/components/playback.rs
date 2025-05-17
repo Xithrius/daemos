@@ -67,7 +67,7 @@ pub struct PlaybackBar {
 
 impl PlaybackBar {
     pub fn new(config: &CoreConfig, player_cmd_tx: Sender<PlayerCommand>) -> Self {
-        let track_state = TrackState::new(config.volume);
+        let track_state = TrackState::new(config.volume.default);
 
         Self {
             player_cmd_tx,
