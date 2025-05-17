@@ -70,23 +70,19 @@ impl Context {
             return;
         };
 
+        debug!("UI received database event: {:?}", database_event);
+
         match database_event {
-            DatabaseEvent::InsertTracks(new_tracks) => match new_tracks {
-                Ok(new_track_amount) => {
-                    if new_track_amount > 0 {
-                        // Refresh the track list
-                        let _ = self
-                            .database_command_tx
-                            .send(DatabaseCommand::QueryAllTracks);
-                    }
+            DatabaseEvent::InsertTracks(new_tracks) => {
+                for track in new_tracks {
+                    self.components.track_table.add_track(&track);
                 }
-                Err(err) => {
-                    error!("Error when inserting tracks: {}", err);
-                }
-            },
+            }
             DatabaseEvent::QueryAllTracks(tracks) => match tracks {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
-                Err(_) => todo!(),
+                Err(err) => {
+                    error!("Error when querying track table: {}", err);
+                }
             },
         }
     }
@@ -138,10 +134,13 @@ impl eframe::App for Context {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        // TODO: Is there a way around this?
+        ctx.request_repaint_after(std::time::Duration::from_millis(16));
+
         let player_event = self.player_event_rx.try_recv().ok();
 
-        self.handle_keybinds(ctx);
         self.handle_database_events();
+        self.handle_keybinds(ctx);
 
         if ctx.input(|i| i.key_pressed(Key::Space)) && !self.components.track_table.search_focused()
         {

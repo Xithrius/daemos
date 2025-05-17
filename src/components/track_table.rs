@@ -3,6 +3,7 @@ use std::{collections::HashSet, time::Duration};
 use crossbeam::channel::Sender;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
+use uuid::Uuid;
 
 use crate::{
     database::{connection::DatabaseCommand, models::tracks::Track},
@@ -34,6 +35,8 @@ impl TrackState {
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     tracks: Vec<Track>,
+    track_ids: HashSet<Uuid>,
+
     #[allow(dead_code)]
     database_command_tx: Sender<DatabaseCommand>,
     player_command_tx: Sender<PlayerCommand>,
@@ -55,6 +58,7 @@ impl TrackTable {
 
         Self {
             tracks: Vec::new(),
+            track_ids: HashSet::default(),
             database_command_tx,
             player_command_tx,
             selection: HashSet::default(),
@@ -69,7 +73,26 @@ impl TrackTable {
     }
 
     pub fn set_tracks(&mut self, tracks: Vec<Track>) {
+        self.track_ids = tracks.iter().map(|track| track.id).collect();
         self.tracks = tracks;
+    }
+
+    pub fn add_track(&mut self, track: &Track) {
+        if self.track_ids.insert(track.id) {
+            self.tracks.push(track.clone());
+        }
+    }
+
+    pub fn remove(&mut self, id: &Uuid) -> bool {
+        if self.track_ids.remove(id) {
+            if let Some(pos) = self.tracks.iter().position(|t| &t.id == id) {
+                self.tracks.remove(pos);
+            }
+
+            true
+        } else {
+            false
+        }
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {

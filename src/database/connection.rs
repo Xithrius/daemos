@@ -16,7 +16,7 @@ pub enum DatabaseCommand {
 
 #[derive(Debug)]
 pub enum DatabaseEvent {
-    InsertTracks(Result<usize>),
+    InsertTracks(Vec<Track>),
     QueryAllTracks(Result<Vec<Track>>),
 }
 
@@ -47,10 +47,18 @@ impl Database {
             while let Ok(cmd) = command_rx.recv() {
                 match cmd {
                     DatabaseCommand::InsertTracks(paths) => {
+                        let mut new_tracks = Vec::new();
                         for path in paths {
-                            let result = Track::insert(&mut conn, path);
-                            let _ = event_tx.send(DatabaseEvent::InsertTracks(result));
+                            match Track::insert(&mut conn, path) {
+                                Ok(Some(track)) => new_tracks.push(track),
+                                Ok(None) => {} // Skipped duplicate
+                                Err(err) => {
+                                    error!("Error when inserting track: {}", err);
+                                }
+                            }
                         }
+
+                        let _ = event_tx.send(DatabaseEvent::InsertTracks(new_tracks));
                     }
                     DatabaseCommand::QueryAllTracks => {
                         let result = Track::select_all(&mut conn);

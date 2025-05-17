@@ -69,7 +69,7 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
-    pub fn insert(conn: &mut Connection, path: PathBuf) -> Result<usize> {
+    pub fn insert(conn: &mut Connection, path: PathBuf) -> Result<Option<Track>> {
         let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
 
         let hash = hash_file(&path)?.to_string();
@@ -79,7 +79,7 @@ impl Track {
             .context(format!("Failed to get duration from track {:?}", path))?
             .as_secs_f64();
 
-        let args = Track {
+        let track = Track {
             path: path.clone(),
             hash: Some(hash),
             duration_secs,
@@ -90,24 +90,25 @@ impl Track {
             .execute(
                 query,
                 (
-                    args.id.to_string(),
-                    args.path.to_str(),
-                    args.hash,
-                    args.duration_secs,
-                    args.valid,
-                    args.created_at.to_string(),
-                    args.updated_at.to_string(),
+                    track.id.to_string(),
+                    track.path.to_str(),
+                    track.hash.clone(),
+                    track.duration_secs,
+                    track.valid,
+                    track.created_at.to_string(),
+                    track.updated_at.to_string(),
                 ),
             )
             .context("Failed to execute insert on tracks table")?;
 
-        if inserted == 1 {
-            debug!("Inserted track into database: {:?}", path);
-        } else {
+        if inserted == 0 {
             debug!("Skipped duplicate track: {:?}", path);
+            return Ok(None);
         }
 
-        Ok(inserted)
+        debug!("Inserted track into database: {:?}", path);
+
+        Ok(Some(track))
     }
 
     pub fn select_all(conn: &mut Connection) -> Result<Vec<Track>> {
