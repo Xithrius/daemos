@@ -9,7 +9,7 @@ fn main() -> eframe::Result {
 
     use crossbeam::channel;
     use drakn::{
-        Context, config::load::load_config, database::connection::Database,
+        Context, config::load::load_config, database::connection::Database, fonts::set_fonts,
         logging::initialize_logging, playback::state::Player,
     };
     use tracing::{error, info};
@@ -18,8 +18,8 @@ fn main() -> eframe::Result {
 
     let config = load_config().expect("Failed to load config");
 
-    let icon_data =
-        eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon.png")).unwrap_or_default();
+    let icon_data = eframe::icon_data::from_png_bytes(include_bytes!("../static/assets/icon.png"))
+        .unwrap_or_default();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -63,6 +63,8 @@ fn main() -> eframe::Result {
         "Drakn",
         options,
         Box::new(|cc| {
+            set_fonts(cc);
+
             let context = Context::new(cc, config, database, player_cmd_tx, player_event_rx);
 
             Ok(Box::new(context))
