@@ -45,6 +45,10 @@
     - [ ] Track name sorting
         - [ ] By full name
         - [ ] By regex group
+    - [ ] Search by attribute
+        - [ ] First, get search by track name working
+        - [ ] Attribute dropdown
+        - [ ] Combine the two to have track-attribute searching
 
 - [ ] Playback
     - [ ] Control
@@ -54,20 +58,23 @@
             - [x] Toggle
             - [ ] Next track
             - [ ] Previous track
+            - [ ] Go back 10 seconds*
+            - [ ] Go forward 10 seconds*
         - [x] Volume bar
             - [x] Click to set volume
             - [x] Drag to set volume
-        - [ ] Seek bar
-            - [ ] See live elapsed and total duration updates
-            - [ ] Click to set time
-            - [ ] Drag to set time
-    - [ ] Visualization
-        - [ ] Seek bar elapsed and total track duration
+        - [x] Seek bar
+            - [x] See live elapsed and total duration updates
+            - [x] Click to set time
+            - [x] Drag to set time
+    - [x] Visualization
+        - [x] Seek bar elapsed and total track duration
 
 - [ ] Settings
     - [x] Popup widget (another window)
     - [ ] Default volume on startup
     - [ ] Default ordering of tracks
+    - [ ] General config settings
 
     - [ ] Default folder to open when adding tracks
     - [ ] Toggle to hash tracks on insert
@@ -76,6 +83,12 @@
 - [ ] First time setup
     - [ ] Offline stats to local storage
         - [ ] Times a track has been played
+
+- [ ] General UI look/feel
+    - [ ] Change font to some JetBrains Mono font
+    - [ ] Configurable font size (?)
+
+\* Should be configurable
 
 ## Later
 
@@ -88,5 +101,5 @@
 
 Centering playback bar controls: https://github.com/emilk/egui/discussions/1197
 
-- [ ] Playback seek bar skips a second, or pauses on a duration for too long
+- [x] Playback seek bar skips a second, or pauses on a duration for too long
 - [ ] Vertically center the playback previous/toggle/next controls

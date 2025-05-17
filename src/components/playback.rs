@@ -85,12 +85,12 @@ impl PlaybackBar {
         match player_event {
             PlayerEvent::TrackChanged(track) => {
                 // Only if the track hash is different or track doesn't exist, then we should restart the state
-                let should_reset = match &self.track_state.track {
-                    Some(prev) => prev.hash != track.hash,
-                    None => true,
-                };
-
-                if should_reset {
+                if self
+                    .track_state
+                    .track
+                    .as_ref()
+                    .is_none_or(|prev| prev.hash != track.hash)
+                {
                     self.track_state.track = Some(track.clone());
                     self.track_state.playing = true;
                     self.track_state.progress_base = Some(Duration::ZERO);
