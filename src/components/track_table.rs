@@ -145,6 +145,24 @@ impl TrackTable {
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
+        // TODO: Don't clone here
+        let filtered_tracks: Vec<Track> = self
+            .tracks
+            .iter()
+            .filter(|track| {
+                if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
+                    return if self.search_text.is_empty() {
+                        true
+                    } else {
+                        track_file_name.to_lowercase().contains(&self.search_text)
+                    };
+                }
+
+                false
+            })
+            .map(|track| track.to_owned())
+            .collect();
+
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
@@ -165,22 +183,31 @@ impl TrackTable {
                 });
             })
             .body(|body| {
-                let num_rows = self.tracks.len();
+                let num_rows = filtered_tracks.len();
 
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
                     let row_index = row.index();
 
-                    let track = self.tracks.get(row_index).cloned();
+                    let track = filtered_tracks.get(row_index).cloned();
                     let playing = self.playing.clone();
 
                     if let Some(track) = track {
                         if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
                             row.set_selected(playing.as_ref().is_some_and(
                                 |TrackState {
-                                     index,
-                                     track: _,
+                                     index: _,
+                                     track:
+                                         Track {
+                                             id: _,
+                                             path: _,
+                                             hash,
+                                             duration_secs: _,
+                                             valid: _,
+                                             created_at: _,
+                                             updated_at: _,
+                                         },
                                      playing: _,
-                                 }| *index == row_index,
+                                 }| { *hash == track.hash },
                             ));
 
                             row.col(|ui| {
