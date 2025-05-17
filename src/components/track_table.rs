@@ -152,6 +152,35 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
+    fn next_track_autoplay(&mut self, filtered_tracks: &[Track], select_next_track: &mut bool) {
+        if let Some(playing) = &self.playing {
+            *select_next_track = false;
+
+            let Some(index) = filtered_tracks
+                .iter()
+                .position(|track| track.hash == playing.track.hash)
+            else {
+                // Could not find a new track to play, clearing sink
+                let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                self.playing = None;
+                return;
+            };
+
+            let new_index = (index + 1) % filtered_tracks.len();
+            let Some(new_track) = filtered_tracks.get(new_index) else {
+                let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                self.playing = None;
+                return;
+            };
+
+            let _ = self
+                .player_command_tx
+                .send(PlayerCommand::Create(new_track.clone()));
+
+            self.playing = Some(TrackState::new(new_index, new_track.clone(), true));
+        }
+    }
+
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32, select_next_track: &mut bool) {
         // TODO: Don't clone here
         let filtered_tracks: Vec<Track> = self
@@ -172,32 +201,7 @@ impl TrackTable {
             .collect();
 
         if *select_next_track {
-            if let Some(playing) = &self.playing {
-                *select_next_track = false;
-
-                let Some(index) = filtered_tracks
-                    .iter()
-                    .position(|track| track.hash == playing.track.hash)
-                else {
-                    // Could not find a new track to play, clearing sink
-                    let _ = self.player_command_tx.send(PlayerCommand::Clear);
-                    self.playing = None;
-                    return;
-                };
-
-                let new_index = (index + 1) % filtered_tracks.len();
-                let Some(new_track) = filtered_tracks.get(new_index) else {
-                    let _ = self.player_command_tx.send(PlayerCommand::Clear);
-                    self.playing = None;
-                    return;
-                };
-
-                let _ = self
-                    .player_command_tx
-                    .send(PlayerCommand::Create(new_track.clone()));
-
-                self.playing = Some(TrackState::new(new_index, new_track.clone(), true));
-            }
+            self.next_track_autoplay(&filtered_tracks, select_next_track);
         }
 
         let table = TableBuilder::new(ui)
