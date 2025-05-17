@@ -42,6 +42,7 @@ pub struct TrackTable {
     playing: Option<TrackState>,
 
     search_text: String,
+    search_focused: bool,
 }
 
 impl TrackTable {
@@ -68,7 +69,12 @@ impl TrackTable {
             selection: HashSet::default(),
             playing: None,
             search_text: String::new(),
+            search_focused: false,
         }
+    }
+
+    pub fn search_focused(&self) -> bool {
+        self.search_focused
     }
 
     pub fn refresh_tracks(&mut self, database: SharedDatabase) -> Result<()> {
@@ -255,6 +261,8 @@ impl TrackTable {
             egui::TextEdit::singleline(&mut self.search_text).hint_text("Search...");
 
         let response = ui.add(search_text_edit);
+
+        self.search_focused = response.has_focus();
 
         if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
             debug!("Searched: {}", self.search_text);

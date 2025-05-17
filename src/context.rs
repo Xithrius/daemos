@@ -127,7 +127,8 @@ impl eframe::App for Context {
             }
         }
 
-        if ctx.input(|i| i.key_pressed(Key::Space)) {
+        if ctx.input(|i| i.key_pressed(Key::Space)) && !self.components.track_table.search_focused()
+        {
             let _ = self.player_cmd_tx.send(PlayerCommand::Toggle);
         }
 
