@@ -84,12 +84,38 @@ impl PlaybackBar {
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
-                self.track_state.track = Some(track.clone());
-                self.track_state.playing = true;
-                self.track_state.progress_base = Some(Duration::ZERO);
-                self.track_state.progress_timestamp = Some(Instant::now());
+                // Only if the track hash is different or track doesn't exist, then we should restart the state
+                let should_reset = match &self.track_state.track {
+                    Some(prev) => prev.hash != track.hash,
+                    None => true,
+                };
+
+                if should_reset {
+                    self.track_state.track = Some(track.clone());
+                    self.track_state.playing = true;
+                    self.track_state.progress_base = Some(Duration::ZERO);
+                    self.track_state.progress_timestamp = Some(Instant::now());
+                }
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
+                // If we are pausing, freeze current progress
+                if !playing && self.track_state.playing {
+                    // Capture how much time has passed
+                    if let (Some(base), Some(ts)) = (
+                        self.track_state.progress_base,
+                        self.track_state.progress_timestamp,
+                    ) {
+                        let elapsed = Instant::now().duration_since(ts);
+                        self.track_state.progress_base = Some(base + elapsed);
+                        self.track_state.progress_timestamp = None;
+                    }
+                }
+
+                // If we are resuming, set the timestamp so progress resumes from base
+                if playing && !self.track_state.playing {
+                    self.track_state.progress_timestamp = Some(Instant::now());
+                }
+
                 self.track_state.playing = playing;
             }
             PlayerEvent::TrackProgress(duration) => {
