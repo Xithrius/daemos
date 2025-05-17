@@ -163,7 +163,9 @@ impl PlaybackBar {
 
     fn ui_volume(&mut self, ui: &mut egui::Ui) {
         ui.add(
-            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE).text("Volume"),
+            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE)
+                .text("Volume")
+                .show_value(false),
         );
 
         let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
@@ -185,9 +187,11 @@ impl PlaybackBar {
             let total_duration_secs = track.duration_secs;
 
             let slider =
-                egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).text("Playback");
+                egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).show_value(false);
 
-            if ui.add(slider).changed() {
+            let response = ui.add(slider);
+
+            if response.drag_stopped() {
                 let _ = self.player_cmd_tx.send(PlayerCommand::SetPosition(
                     std::time::Duration::from_secs_f64(playback_secs),
                 ));
@@ -196,17 +200,19 @@ impl PlaybackBar {
             let current_time = Duration::from_secs_f64(playback_secs.floor());
             let total_time = Duration::from_secs_f64(total_duration_secs.floor());
 
+            let has_hours = (total_time.as_secs() / 3600) > 0;
+
             ui.label(format!(
                 "{}/{}",
-                human_duration(current_time),
-                human_duration(total_time)
+                human_duration(current_time, has_hours),
+                human_duration(total_time, has_hours)
             ));
         } else {
             let mut dummy = 0.0;
-            let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).text("Playback");
+            let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).show_value(false);
 
             ui.add_enabled(false, slider);
-            ui.label("00:00/00:00");
+            ui.label("--:--/--:--");
         }
     }
 

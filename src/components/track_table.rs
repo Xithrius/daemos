@@ -107,6 +107,7 @@ impl TrackTable {
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
         if let Some(event) = player_event {
             self.handle_player_event(event.clone());
+            ui.ctx().request_repaint();
         }
 
         let height = ui.available_height();
@@ -170,7 +171,7 @@ impl TrackTable {
 
                             row.col(|ui| {
                                 let track_duration = Duration::from_secs_f64(track.duration_secs);
-                                let readable_track_duration = human_duration(track_duration);
+                                let readable_track_duration = human_duration(track_duration, false);
 
                                 let label = ui
                                     .label(readable_track_duration)

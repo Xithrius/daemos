@@ -30,7 +30,6 @@
         - [x] Hashing
             - [x] On track insert, hash said track
             - [ ] Perhaps have a tab for tracking duplicates
-        - [ ] Querying/inserting should be done on another thread
         - [ ] Validation of tracks (via settings)
             - [ ] At startup
             - [ ] Every once in a while
@@ -70,6 +69,18 @@
     - [x] Visualization
         - [x] Seek bar elapsed and total track duration
 
+- [ ] Database
+    - [ ] Move to another thread
+    - [ ] Create an unbounded channel for receiving on thread's end, and sending from UI
+    - [ ] Create a oneshot channel to receive in UI, and send from thread
+    - [ ] Create commands to communicate to said thread with
+    - [ ] Replace all current command calls with sending messages
+
+- [ ] Tabs
+    - [ ] Tracks
+    - [ ] Playlists
+    - [ ] Database tasks (other tasks in the future?)
+
 - [ ] Settings
     - [x] Popup widget (another window)
     - [ ] Default volume on startup
@@ -99,7 +110,5 @@
 
 ## Issues
 
-Centering playback bar controls: https://github.com/emilk/egui/discussions/1197
-
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
-- [ ] Vertically center the playback previous/toggle/next controls
+- [ ] Vertically center the playback previous/toggle/next controls ([relevant issue](https://github.com/emilk/egui/discussions/1197))
