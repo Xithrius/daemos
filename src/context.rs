@@ -151,9 +151,7 @@ impl eframe::App for Context {
                     self.components.playlist_tree.ui(ui);
                     vertical_separator!(ui);
 
-                    ui.vertical(|ui| {
-                        self.components.track_table.ui(ui, &player_event);
-                    });
+                    self.components.track_table.ui(ui, &player_event);
                 });
             });
         });

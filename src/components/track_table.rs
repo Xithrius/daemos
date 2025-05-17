@@ -35,11 +35,13 @@ impl TrackState {
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     tracks: Vec<Track>,
+    tx: Sender<PlayerCommand>,
+
     #[allow(dead_code)]
     selection: HashSet<usize>,
     playing: Option<TrackState>,
 
-    tx: Sender<PlayerCommand>,
+    search_text: String,
 }
 
 impl TrackTable {
@@ -62,9 +64,10 @@ impl TrackTable {
 
         Self {
             tracks,
+            tx,
             selection: HashSet::default(),
             playing: None,
-            tx,
+            search_text: String::new(),
         }
     }
 
@@ -104,21 +107,50 @@ impl TrackTable {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        if let Some(event) = player_event {
-            self.handle_player_event(event.clone());
-            ui.ctx().request_repaint();
+    // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
+    //     if row_response.clicked() {
+    //         if self.selection.contains(&row_index) {
+    //             self.selection.remove(&row_index);
+    //         } else {
+    //             self.selection.insert(row_index);
+    //         }
+    //     }
+    // }
+
+    fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
+        if self.playing.as_ref().is_some_and(
+            |TrackState {
+                 index: playing_index,
+                 track: playing_track,
+                 playing: _,
+             }| { (*playing_index == row_index) && (*playing_track == *track) },
+        ) {
+            if let Err(err) = self.tx.send(PlayerCommand::Toggle) {
+                error!(
+                    "Failed to toggle track state on path {:?}: {}",
+                    track.path, err
+                );
+            }
+
+            return;
         }
 
-        let height = ui.available_height();
+        if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
+            error!("Failed to start track on path {:?}: {}", track.path, err);
+        }
 
-        let mut table = TableBuilder::new(ui)
+        let new_track_state = TrackState::new(row_index, track.clone(), true);
+
+        self.playing = Some(new_track_state)
+    }
+
+    fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
+        let table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
             .column(Column::remainder())
-            .column(Column::auto().at_least(50.0));
-
-        table = table.sense(egui::Sense::click());
+            .column(Column::auto().at_least(50.0))
+            .sense(egui::Sense::click());
 
         table
             .header(TABLE_HEADER_HEIGHT, |mut header| {
@@ -191,39 +223,31 @@ impl TrackTable {
             });
     }
 
-    // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
-    //     if row_response.clicked() {
-    //         if self.selection.contains(&row_index) {
-    //             self.selection.remove(&row_index);
-    //         } else {
-    //             self.selection.insert(row_index);
-    //         }
-    //     }
-    // }
+    fn ui_search(&mut self, ui: &mut egui::Ui) {
+        let search_text_edit =
+            egui::TextEdit::singleline(&mut self.search_text).hint_text("Search...");
 
-    fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
-        if self.playing.as_ref().is_some_and(
-            |TrackState {
-                 index: playing_index,
-                 track: playing_track,
-                 playing: _,
-             }| { (*playing_index == row_index) && (*playing_track == *track) },
-        ) {
-            if let Err(err) = self.tx.send(PlayerCommand::Toggle) {
-                error!(
-                    "Failed to toggle track state on path {:?}: {}",
-                    track.path, err
-                );
-            }
+        let response = ui.add(search_text_edit);
 
-            return;
+        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            debug!("Searched: {}", self.search_text);
+        }
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
+        if let Some(event) = player_event {
+            self.handle_player_event(event.clone());
+            ui.ctx().request_repaint();
         }
 
-        if let Err(err) = self.tx.send(PlayerCommand::Create(track.clone())) {
-            error!("Failed to start track on path {:?}: {}", track.path, err);
-        }
+        let height = ui.available_height();
 
-        let new_track_state = TrackState::new(row_index, track.clone(), true);
-        self.playing = Some(new_track_state)
+        ui.vertical(|ui| {
+            self.ui_search(ui);
+
+            ui.separator();
+
+            self.ui_table(ui, height);
+        });
     }
 }
