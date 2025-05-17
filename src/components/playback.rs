@@ -35,6 +35,19 @@ struct TrackState {
     progress_timestamp: Option<Instant>,
 }
 
+impl Default for TrackState {
+    fn default() -> Self {
+        Self {
+            track: None,
+            playing: false,
+            volume: 0.5,
+            last_volume_sent: 0.5,
+            progress_base: None,
+            progress_timestamp: None,
+        }
+    }
+}
+
 impl TrackState {
     pub fn new(volume: f32) -> Self {
         Self {
@@ -62,6 +75,7 @@ impl TrackState {
 pub struct PlaybackBar {
     player_command_tx: Sender<PlayerCommand>,
     track_state: TrackState,
+    find_next_track: bool,
     debug: bool,
 }
 
@@ -72,8 +86,17 @@ impl PlaybackBar {
         Self {
             player_command_tx,
             track_state,
+            find_next_track: false,
             debug: false,
         }
+    }
+
+    pub fn find_next_track_mut(&mut self) -> &mut bool {
+        &mut self.find_next_track
+    }
+
+    fn reset_track_state(&mut self) {
+        self.track_state = TrackState::default();
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
@@ -95,6 +118,7 @@ impl PlaybackBar {
                     self.track_state.playing = true;
                     self.track_state.progress_base = Some(Duration::ZERO);
                     self.track_state.progress_timestamp = Some(Instant::now());
+                    self.find_next_track = false;
                 }
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
@@ -195,6 +219,13 @@ impl PlaybackBar {
         {
             let mut playback_secs = progress.as_secs_f64();
             let total_duration_secs = track.duration_secs;
+
+            if playback_secs >= total_duration_secs {
+                self.find_next_track = true;
+                self.reset_track_state();
+                debug!("END OF TRACK REACHED");
+                return;
+            }
 
             let slider =
                 egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).show_value(false);

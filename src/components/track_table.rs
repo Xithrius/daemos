@@ -152,7 +152,7 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
-    fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
+    fn ui_table(&mut self, ui: &mut egui::Ui, height: f32, select_next_track: &mut bool) {
         // TODO: Don't clone here
         let filtered_tracks: Vec<Track> = self
             .tracks
@@ -170,6 +170,33 @@ impl TrackTable {
             })
             .map(|track| track.to_owned())
             .collect();
+
+        if *select_next_track {
+            if let Some(playing) = &self.playing {
+                let Some(index) = filtered_tracks
+                    .iter()
+                    .position(|track| track.hash == playing.track.hash)
+                else {
+                    // Could not find a new track to play, clearing sink
+                    let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                    return;
+                };
+
+                let new_index = (index + 1) % filtered_tracks.len();
+                let Some(new_track) = filtered_tracks.get(new_index) else {
+                    let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                    return;
+                };
+
+                let _ = self
+                    .player_command_tx
+                    .send(PlayerCommand::Create(new_track.clone()));
+
+                self.playing = Some(TrackState::new(new_index, new_track.clone(), true));
+
+                *select_next_track = false;
+            }
+        }
 
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)
@@ -271,7 +298,12 @@ impl TrackTable {
         }
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
+    pub fn ui(
+        &mut self,
+        ui: &mut egui::Ui,
+        player_event: &Option<PlayerEvent>,
+        select_next_track: &mut bool,
+    ) {
         if let Some(event) = player_event {
             self.handle_player_event(event.clone());
             ui.ctx().request_repaint();
@@ -284,7 +316,7 @@ impl TrackTable {
 
             ui.separator();
 
-            self.ui_table(ui, height);
+            self.ui_table(ui, height, select_next_track);
         });
     }
 }

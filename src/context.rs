@@ -70,7 +70,7 @@ impl Context {
             return;
         };
 
-        debug!("UI received database event: {:?}", database_event);
+        // debug!("UI received database event: {:?}", database_event);
 
         match database_event {
             DatabaseEvent::InsertTracks(new_tracks) => {
@@ -161,13 +161,17 @@ impl eframe::App for Context {
             self.components.playback_bar.ui(ui, &player_event);
         });
 
+        let select_next_track = self.components.playback_bar.find_next_track_mut();
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     self.components.playlist_tree.ui(ui);
                     vertical_separator!(ui);
 
-                    self.components.track_table.ui(ui, &player_event);
+                    self.components
+                        .track_table
+                        .ui(ui, &player_event, select_next_track);
                 });
             });
         });

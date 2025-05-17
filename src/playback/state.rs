@@ -31,6 +31,7 @@ pub enum PlayerCommand {
     Pause,
     Toggle,
     Resume,
+    Clear,
     SkipNext,
     SkipPrevious,
     Volume,
@@ -129,13 +130,9 @@ impl Player {
         match command {
             PlayerCommand::Create(track) => {
                 self.create_player_track(track)?;
-
-                Ok(())
             }
             PlayerCommand::Play => {
                 self.sink.play();
-
-                Ok(())
             }
             PlayerCommand::Toggle => {
                 let is_paused = self.sink.is_paused();
@@ -148,13 +145,9 @@ impl Player {
 
                 self.player_event_tx
                     .send(PlayerEvent::TrackPlayingStatus(is_paused))?;
-
-                Ok(())
             }
             PlayerCommand::Pause => {
                 self.sink.pause();
-
-                Ok(())
             }
             PlayerCommand::Resume => {
                 if self.sink.is_paused() {
@@ -162,13 +155,12 @@ impl Player {
                 } else {
                     debug!("No track to resume");
                 }
-
-                Ok(())
+            }
+            PlayerCommand::Clear => {
+                self.sink.clear();
             }
             PlayerCommand::SkipNext => {
                 self.sink.skip_one();
-
-                Ok(())
             }
             PlayerCommand::SkipPrevious => {
                 todo!();
@@ -178,24 +170,18 @@ impl Player {
 
                 self.player_event_tx
                     .send(PlayerEvent::CurrentVolume(volume))?;
-
-                Ok(())
             }
             PlayerCommand::SetVolume(volume_value) => {
                 self.sink.set_volume(*volume_value);
 
                 self.player_event_tx
                     .send(PlayerEvent::CurrentVolume(*volume_value))?;
-
-                Ok(())
             }
             PlayerCommand::Position => {
                 let position = self.sink.get_pos();
 
                 self.player_event_tx
                     .send(PlayerEvent::TrackProgress(position))?;
-
-                Ok(())
             }
             PlayerCommand::SetPosition(duration) => {
                 if let Err(err) = self.sink.try_seek(*duration) {
@@ -206,9 +192,9 @@ impl Player {
 
                 self.player_event_tx
                     .send(PlayerEvent::TrackProgress(position))?;
-
-                Ok(())
             }
         }
+
+        Ok(())
     }
 }

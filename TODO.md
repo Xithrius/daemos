@@ -74,13 +74,13 @@
     - [x] Seek bar elapsed and total track duration
   - [ ] Show currently selected track title
 
-- [ ] Database
+- [x] Database
 
-  - [ ] Move to another thread
-  - [ ] Create an unbounded channel for receiving on thread's end, and sending from UI
-  - [ ] Create a oneshot channel to receive in UI, and send from thread
-  - [ ] Create commands to communicate to said thread with
-  - [ ] Replace all current command calls with sending messages
+  - [x] Move to another thread
+  - [x] Create an unbounded channel for receiving on thread's end, and sending from UI
+  - [x] Create another unbounded channel to receive in UI, and send from thread
+  - [x] Create commands to communicate to said thread with
+  - [x] Replace all current command calls with sending messages
 
 - [ ] Tabs
 
