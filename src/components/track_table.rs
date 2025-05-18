@@ -1,10 +1,10 @@
-use std::{collections::HashSet, time::Duration};
+use std::{collections::HashSet, rc::Rc, time::Duration};
 
-use crossbeam::channel::Sender;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 use uuid::Uuid;
 
+use super::ComponentChannels;
 use crate::{
     database::{connection::DatabaseCommand, models::tracks::Track},
     files::open::get_track_file_name,
@@ -37,9 +37,7 @@ pub struct TrackTable {
     tracks: Vec<Track>,
     track_ids: HashSet<Uuid>,
 
-    #[allow(dead_code)]
-    database_command_tx: Sender<DatabaseCommand>,
-    player_command_tx: Sender<PlayerCommand>,
+    channels: Rc<ComponentChannels>,
 
     #[allow(dead_code)]
     selection: HashSet<usize>,
@@ -50,17 +48,15 @@ pub struct TrackTable {
 }
 
 impl TrackTable {
-    pub fn new(
-        database_command_tx: Sender<DatabaseCommand>,
-        player_command_tx: Sender<PlayerCommand>,
-    ) -> Self {
-        let _ = database_command_tx.send(DatabaseCommand::QueryAllTracks);
+    pub fn new(channels: Rc<ComponentChannels>) -> Self {
+        let _ = channels
+            .database_command_tx
+            .send(DatabaseCommand::QueryAllTracks);
 
         Self {
             tracks: Vec::new(),
             track_ids: HashSet::default(),
-            database_command_tx,
-            player_command_tx,
+            channels,
             selection: HashSet::default(),
             playing: None,
             search_text: String::new(),
@@ -130,7 +126,7 @@ impl TrackTable {
                  playing: _,
              }| { (*playing_index == row_index) && (*playing_track == *track) },
         ) {
-            if let Err(err) = self.player_command_tx.send(PlayerCommand::Toggle) {
+            if let Err(err) = self.channels.player_command_tx.send(PlayerCommand::Toggle) {
                 error!(
                     "Failed to toggle track state on path {:?}: {}",
                     track.path, err
@@ -141,6 +137,7 @@ impl TrackTable {
         }
 
         if let Err(err) = self
+            .channels
             .player_command_tx
             .send(PlayerCommand::Create(track.clone()))
         {
@@ -161,19 +158,20 @@ impl TrackTable {
                 .position(|track| track.hash == playing.track.hash)
             else {
                 // Could not find a new track to play, clearing sink
-                let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
                 self.playing = None;
                 return;
             };
 
             let new_index = (index + 1) % filtered_tracks.len();
             let Some(new_track) = filtered_tracks.get(new_index) else {
-                let _ = self.player_command_tx.send(PlayerCommand::Clear);
+                let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
                 self.playing = None;
                 return;
             };
 
             let _ = self
+                .channels
                 .player_command_tx
                 .send(PlayerCommand::Create(new_track.clone()));
 

@@ -121,4 +121,5 @@
 ## Issues
 
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
+- [-] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
 - [ ] Vertically center the playback previous/toggle/next controls ([relevant issue](https://github.com/emilk/egui/discussions/1197))

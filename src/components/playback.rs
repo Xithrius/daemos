@@ -1,12 +1,13 @@
 use std::{
     ops::RangeInclusive,
+    rc::Rc,
     time::{Duration, Instant},
 };
 
-use crossbeam::channel::Sender;
 use egui::RichText;
 use tracing::{debug, warn};
 
+use super::ComponentChannels;
 use crate::{
     config::core::CoreConfig,
     database::models::tracks::Track,
@@ -73,18 +74,18 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
-    player_command_tx: Sender<PlayerCommand>,
+    channels: Rc<ComponentChannels>,
     track_state: TrackState,
     find_next_track: bool,
     debug: bool,
 }
 
 impl PlaybackBar {
-    pub fn new(config: &CoreConfig, player_command_tx: Sender<PlayerCommand>) -> Self {
+    pub fn new(config: &CoreConfig, channels: Rc<ComponentChannels>) -> Self {
         let track_state = TrackState::new(config.volume.default);
 
         Self {
-            player_command_tx,
+            channels,
             track_state,
             find_next_track: false,
             debug: false,
@@ -175,7 +176,10 @@ impl PlaybackBar {
         };
 
         if button(ui, SKIP_BACKWARD_SYMBOL) {
-            let _ = self.player_command_tx.send(PlayerCommand::SkipPrevious);
+            let _ = self
+                .channels
+                .player_command_tx
+                .send(PlayerCommand::SkipPrevious);
         }
 
         let current_track = self.track_state.track.is_some();
@@ -187,11 +191,14 @@ impl PlaybackBar {
         };
 
         if button(ui, toggle_playing_button) && current_track {
-            let _ = self.player_command_tx.send(PlayerCommand::Toggle);
+            let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }
 
         if button(ui, SKIP_FORWARD_SYMBOL) {
-            let _ = self.player_command_tx.send(PlayerCommand::SkipNext);
+            let _ = self
+                .channels
+                .player_command_tx
+                .send(PlayerCommand::SkipNext);
         }
     }
 
@@ -206,6 +213,7 @@ impl PlaybackBar {
 
         if volume_dx > f32::EPSILON {
             let _ = self
+                .channels
                 .player_command_tx
                 .send(PlayerCommand::SetVolume(self.track_state.volume));
 
@@ -236,9 +244,12 @@ impl PlaybackBar {
                 self.track_state.progress_base = Some(Duration::from_secs_f64(playback_secs));
                 self.track_state.progress_timestamp = Some(Instant::now());
 
-                let _ = self.player_command_tx.send(PlayerCommand::SetPosition(
-                    std::time::Duration::from_secs_f64(playback_secs),
-                ));
+                let _ = self
+                    .channels
+                    .player_command_tx
+                    .send(PlayerCommand::SetPosition(
+                        std::time::Duration::from_secs_f64(playback_secs),
+                    ));
             }
 
             let current_time = Duration::from_secs_f64(playback_secs.floor());

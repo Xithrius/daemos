@@ -5,12 +5,16 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-    use std::thread;
+    use std::{rc::Rc, thread};
 
     use crossbeam::channel;
     use drakn::{
-        Context, config::load::load_config, database::connection::Database, fonts::set_fonts,
-        logging::initialize_logging, playback::state::Player,
+        app::{App, Channels},
+        config::load::load_config,
+        database::connection::Database,
+        fonts::set_fonts,
+        logging::initialize_logging,
+        playback::state::Player,
     };
     use tracing::{error, info};
 
@@ -40,8 +44,8 @@ fn main() -> eframe::Result {
         info!("Spawned player thread");
 
         let player = match Player::new(player_event_tx, player_cmd_rx) {
-            Err(e) => {
-                let _ = err_tx.send(Some(e));
+            Err(err) => {
+                let _ = err_tx.send(Some(err));
                 return;
             }
             Ok(player) => {
@@ -58,20 +62,20 @@ fn main() -> eframe::Result {
         std::process::exit(1);
     }
 
+    let channels = Rc::new(Channels::new(
+        database_command_tx,
+        database_event_rx,
+        player_command_tx,
+        player_event_rx,
+    ));
+
     eframe::run_native(
         "Drakn",
         options,
         Box::new(|cc| {
             set_fonts(cc);
 
-            let context = Context::new(
-                cc,
-                config,
-                database_command_tx,
-                database_event_rx,
-                player_command_tx,
-                player_event_rx,
-            );
+            let context = App::new(cc, config, channels);
 
             Ok(Box::new(context))
         }),

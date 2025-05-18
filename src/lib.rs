@@ -1,6 +1,4 @@
-mod context;
-pub use context::Context;
-
+pub mod app;
 pub mod components;
 pub mod config;
 pub mod database;
