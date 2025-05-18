@@ -54,9 +54,9 @@ impl Components {
     ) -> Self {
         Self {
             top_menu_bar: MenuBar::default(),
-            track_table: TrackTable::new(context, channels.clone()),
+            track_table: TrackTable::new(context.clone(), channels.clone()),
             playlist_tree: Tree::default(),
-            playback_bar: PlaybackBar::new(&config, channels),
+            playback_bar: PlaybackBar::new(&config, context, channels),
             settings: Settings::new(config),
         }
     }

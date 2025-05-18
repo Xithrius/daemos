@@ -10,6 +10,7 @@ use tracing::{debug, warn};
 use super::ComponentChannels;
 use crate::{
     config::core::CoreConfig,
+    context::SharedContext,
     database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
@@ -74,26 +75,26 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
+    context: SharedContext,
     channels: Rc<ComponentChannels>,
     track_state: TrackState,
-    find_next_track: bool,
     debug: bool,
 }
 
 impl PlaybackBar {
-    pub fn new(config: &CoreConfig, channels: Rc<ComponentChannels>) -> Self {
+    pub fn new(
+        config: &CoreConfig,
+        context: SharedContext,
+        channels: Rc<ComponentChannels>,
+    ) -> Self {
         let track_state = TrackState::new(config.volume.default);
 
         Self {
+            context,
             channels,
             track_state,
-            find_next_track: false,
             debug: false,
         }
-    }
-
-    pub fn find_next_track_mut(&mut self) -> &mut bool {
-        &mut self.find_next_track
     }
 
     fn reset_track_state(&mut self) {
@@ -119,7 +120,6 @@ impl PlaybackBar {
                     self.track_state.playing = true;
                     self.track_state.progress_base = Some(Duration::ZERO);
                     self.track_state.progress_timestamp = Some(Instant::now());
-                    self.find_next_track = false;
                 }
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
@@ -229,9 +229,8 @@ impl PlaybackBar {
             let total_duration_secs = track.duration_secs;
 
             if playback_secs >= total_duration_secs {
-                self.find_next_track = true;
                 self.reset_track_state();
-                debug!("END OF TRACK REACHED");
+                self.context.borrow_mut().set_select_next_track(true);
                 return;
             }
 
