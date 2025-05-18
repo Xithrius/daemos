@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use super::ComponentChannels;
 use crate::{
+    context::SharedContext,
     database::{connection::DatabaseCommand, models::tracks::Track},
     files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
@@ -34,10 +35,11 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 pub struct TrackTable {
+    context: SharedContext,
+    channels: Rc<ComponentChannels>,
+
     tracks: Vec<Track>,
     track_ids: HashSet<Uuid>,
-
-    channels: Rc<ComponentChannels>,
 
     #[allow(dead_code)]
     selection: HashSet<usize>,
@@ -48,15 +50,17 @@ pub struct TrackTable {
 }
 
 impl TrackTable {
-    pub fn new(channels: Rc<ComponentChannels>) -> Self {
+    pub fn new(context: SharedContext, channels: Rc<ComponentChannels>) -> Self {
         let _ = channels
             .database_command_tx
             .send(DatabaseCommand::QueryAllTracks);
 
         Self {
+            context,
+            channels,
+
             tracks: Vec::new(),
             track_ids: HashSet::default(),
-            channels,
             selection: HashSet::default(),
             playing: None,
             search_text: String::new(),
@@ -149,9 +153,9 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
-    fn next_track_autoplay(&mut self, filtered_tracks: &[Track], select_next_track: &mut bool) {
+    fn select_incoming_track(&mut self, filtered_tracks: &[Track]) {
         if let Some(playing) = &self.playing {
-            *select_next_track = false;
+            self.context.borrow_mut().set_select_next_track(false);
 
             let Some(index) = filtered_tracks
                 .iter()
@@ -179,7 +183,7 @@ impl TrackTable {
         }
     }
 
-    fn ui_table(&mut self, ui: &mut egui::Ui, height: f32, select_next_track: &mut bool) {
+    fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
         // TODO: Don't clone here
         let filtered_tracks: Vec<Track> = self
             .tracks
@@ -198,8 +202,8 @@ impl TrackTable {
             .map(|track| track.to_owned())
             .collect();
 
-        if *select_next_track {
-            self.next_track_autoplay(&filtered_tracks, select_next_track);
+        if self.context.borrow().select_next_track() {
+            self.select_incoming_track(&filtered_tracks);
         }
 
         let table = TableBuilder::new(ui)
@@ -302,12 +306,7 @@ impl TrackTable {
         }
     }
 
-    pub fn ui(
-        &mut self,
-        ui: &mut egui::Ui,
-        player_event: &Option<PlayerEvent>,
-        select_next_track: &mut bool,
-    ) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
         if let Some(event) = player_event {
             self.handle_player_event(event.clone());
             ui.ctx().request_repaint();
@@ -320,7 +319,7 @@ impl TrackTable {
 
             ui.separator();
 
-            self.ui_table(ui, height, select_next_track);
+            self.ui_table(ui, height);
         });
     }
 }

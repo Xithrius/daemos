@@ -40,12 +40,12 @@ impl App {
             channels.database_command_tx.clone(),
             channels.player_command_tx.clone(),
         ));
-        let components = Components::new(config.clone(), component_channels);
+        let components = Components::new(config.clone(), context.clone(), component_channels);
 
         Self {
             config,
-            components,
             channels,
+            components,
         }
     }
 
@@ -146,17 +146,13 @@ impl eframe::App for App {
             self.components.playback_bar.ui(ui, &player_event);
         });
 
-        let select_next_track = self.components.playback_bar.find_next_track_mut();
-
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     self.components.playlist_tree.ui(ui);
                     vertical_separator!(ui);
 
-                    self.components
-                        .track_table
-                        .ui(ui, &player_event, select_next_track);
+                    self.components.track_table.ui(ui, &player_event);
                 });
             });
         });

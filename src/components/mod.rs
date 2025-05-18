@@ -15,6 +15,7 @@ use crate::{
         tree::Tree,
     },
     config::core::CoreConfig,
+    context::SharedContext,
     database::connection::DatabaseCommand,
     playback::state::PlayerCommand,
 };
@@ -46,10 +47,14 @@ pub struct Components {
 }
 
 impl Components {
-    pub fn new(config: CoreConfig, channels: Rc<ComponentChannels>) -> Self {
+    pub fn new(
+        config: CoreConfig,
+        context: SharedContext,
+        channels: Rc<ComponentChannels>,
+    ) -> Self {
         Self {
             top_menu_bar: MenuBar::default(),
-            track_table: TrackTable::new(channels.clone()),
+            track_table: TrackTable::new(context, channels.clone()),
             playlist_tree: Tree::default(),
             playback_bar: PlaybackBar::new(&config, channels),
             settings: Settings::new(config),
