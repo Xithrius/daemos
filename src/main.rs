@@ -9,12 +9,8 @@ fn main() -> eframe::Result {
 
     use crossbeam::channel;
     use drakn::{
-        app::{App, Channels},
-        config::load::load_config,
-        database::connection::Database,
-        fonts::set_fonts,
-        logging::initialize_logging,
-        playback::state::Player,
+        app::App, channels::Channels, config::load::load_config, database::connection::Database,
+        fonts::set_fonts, logging::initialize_logging, playback::state::Player,
     };
     use tracing::{error, info};
 

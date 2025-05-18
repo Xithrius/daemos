@@ -1,42 +1,18 @@
 use std::rc::Rc;
 
-use crossbeam::channel::{Receiver, Sender};
 use egui::{Key, KeyboardShortcut, Modifiers, Separator};
 use tracing::{debug, error};
 
 use crate::{
+    channels::Channels,
     components::{ComponentChannels, Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
+    context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
     files::open::{get_tracks, select_folders_dialog},
-    playback::state::{PlayerCommand, PlayerEvent},
+    playback::state::PlayerCommand,
     vertical_separator,
 };
-
-#[derive(Debug, Clone)]
-pub struct Channels {
-    database_command_tx: Sender<DatabaseCommand>,
-    database_event_rx: Receiver<DatabaseEvent>,
-
-    player_command_tx: Sender<PlayerCommand>,
-    player_event_rx: Receiver<PlayerEvent>,
-}
-
-impl Channels {
-    pub fn new(
-        database_command_tx: Sender<DatabaseCommand>,
-        database_event_rx: Receiver<DatabaseEvent>,
-        player_command_tx: Sender<PlayerCommand>,
-        player_event_rx: Receiver<PlayerEvent>,
-    ) -> Self {
-        Self {
-            database_command_tx,
-            database_event_rx,
-            player_command_tx,
-            player_event_rx,
-        }
-    }
-}
 
 pub struct App {
     config: CoreConfig,
@@ -57,6 +33,8 @@ impl App {
         // if let Some(storage) = cc.storage {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
+
+        let context = SharedContext::default();
 
         let component_channels = Rc::new(ComponentChannels::new(
             channels.database_command_tx.clone(),

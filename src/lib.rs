@@ -1,6 +1,8 @@
 pub mod app;
+pub mod channels;
 pub mod components;
 pub mod config;
+pub mod context;
 pub mod database;
 pub mod files;
 pub mod fonts;
