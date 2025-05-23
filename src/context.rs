@@ -19,7 +19,7 @@ pub enum ShuffleType {
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     select_previous_track: bool,
-    select_next_track: bool,
+    select_new_track: bool,
     shuffle: ShuffleType,
 }
 
@@ -29,19 +29,15 @@ impl Context {
     }
 
     pub fn select_next_track(&self) -> bool {
-        self.select_next_track
+        self.select_new_track
     }
 
     pub fn shuffle(&self) -> &ShuffleType {
         &self.shuffle
     }
 
-    pub fn set_select_previous_track(&mut self, val: bool) {
-        self.select_previous_track = val;
-    }
-
-    pub fn set_select_next_track(&mut self, val: bool) {
-        self.select_next_track = val;
+    pub fn set_select_new_track(&mut self, val: bool) {
+        self.select_new_track = val;
     }
 
     pub fn set_shuffle(&mut self, shuffle: ShuffleType) {

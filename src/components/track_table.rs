@@ -153,9 +153,9 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
-    fn select_incoming_track(&mut self, filtered_tracks: &[Track]) {
+    fn select_new_track(&mut self, filtered_tracks: &[Track]) {
         if let Some(playing) = &self.playing {
-            self.context.borrow_mut().set_select_next_track(false);
+            self.context.borrow_mut().set_select_new_track(false);
 
             let Some(index) = filtered_tracks
                 .iter()
@@ -179,7 +179,11 @@ impl TrackTable {
                 .player_command_tx
                 .send(PlayerCommand::Create(new_track.clone()));
 
-            self.playing = Some(TrackState::new(new_index, new_track.clone(), true));
+            let new_track_state = TrackState::new(new_index, new_track.clone(), true);
+
+            debug!("Selected new track with autoplay: {:?}", new_track_state);
+
+            self.playing = Some(new_track_state);
         }
     }
 
@@ -203,7 +207,7 @@ impl TrackTable {
             .collect();
 
         if self.context.borrow().select_next_track() {
-            self.select_incoming_track(&filtered_tracks);
+            self.select_new_track(&filtered_tracks);
         }
 
         let table = TableBuilder::new(ui)

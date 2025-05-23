@@ -56,7 +56,7 @@ impl TryFrom<&Row<'_>> for Track {
                 .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
         };
 
-        Ok(Track {
+        let track = Track {
             id: parse_uuid(row.get::<_, String>("id")?)?,
             path: PathBuf::from(row.get::<_, String>("path")?),
             hash: row.get("hash")?,
@@ -64,7 +64,9 @@ impl TryFrom<&Row<'_>> for Track {
             valid: row.get("valid")?,
             created_at: parse_date(row.get::<_, String>("created_at")?)?,
             updated_at: parse_date(row.get::<_, String>("updated_at")?)?,
-        })
+        };
+
+        Ok(track)
     }
 }
 

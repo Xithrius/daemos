@@ -230,7 +230,7 @@ impl PlaybackBar {
 
             if playback_secs >= total_duration_secs {
                 self.reset_track_state();
-                self.context.borrow_mut().set_select_next_track(true);
+                self.context.borrow_mut().set_select_new_track(true);
                 return;
             }
 
