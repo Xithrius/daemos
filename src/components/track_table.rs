@@ -1,4 +1,8 @@
-use std::{collections::HashSet, rc::Rc, time::Duration};
+use std::{
+    collections::HashSet,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
@@ -39,6 +43,7 @@ pub struct TrackTable {
     channels: Rc<ComponentChannels>,
 
     tracks: Vec<Track>,
+    filtered_tracks: Vec<Track>,
     track_ids: HashSet<Uuid>,
 
     #[allow(dead_code)]
@@ -46,6 +51,7 @@ pub struct TrackTable {
     playing: Option<TrackState>,
 
     search_text: String,
+    search_changed: bool,
     search_focused: bool,
     search_focus_requested: bool,
 }
@@ -61,10 +67,12 @@ impl TrackTable {
             channels,
 
             tracks: Vec::new(),
+            filtered_tracks: Vec::new(),
             track_ids: HashSet::default(),
             selection: HashSet::default(),
             playing: None,
             search_text: String::new(),
+            search_changed: false,
             search_focused: false,
             search_focus_requested: false,
         }
@@ -159,11 +167,12 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
-    fn select_new_track(&mut self, filtered_tracks: &[Track]) {
+    fn select_new_track(&mut self) {
         if let Some(playing) = &self.playing {
             self.context.borrow_mut().set_select_new_track(false);
 
-            let Some(index) = filtered_tracks
+            let Some(index) = self
+                .filtered_tracks
                 .iter()
                 .position(|track| track.hash == playing.track.hash)
             else {
@@ -173,8 +182,8 @@ impl TrackTable {
                 return;
             };
 
-            let new_index = (index + 1) % filtered_tracks.len();
-            let Some(new_track) = filtered_tracks.get(new_index) else {
+            let new_index = (index + 1) % self.filtered_tracks.len();
+            let Some(new_track) = self.filtered_tracks.get(new_index) else {
                 let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
                 self.playing = None;
                 return;
@@ -194,12 +203,15 @@ impl TrackTable {
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
-        let filtered_tracks: Vec<Track> = if self.search_text.is_empty() {
-            self.tracks.clone()
-        } else {
+        if self.search_text.is_empty() {
+            self.filtered_tracks = self.tracks.clone();
+        } else if self.search_changed {
             let search_lower = self.search_text.to_lowercase();
 
-            self.tracks
+            let start = Instant::now();
+
+            let filtered_tracks = self
+                .tracks
                 .iter()
                 .filter_map(|track| {
                     get_track_file_name(track.path.clone()).and_then(|name| {
@@ -210,11 +222,16 @@ impl TrackTable {
                         }
                     })
                 })
-                .collect()
-        };
+                .collect();
+
+            let duration = start.elapsed();
+            debug!("Filtered tracks with user search input took {:?}", duration);
+
+            self.filtered_tracks = filtered_tracks;
+        }
 
         if self.context.borrow().select_next_track() {
-            self.select_new_track(&filtered_tracks);
+            self.select_new_track();
         }
 
         let table = TableBuilder::new(ui)
@@ -237,12 +254,12 @@ impl TrackTable {
                 });
             })
             .body(|body| {
-                let num_rows = filtered_tracks.len();
+                let num_rows = self.filtered_tracks.len();
 
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
                     let row_index = row.index();
 
-                    let track = filtered_tracks.get(row_index).cloned();
+                    let track = self.filtered_tracks.get(row_index).cloned();
                     let playing = self.playing.clone();
 
                     if let Some(track) = track {
@@ -315,6 +332,7 @@ impl TrackTable {
             self.search_focus_requested = false;
         }
 
+        self.search_changed = response.changed();
         self.search_focused = response.has_focus();
 
         // if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {

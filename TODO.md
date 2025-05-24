@@ -114,7 +114,7 @@
 - [ ] General UI look/feel
 
   - [x] Change font to Space mono font
-  - [ ] Configurable font size
+  - [ ] font size\*
 
 \* Should be configurable
 
