@@ -299,7 +299,7 @@ impl TrackTable {
     fn ui_search(&mut self, ui: &mut egui::Ui) {
         if self.search_text.is_empty() {
             self.filtered_tracks = self.tracks.clone();
-        } else if self.search_changed {
+        } else if self.search_changed && !self.filtered_tracks.is_empty() {
             let search_lower = self.search_text.to_lowercase();
 
             let start = Instant::now();
