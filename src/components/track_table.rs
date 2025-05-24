@@ -54,6 +54,7 @@ pub struct TrackTable {
     search_changed: bool,
     search_focused: bool,
     search_focus_requested: bool,
+    search_duration: Option<Duration>,
 }
 
 impl TrackTable {
@@ -75,6 +76,7 @@ impl TrackTable {
             search_changed: false,
             search_focused: false,
             search_focus_requested: false,
+            search_duration: None,
         }
     }
 
@@ -203,33 +205,6 @@ impl TrackTable {
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
-        if self.search_text.is_empty() {
-            self.filtered_tracks = self.tracks.clone();
-        } else if self.search_changed {
-            let search_lower = self.search_text.to_lowercase();
-
-            let start = Instant::now();
-
-            let filtered_tracks = self
-                .tracks
-                .iter()
-                .filter_map(|track| {
-                    get_track_file_name(track.path.clone()).and_then(|name| {
-                        if name.to_lowercase().contains(&search_lower) {
-                            Some(track.clone())
-                        } else {
-                            None
-                        }
-                    })
-                })
-                .collect();
-
-            let duration = start.elapsed();
-            debug!("Filtered tracks with user search input took {:?}", duration);
-
-            self.filtered_tracks = filtered_tracks;
-        }
-
         if self.context.borrow().select_next_track() {
             self.select_new_track();
         }
@@ -322,6 +297,34 @@ impl TrackTable {
     }
 
     fn ui_search(&mut self, ui: &mut egui::Ui) {
+        if self.search_text.is_empty() {
+            self.filtered_tracks = self.tracks.clone();
+        } else if self.search_changed {
+            let search_lower = self.search_text.to_lowercase();
+
+            let start = Instant::now();
+
+            let filtered_tracks = self
+                .tracks
+                .iter()
+                .filter_map(|track| {
+                    get_track_file_name(track.path.clone()).and_then(|name| {
+                        if name.to_lowercase().contains(&search_lower) {
+                            Some(track.clone())
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .collect();
+
+            let duration = start.elapsed();
+            self.search_duration = Some(duration);
+            debug!("Filtered tracks with user search input took {:?}", duration);
+
+            self.filtered_tracks = filtered_tracks;
+        }
+
         let search_text_edit =
             egui::TextEdit::singleline(&mut self.search_text).hint_text("Search...");
 
@@ -334,10 +337,6 @@ impl TrackTable {
 
         self.search_changed = response.changed();
         self.search_focused = response.has_focus();
-
-        // if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-        //     debug!("Searched: {}", self.search_text);
-        // }
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
@@ -349,7 +348,19 @@ impl TrackTable {
         let height = ui.available_height();
 
         ui.vertical(|ui| {
-            self.ui_search(ui);
+            ui.horizontal(|ui| {
+                self.ui_search(ui);
+
+                if let Some(search_duration) = self.search_duration {
+                    if self.filtered_tracks.len() != self.tracks.len() {
+                        ui.label(format!(
+                            "{} results in {:?}",
+                            self.filtered_tracks.len(),
+                            search_duration
+                        ));
+                    }
+                }
+            });
 
             ui.separator();
 
