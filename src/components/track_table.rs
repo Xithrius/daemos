@@ -47,6 +47,7 @@ pub struct TrackTable {
 
     search_text: String,
     search_focused: bool,
+    search_focus_requested: bool,
 }
 
 impl TrackTable {
@@ -65,11 +66,16 @@ impl TrackTable {
             playing: None,
             search_text: String::new(),
             search_focused: false,
+            search_focus_requested: false,
         }
     }
 
     pub fn search_focused(&self) -> bool {
         self.search_focused
+    }
+
+    pub fn request_search_focus(&mut self) {
+        self.search_focus_requested = true
     }
 
     pub fn set_tracks(&mut self, tracks: Vec<Track>) {
@@ -197,7 +203,9 @@ impl TrackTable {
                     return if self.search_text.is_empty() {
                         true
                     } else {
-                        track_file_name.to_lowercase().contains(&self.search_text)
+                        track_file_name
+                            .to_lowercase()
+                            .contains(&self.search_text.to_lowercase())
                     };
                 }
 
@@ -303,11 +311,16 @@ impl TrackTable {
 
         let response = ui.add(search_text_edit);
 
+        if self.search_focus_requested {
+            response.request_focus();
+            self.search_focus_requested = false;
+        }
+
         self.search_focused = response.has_focus();
 
-        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-            debug!("Searched: {}", self.search_text);
-        }
+        // if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+        //     debug!("Searched: {}", self.search_text);
+        // }
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {

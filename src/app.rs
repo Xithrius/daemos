@@ -72,8 +72,11 @@ impl App {
     }
 
     fn handle_keybinds(&mut self, ctx: &egui::Context) {
+        // Debug wireframe
         #[cfg(debug_assertions)]
         if ctx.input(|i| i.key_pressed(Key::F3)) {
+            debug!("`F3` Has been used to toggle the debug wireframe");
+
             self.config.general.debug = !self.config.general.debug;
 
             if self.config.general.debug != ctx.debug_on_hover() {
@@ -81,12 +84,17 @@ impl App {
             }
         }
 
+        // Open OS file explorer to select folder of tracks
         if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL | Modifiers::SHIFT,
                 logical_key: Key::O,
             })
         }) {
+            debug!(
+                "`Ctrl + Shift + O` has been used to open OS file explorer for track folder selection"
+            );
+
             if let Some(selected_folders) = select_folders_dialog() {
                 let mut tracks = Vec::new();
 
@@ -105,6 +113,18 @@ impl App {
                     error!("Failed to send insert tracks command to database: {}", err);
                 }
             }
+        }
+
+        // Focus search input box
+        if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL,
+                logical_key: Key::F,
+            })
+        }) {
+            debug!("`Ctrl + F` has been used to focus user input for searching");
+
+            self.components.track_table.request_search_focus();
         }
     }
 }

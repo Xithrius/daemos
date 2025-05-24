@@ -88,6 +88,13 @@
   - [ ] Playlists
   - [ ] Database tasks (other tasks in the future?)
 
+- [ ] Keybinds
+
+  - [ ] Ctrl+Shift+O to open a folder of tracks in the OS file explorer
+  - [ ] Space for toggling pause/play
+  - [ ] F3 to toggle the debug wireframe
+  - [ ] Ctrl+F to focus the search input box
+
 - [ ] Settings
 
   - [x] Popup widget (another window)
@@ -121,5 +128,7 @@
 ## Issues
 
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
-- [-] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
-- [ ] Vertically center the playback previous/toggle/next controls ([relevant issue](https://github.com/emilk/egui/discussions/1197))
+- [x] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
+- [ ] Vertically center the playback previous/toggle/next controls
+  - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)
+- [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
