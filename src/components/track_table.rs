@@ -194,25 +194,24 @@ impl TrackTable {
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
-        // TODO: Don't clone here
-        let filtered_tracks: Vec<Track> = self
-            .tracks
-            .iter()
-            .filter(|track| {
-                if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
-                    return if self.search_text.is_empty() {
-                        true
-                    } else {
-                        track_file_name
-                            .to_lowercase()
-                            .contains(&self.search_text.to_lowercase())
-                    };
-                }
+        let filtered_tracks: Vec<Track> = if self.search_text.is_empty() {
+            self.tracks.clone()
+        } else {
+            let search_lower = self.search_text.to_lowercase();
 
-                false
-            })
-            .map(|track| track.to_owned())
-            .collect();
+            self.tracks
+                .iter()
+                .filter_map(|track| {
+                    get_track_file_name(track.path.clone()).and_then(|name| {
+                        if name.to_lowercase().contains(&search_lower) {
+                            Some(track.clone())
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .collect()
+        };
 
         if self.context.borrow().select_next_track() {
             self.select_new_track(&filtered_tracks);
