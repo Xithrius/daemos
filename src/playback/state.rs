@@ -12,9 +12,12 @@ use crossbeam::{
 };
 use rodio::{Decoder, OutputStream, Sink};
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
-use crate::database::models::tracks::Track;
+use crate::{
+    database::models::tracks::Track, files::open::get_track_file_name,
+    playback::notifications::now_playing,
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum PlayerEvent {
@@ -120,6 +123,12 @@ impl Player {
 
         self.player_event_tx
             .send(PlayerEvent::TrackChanged(track.clone()))?;
+
+        if let Some(new_track_file_name) = get_track_file_name(track.path.clone()) {
+            now_playing(new_track_file_name);
+        } else {
+            warn!("Could not get new track file name for now playing desktop notification");
+        }
 
         Ok(())
     }
