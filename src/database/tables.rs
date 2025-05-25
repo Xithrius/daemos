@@ -28,17 +28,27 @@ CREATE TABLE IF NOT EXISTS playlists (
 );
 ";
 
+const PLAYLIST_TRACKS_TABLE: &str = "
+CREATE TABLE playlist_tracks (
+    PRIMARY KEY (playlist_id, track_id),
+
+    playlist_id TEXT NOT NULL,
+    track_id TEXT NOT NULL,
+
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+);
+";
+
+const TABLES: [&str; 3] = [TRACKS_TABLE, PLAYLISTS_TABLE, PLAYLIST_TRACKS_TABLE];
+
 impl Database {
     pub(crate) fn create_tables(conn: &mut Connection) -> Result<()> {
-        conn.execute_batch(&format!(
-            "
-            BEGIN;
-            {}
-            {}
-            COMMIT;
-            ",
-            TRACKS_TABLE, PLAYLISTS_TABLE
-        ))?;
+        for table in TABLES {
+            conn.execute(table, ())?;
+        }
 
         Ok(())
     }

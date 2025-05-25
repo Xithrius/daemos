@@ -97,7 +97,7 @@
   - [ ] `Ctrl+,` to open settings popup
 
 - [ ] Autoplay
-  - [ ] Notify on track change
+  - [x] Notify on track change
   - [ ] Show track that is currently playing on playback bar
 
 - [ ] Settings
