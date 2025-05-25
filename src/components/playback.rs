@@ -78,7 +78,6 @@ pub struct PlaybackBar {
     context: SharedContext,
     channels: Rc<ComponentChannels>,
     track_state: TrackState,
-    debug: bool,
 }
 
 impl PlaybackBar {
@@ -93,7 +92,6 @@ impl PlaybackBar {
             context,
             channels,
             track_state,
-            debug: false,
         }
     }
 
@@ -272,7 +270,7 @@ impl PlaybackBar {
 
     fn debug_window(&mut self, ui: &mut egui::Ui) {
         egui::Window::new("Playback Debug Info")
-            .open(&mut self.debug)
+            .open(self.context.borrow_mut().debug_playback_mut())
             .collapsible(true)
             .resizable(true)
             .default_size([400.0, 250.0])
@@ -333,23 +331,16 @@ impl PlaybackBar {
             ui.ctx().request_repaint();
         }
 
-        if self.debug {
+        if self.context.borrow().debug_playback() {
             self.debug_window(ui);
         }
 
-        let playback_bar = ui.horizontal_centered(|ui| {
+        ui.horizontal_centered(|ui| {
             self.ui_playback_controls(ui);
 
             self.ui_seek(ui);
 
             self.ui_volume(ui);
-        });
-
-        playback_bar.response.context_menu(|ui| {
-            if ui.button("Toggle Debug Info").clicked() {
-                self.debug = !self.debug;
-                ui.close_menu();
-            }
         });
     }
 }

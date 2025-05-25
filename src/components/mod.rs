@@ -53,11 +53,11 @@ impl Components {
         channels: Rc<ComponentChannels>,
     ) -> Self {
         Self {
-            top_menu_bar: MenuBar::default(),
+            top_menu_bar: MenuBar::new(context.clone()),
             track_table: TrackTable::new(context.clone(), channels.clone()),
             playlist_tree: Tree::default(),
-            playback_bar: PlaybackBar::new(&config, context, channels),
-            settings: Settings::new(config),
+            playback_bar: PlaybackBar::new(&config, context.clone(), channels),
+            settings: Settings::new(config, context),
         }
     }
 }

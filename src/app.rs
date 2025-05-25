@@ -154,9 +154,7 @@ impl eframe::App for App {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                self.components
-                    .top_menu_bar
-                    .ui(ctx, ui, self.components.settings.visible_mut());
+                self.components.top_menu_bar.ui(ctx, ui);
             });
         });
 

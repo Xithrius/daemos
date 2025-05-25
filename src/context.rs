@@ -21,6 +21,8 @@ pub struct Context {
     select_previous_track: bool,
     select_new_track: bool,
     shuffle: ShuffleType,
+    visible_settings: bool,
+    debug_playback: bool,
 }
 
 impl Context {
@@ -36,12 +38,36 @@ impl Context {
         &self.shuffle
     }
 
-    pub fn set_select_new_track(&mut self, val: bool) {
-        self.select_new_track = val;
+    pub fn set_select_new_track(&mut self, new_track: bool) {
+        self.select_new_track = new_track;
     }
 
     pub fn set_shuffle(&mut self, shuffle: ShuffleType) {
         self.shuffle = shuffle;
+    }
+
+    pub fn visible_settings_mut(&mut self) -> &mut bool {
+        &mut self.visible_settings
+    }
+
+    pub fn visible_settings(&self) -> bool {
+        self.visible_settings
+    }
+
+    pub fn set_visible_settings(&mut self, visibility: bool) {
+        self.visible_settings = visibility;
+    }
+
+    pub fn debug_playback_mut(&mut self) -> &mut bool {
+        &mut self.debug_playback
+    }
+
+    pub fn debug_playback(&self) -> bool {
+        self.debug_playback
+    }
+
+    pub fn set_debug_playback(&mut self, visibility: bool) {
+        self.debug_playback = visibility;
     }
 }
 

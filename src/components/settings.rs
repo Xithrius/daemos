@@ -1,5 +1,5 @@
 use super::utils::positioning::centered_position;
-use crate::config::core::CoreConfig;
+use crate::{config::core::CoreConfig, context::SharedContext};
 
 const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 
@@ -7,36 +7,21 @@ const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 pub struct Settings {
     #[allow(dead_code)]
     config: CoreConfig,
-    visible: bool,
+    context: SharedContext,
 }
 
 impl Settings {
-    pub fn new(config: CoreConfig) -> Self {
-        Self {
-            config,
-            visible: false,
-        }
-    }
-
-    pub fn visible_mut(&mut self) -> &mut bool {
-        &mut self.visible
-    }
-
-    pub fn is_visible(&self) -> bool {
-        self.visible
-    }
-
-    pub fn set_visible(&mut self, visible: bool) {
-        self.visible = visible;
+    pub fn new(config: CoreConfig, context: SharedContext) -> Self {
+        Self { config, context }
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.visible {
+        if !self.context.borrow().visible_settings() {
             return;
         }
 
         egui::Window::new("Settings")
-            .open(&mut self.visible)
+            .open(self.context.borrow_mut().visible_settings_mut())
             .resizable(true)
             .title_bar(true)
             .default_pos(centered_position(ctx, DEFAULT_SETTINGS_WINDOW_SIZE))

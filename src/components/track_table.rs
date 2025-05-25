@@ -299,12 +299,20 @@ impl TrackTable {
     fn ui_search(&mut self, ui: &mut egui::Ui) {
         if self.search_text.is_empty() {
             self.filtered_tracks = self.tracks.clone();
-        } else if self.search_changed && !self.filtered_tracks.is_empty() {
+        }
+        // Only recalculate the filtered tracks if the search input has changed
+        // and the previous search yielded some results
+
+        // TODO
+        // Keep track of previous search that yielded result such that if we
+        // delete characters to go back to that same search length, then add more characters,
+        // calculation of filtered tracks will begin again
+        else if self.search_changed && !self.filtered_tracks.is_empty() {
             let search_lower = self.search_text.to_lowercase();
 
             let start = Instant::now();
 
-            let filtered_tracks = self
+            let filtered_tracks: Vec<Track> = self
                 .tracks
                 .iter()
                 .filter_map(|track| {
@@ -320,7 +328,11 @@ impl TrackTable {
 
             let duration = start.elapsed();
             self.search_duration = Some(duration);
-            debug!("Filtered tracks with user search input took {:?}", duration);
+            debug!(
+                "Filtered into {} tracks in {:?}",
+                filtered_tracks.len(),
+                duration
+            );
 
             self.filtered_tracks = filtered_tracks;
         }

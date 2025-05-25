@@ -90,10 +90,15 @@
 
 - [ ] Keybinds
 
-  - [ ] Ctrl+Shift+O to open a folder of tracks in the OS file explorer
-  - [ ] Space for toggling pause/play
-  - [ ] F3 to toggle the debug wireframe
-  - [ ] Ctrl+F to focus the search input box
+  - [x] `Ctrl+Shift+O` to open a folder of tracks in the OS file explorer
+  - [x] `Space` for toggling pause/play
+  - [x] `F3` to toggle the debug wireframe
+  - [x] `Ctrl+F` to focus the search input box
+  - [ ] `Ctrl+,` to open settings popup
+
+- [ ] Autoplay
+  - [ ] Notify on track change
+  - [ ] Show track that is currently playing on playback bar
 
 - [ ] Settings
 
