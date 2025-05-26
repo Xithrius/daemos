@@ -8,8 +8,8 @@ use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 use uuid::Uuid;
 
-use super::ComponentChannels;
 use crate::{
+    components::ComponentChannels,
     context::SharedContext,
     database::{connection::DatabaseCommand, models::tracks::Track},
     files::open::get_track_file_name,

@@ -1,20 +1,17 @@
 pub mod menu_bar;
 pub mod playback;
 pub mod settings;
-pub mod track_table;
-pub mod tree;
+pub mod tables;
 pub mod utils;
 
 use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
 use egui_dock::TabViewer;
+use tables::{playlists::PlaylistTable, tracks::TrackTable};
 
 use crate::{
-    components::{
-        menu_bar::MenuBar, playback::PlaybackBar, settings::Settings, track_table::TrackTable,
-        tree::Tree,
-    },
+    components::{menu_bar::MenuBar, playback::PlaybackBar, settings::Settings},
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::DatabaseCommand,
@@ -58,7 +55,7 @@ impl ComponentChannels {
 pub struct Components {
     pub top_menu_bar: MenuBar,
     pub track_table: TrackTable,
-    pub playlist_tree: Tree,
+    pub playlists: PlaylistTable,
     pub playback_bar: PlaybackBar,
     pub settings: Settings,
 
@@ -74,7 +71,7 @@ impl Components {
         Self {
             top_menu_bar: MenuBar::new(context.clone()),
             track_table: TrackTable::new(context.clone(), channels.clone()),
-            playlist_tree: Tree::default(),
+            playlists: PlaylistTable::new(context.clone()),
             playback_bar: PlaybackBar::new(&config, context.clone(), channels),
             settings: Settings::new(config, context),
             current_player_event: None,
@@ -96,7 +93,7 @@ impl TabViewer for Components {
     fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Self::Tab) {
         match tab {
             ComponentTab::Playlists => {
-                self.playlist_tree.ui(ui);
+                self.playlists.ui(ui);
             }
             ComponentTab::Tracks => {
                 self.track_table.ui(ui, &self.current_player_event);

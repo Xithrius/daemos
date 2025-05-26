@@ -5,7 +5,7 @@
 - [x] UI sections (fake/real data)
 
   - [x] Music
-  - [x] Playlist tree
+  - [x] Playlists
 
 - [x] Basic UI
 
@@ -17,29 +17,17 @@
     - [x] Next track
     - [x] Previous track
 
-- [ ] Tracks and playlists
+- [ ] Database
 
-  - [ ] Sqlite database
-    - [x] Connection
-    - [x] Table definitions and creation
-      - [x] Tracks
-      - [x] Playlists
-    - [x] CRUD for each table
-      - [x] Tracks
-      - [ ] Playlists
-  - [ ] Tracks
-    - [x] Should not query once per frame
-      - [x] At startup query once then put into vector
-    - [x] Hashing
-      - [x] On track insert, hash said track
-    - [ ] Validation of tracks (via settings)
-      - [ ] At startup
-      - [ ] Every once in a while
-      - [ ] **DO NOT** remove file, instead mark with warning and ask user to either correct path or remove entry
-  - [ ] Playlist tree table
-    - One table, each row has a parent ID
-    - If a row doesn't have a parent, that means it's the root
-    - Create some query that would create a vector of vectors for the playlist tree UI
+  - [x] Sqlite connection
+  - [ ] Table definitions
+    - [x] Tracks
+    - [ ] Playlists
+    - [ ] Tags
+  - [ ] CRUD
+    - [x] Tracks
+    - [ ] Playlists
+    - [ ] Tags
 
 - [ ] Track UI table
 
@@ -74,7 +62,7 @@
     - [x] Seek bar elapsed and total track duration
   - [ ] Show currently selected track title
 
-- [x] Database
+- [x] Database background jobs
 
   - [x] Move to another thread
   - [x] Create an unbounded channel for receiving on thread's end, and sending from UI
@@ -83,12 +71,16 @@
   - [x] Replace all current command calls with sending messages
 
 - [ ] Tabs
-  - [ ] Install through [egui_dock](https://crates.io/crates/egui_dock)
-  - [ ] Tracks
-  - [ ] Playlists
-  - [ ] Database tasks (other tasks in the future?)
 
-- [ ] Keybinds
+  - [x] Install through [egui_dock](https://crates.io/crates/egui_dock)
+  - [ ] Left panel
+    - [x] Playlists
+  - [ ] Right panel
+    - [x] Tracks
+    - [ ] Tags
+    - [ ] Database tasks
+
+- [x] Keybinds
 
   - [x] `Ctrl+Shift+O` to open a folder of tracks in the OS file explorer
   - [x] `Space` for toggling pause/play
@@ -102,38 +94,49 @@
   - [ ] Default volume on startup
   - [ ] Default ordering of tracks
   - [ ] General config settings
-
   - [ ] Default folder to open when adding tracks
   - [ ] Toggle to hash tracks on insert
   - [ ] (re)calculation of all track hashes
+  - [ ] Validation of tracks
+    - [ ] At startup
+    - [ ] Every once in a while
+    - [ ] Mark with warning and ask user to either correct path or remove entry if invalid
 
 - [ ] First time setup
 
   - [ ] Offline stats to local storage
     - [ ] Times a track has been played
 
-- [ ] General UI look/feel
+- [ ] Misc
+
+  - [ ] When executing tasks, have a loading circle at the top right of the screen\*
+    - [x] Number when tasks start executing
+    - [ ] Change number when tasks are completed
+  - [ ] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
+  - [ ] Fuzzy track searching
+
+- [ ] Autoplay
+
+  - [ ] Iterative
+    - [x] Play next track in the table once the current one is done
+    - [x] Once last track is done, go to the start
+    - [ ] Reverse button on playback bar
+  - [ ] Shuffle
+    - [ ] Pseudo Random (don't play the same thing twice until everything is played)
+    - [ ] True Random (Pick any other track)
+    - [ ] Similar tracks (Hash distance?)
+
+- [ ] Fonts
 
   - [x] Change font to Space mono font
   - [ ] font size\*
 
-- [ ] Misc
-  - [ ] When executing tasks, have a loading circle at the top right of the screen
-  - [ ] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
-
 \* Should be configurable
-
-## Later
-
-- Shuffle
-  - Pseudo Random (don't play the same thing twice until everything is played)
-  - True Random (Pick any other track)
-  - Similar tracks (Hash distance?)
 
 ## Issues
 
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
 - [x] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
+- [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
 - [ ] Vertically center the playback previous/toggle/next controls
   - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)
-- [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track

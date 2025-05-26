@@ -4,12 +4,11 @@ use rusqlite::{Connection, Row, params};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::utils::parse::{parse_date, parse_uuid};
+use crate::database::models::utils::parse::{parse_date, parse_uuid};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct Playlist {
     pub id: Uuid,
-    pub parent_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -18,7 +17,6 @@ impl Default for Playlist {
     fn default() -> Self {
         Self {
             id: Uuid::new_v4(),
-            parent_id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }
@@ -30,13 +28,11 @@ impl TryFrom<&Row<'_>> for Playlist {
 
     fn try_from(row: &Row) -> Result<Self, Self::Error> {
         let id = parse_uuid(row.get::<_, String>("id")?)?;
-        let parent_id = row.get::<_, String>("parent_id").and_then(parse_uuid).ok();
         let created_at = parse_date(row.get::<_, String>("created_at")?)?;
         let updated_at = parse_date(row.get::<_, String>("updated_at")?)?;
 
         let playlist = Playlist {
             id,
-            parent_id,
             created_at,
             updated_at,
         };
@@ -48,15 +44,14 @@ impl TryFrom<&Row<'_>> for Playlist {
 impl Playlist {
     pub fn create(&self, conn: &Connection) -> rusqlite::Result<()> {
         let sql = "
-            INSERT INTO playlists (id, parent_id, created_at, updated_at)
-            VALUES (?1, ?2, ?3, ?4)
+            INSERT INTO playlists (id, created_at, updated_at)
+            VALUES (?1, ?2, ?3)
         ";
 
         conn.execute(
             sql,
             params![
                 self.id.to_string(),
-                self.parent_id.map(|id| id.to_string()),
                 self.created_at.to_rfc3339(),
                 self.updated_at.to_rfc3339(),
             ],

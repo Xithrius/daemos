@@ -106,6 +106,7 @@ impl Track {
 
         if inserted == 0 {
             debug!("Skipped duplicate track: {:?}", path);
+
             return Ok(None);
         }
 

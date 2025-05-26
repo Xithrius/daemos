@@ -4,7 +4,7 @@ use rusqlite::{Connection, Row, params};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::utils::parse::{parse_date, parse_uuid};
+use crate::database::models::utils::parse::{parse_date, parse_uuid};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 struct PlaylistTrack {

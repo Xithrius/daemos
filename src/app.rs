@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
-use egui_dock::{DockArea, DockState, NodeIndex, Style};
+use egui_dock::{DockArea, DockState, NodeIndex};
 use tracing::{debug, error};
 
 use crate::{
