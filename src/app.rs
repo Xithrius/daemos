@@ -63,6 +63,8 @@ impl App {
                 for track in new_tracks {
                     self.components.track_table.add_track(&track);
                 }
+
+                self.context.borrow_mut().set_processing_tracks(0);
             }
             DatabaseEvent::QueryAllTracks(tracks) => match tracks {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
@@ -106,6 +108,10 @@ impl App {
                 }
 
                 debug!("Found {} total track(s) in selected folders", tracks.len());
+
+                self.context
+                    .borrow_mut()
+                    .set_processing_tracks(tracks.len());
 
                 if let Err(err) = self
                     .channels

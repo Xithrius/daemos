@@ -83,7 +83,7 @@
   - [x] Replace all current command calls with sending messages
 
 - [ ] Tabs
-
+  - [ ] Install through [egui_dock](https://crates.io/crates/egui_dock)
   - [ ] Tracks
   - [ ] Playlists
   - [ ] Database tasks (other tasks in the future?)
@@ -119,7 +119,7 @@
 
 - [ ] Misc
   - [ ] When executing tasks, have a loading circle at the top right of the screen
-  - [ ] [Catppuccin themes](https://github.com/catppuccin/egui)
+  - [ ] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
 
 \* Should be configurable
 

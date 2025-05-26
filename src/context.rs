@@ -23,6 +23,7 @@ pub struct Context {
     shuffle: ShuffleType,
     visible_settings: bool,
     debug_playback: bool,
+    processing_tracks: usize,
 }
 
 impl Context {
@@ -72,6 +73,14 @@ impl Context {
 
     pub fn set_debug_playback(&mut self, visibility: bool) {
         self.debug_playback = visibility;
+    }
+
+    pub fn processing_tracks(&self) -> usize {
+        self.processing_tracks
+    }
+
+    pub fn set_processing_tracks(&mut self, processing: usize) {
+        self.processing_tracks = processing;
     }
 }
 
