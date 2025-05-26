@@ -94,7 +94,7 @@
   - [x] `Space` for toggling pause/play
   - [x] `F3` to toggle the debug wireframe
   - [x] `Ctrl+F` to focus the search input box
-  - [ ] `Ctrl+,` to open settings popup
+  - [x] `Ctrl+,` to toggle settings popup window
 
 - [ ] Settings
 
@@ -119,6 +119,7 @@
 
 - [ ] Misc
   - [ ] When executing tasks, have a loading circle at the top right of the screen
+  - [ ] [Catppuccin themes](https://github.com/catppuccin/egui)
 
 \* Should be configurable
 

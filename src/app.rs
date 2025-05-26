@@ -16,6 +16,7 @@ use crate::{
 
 pub struct App {
     config: CoreConfig,
+    context: SharedContext,
     channels: Rc<Channels>,
     components: Components,
 }
@@ -44,6 +45,7 @@ impl App {
 
         Self {
             config,
+            context,
             channels,
             components,
         }
@@ -125,6 +127,18 @@ impl App {
             debug!("`Ctrl + F` has been used to focus user input for searching");
 
             self.components.track_table.request_search_focus();
+        }
+
+        // Toggle settings popup window
+        if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL,
+                logical_key: Key::Comma,
+            })
+        }) {
+            debug!("`Ctrl + ,` has been used to toggle the settings popup window");
+
+            self.context.borrow_mut().toggle_settings();
         }
     }
 }

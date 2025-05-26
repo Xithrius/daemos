@@ -58,6 +58,10 @@ impl Context {
         self.visible_settings = visibility;
     }
 
+    pub fn toggle_settings(&mut self) {
+        self.visible_settings = !self.visible_settings;
+    }
+
     pub fn debug_playback_mut(&mut self) -> &mut bool {
         &mut self.debug_playback
     }
