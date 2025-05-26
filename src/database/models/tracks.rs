@@ -5,11 +5,12 @@ use color_eyre::{
     Result,
     eyre::{Context, ContextCompat},
 };
-use rusqlite::{Connection, Row, types::Type};
+use rusqlite::{Connection, Row, params};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use uuid::Uuid;
 
+use super::utils::parse::{parse_date, parse_uuid};
 use crate::{
     database::hash::hash_file,
     playback::track_metadata::{extract_track_duration, extract_track_metadata},
@@ -44,26 +45,22 @@ impl TryFrom<&Row<'_>> for Track {
     type Error = rusqlite::Error;
 
     fn try_from(row: &Row) -> Result<Self, Self::Error> {
-        let parse_date = |value: String| {
-            value
-                .parse::<DateTime<Utc>>()
-                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
-        };
-
-        let parse_uuid = |value: String| {
-            value
-                .parse::<Uuid>()
-                .map_err(|e| Self::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
-        };
+        let id = parse_uuid(row.get::<_, String>("id")?)?;
+        let path = PathBuf::from(row.get::<_, String>("path")?);
+        let hash = row.get("hash")?;
+        let duration_secs = row.get::<_, f64>("duration_secs")?;
+        let valid = row.get("valid")?;
+        let created_at = parse_date(row.get::<_, String>("created_at")?)?;
+        let updated_at = parse_date(row.get::<_, String>("updated_at")?)?;
 
         let track = Track {
-            id: parse_uuid(row.get::<_, String>("id")?)?,
-            path: PathBuf::from(row.get::<_, String>("path")?),
-            hash: row.get("hash")?,
-            duration_secs: row.get::<_, f64>("duration_secs")?,
-            valid: row.get("valid")?,
-            created_at: parse_date(row.get::<_, String>("created_at")?)?,
-            updated_at: parse_date(row.get::<_, String>("updated_at")?)?,
+            id,
+            path,
+            hash,
+            duration_secs,
+            valid,
+            created_at,
+            updated_at,
         };
 
         Ok(track)
@@ -71,8 +68,12 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
-    pub fn insert(conn: &mut Connection, path: PathBuf) -> Result<Option<Track>> {
-        let query = "INSERT INTO Tracks VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT DO NOTHING";
+    pub fn create(conn: &mut Connection, path: PathBuf) -> Result<Option<Track>> {
+        let sql = "
+            INSERT INTO Tracks
+            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            ON CONFLICT DO NOTHING
+        ";
 
         let hash = hash_file(&path)?.to_string();
 
@@ -90,16 +91,16 @@ impl Track {
 
         let inserted = conn
             .execute(
-                query,
-                (
+                sql,
+                params![
                     track.id.to_string(),
                     track.path.to_str(),
-                    track.hash.clone(),
+                    track.hash,
                     track.duration_secs,
                     track.valid,
-                    track.created_at.to_string(),
-                    track.updated_at.to_string(),
-                ),
+                    track.created_at,
+                    track.updated_at,
+                ],
             )
             .context("Failed to execute insert on tracks table")?;
 
@@ -113,12 +114,14 @@ impl Track {
         Ok(Some(track))
     }
 
-    pub fn select_all(conn: &mut Connection) -> Result<Vec<Track>> {
-        let query =
-            "SELECT id, path, hash, duration_secs, valid, created_at, updated_at FROM tracks";
+    pub fn get_all(conn: &mut Connection) -> Result<Vec<Track>> {
+        let sql = "
+            SELECT id, path, hash, duration_secs, valid, created_at, updated_at
+            FROM tracks
+        ";
 
         let mut stmt = conn
-            .prepare(query)
+            .prepare(sql)
             .context("Failed to prepare query for select all from tracks")?;
 
         let tracks: Vec<Track> = stmt

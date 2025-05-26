@@ -29,14 +29,13 @@ CREATE TABLE IF NOT EXISTS playlists (
 ";
 
 const PLAYLIST_TRACKS_TABLE: &str = "
-CREATE TABLE playlist_tracks (
-    PRIMARY KEY (playlist_id, track_id),
-
+CREATE TABLE IF NOT EXISTS playlist_tracks (
     playlist_id TEXT NOT NULL,
     track_id TEXT NOT NULL,
 
     added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
+    PRIMARY KEY (playlist_id, track_id),
     FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
     FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
 );

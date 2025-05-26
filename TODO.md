@@ -96,10 +96,6 @@
   - [x] `Ctrl+F` to focus the search input box
   - [ ] `Ctrl+,` to open settings popup
 
-- [ ] Autoplay
-  - [x] Notify on track change
-  - [ ] Show track that is currently playing on playback bar
-
 - [ ] Settings
 
   - [x] Popup widget (another window)
@@ -120,6 +116,9 @@
 
   - [x] Change font to Space mono font
   - [ ] font size\*
+
+- [ ] Misc
+  - [ ] When executing tasks, have a loading circle at the top right of the screen
 
 \* Should be configurable
 

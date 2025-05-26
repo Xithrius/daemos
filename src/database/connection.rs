@@ -49,7 +49,7 @@ impl Database {
                     DatabaseCommand::InsertTracks(paths) => {
                         let mut new_tracks = Vec::new();
                         for path in paths {
-                            match Track::insert(&mut conn, path) {
+                            match Track::create(&mut conn, path) {
                                 Ok(Some(track)) => new_tracks.push(track),
                                 Ok(None) => {} // Skipped duplicate
                                 Err(err) => {
@@ -61,7 +61,7 @@ impl Database {
                         let _ = event_tx.send(DatabaseEvent::InsertTracks(new_tracks));
                     }
                     DatabaseCommand::QueryAllTracks => {
-                        let result = Track::select_all(&mut conn);
+                        let result = Track::get_all(&mut conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
                     }
                 }
