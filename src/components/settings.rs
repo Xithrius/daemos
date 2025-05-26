@@ -1,5 +1,6 @@
-use super::utils::positioning::centered_position;
 use crate::{config::core::CoreConfig, context::SharedContext};
+
+use super::utils::positioning::centered_position;
 
 const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 

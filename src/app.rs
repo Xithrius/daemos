@@ -1,17 +1,17 @@
 use std::rc::Rc;
 
-use egui::{Key, KeyboardShortcut, Modifiers, Separator};
+use egui::{Frame, Key, KeyboardShortcut, Modifiers};
+use egui_dock::{DockArea, DockState, NodeIndex, Style};
 use tracing::{debug, error};
 
 use crate::{
     channels::Channels,
-    components::{ComponentChannels, Components, playback::PLAYBACK_BAR_HEIGHT},
+    components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
     files::open::{get_tracks, select_folders_dialog},
     playback::state::PlayerCommand,
-    vertical_separator,
 };
 
 pub struct App {
@@ -19,6 +19,7 @@ pub struct App {
     context: SharedContext,
     channels: Rc<Channels>,
     components: Components,
+    tree: DockState<ComponentTab>,
 }
 
 impl App {
@@ -43,11 +44,18 @@ impl App {
         ));
         let components = Components::new(config.clone(), context.clone(), component_channels);
 
+        let mut dock_state = DockState::new(vec![ComponentTab::Tracks]);
+
+        let surface = dock_state.main_surface_mut();
+
+        let [_, _] = surface.split_left(NodeIndex::root(), 0.20, vec![ComponentTab::Playlists]);
+
         Self {
             config,
             context,
             channels,
             components,
+            tree: dock_state,
         }
     }
 
@@ -163,6 +171,8 @@ impl eframe::App for App {
         ctx.request_repaint_after(std::time::Duration::from_millis(16));
 
         let player_event = self.channels.player_event_rx.try_recv().ok();
+        self.components
+            .maybe_current_player_event(player_event.clone());
 
         self.handle_database_events();
         self.handle_keybinds(ctx);
@@ -184,16 +194,20 @@ impl eframe::App for App {
             self.components.playback_bar.ui(ui, &player_event);
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.vertical(|ui| {
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    self.components.playlist_tree.ui(ui);
-                    vertical_separator!(ui);
-
-                    self.components.track_table.ui(ui, &player_event);
-                });
+        egui::CentralPanel::default()
+            .frame(Frame::central_panel(&ctx.style()).inner_margin(0.))
+            .show(ctx, |ui| {
+                DockArea::new(&mut self.tree)
+                    .show_close_buttons(false)
+                    .show_add_buttons(false)
+                    .draggable_tabs(true)
+                    .show_leaf_collapse_buttons(false)
+                    .show_secondary_button_hint(false)
+                    .secondary_button_on_modifier(false)
+                    .secondary_button_context_menu(false)
+                    .show_leaf_close_all_buttons(false)
+                    .show_inside(ui, &mut self.components);
             });
-        });
 
         self.components.settings.ui(ctx);
     }

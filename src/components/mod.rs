@@ -5,9 +5,10 @@ pub mod track_table;
 pub mod tree;
 pub mod utils;
 
-use std::rc::Rc;
+use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
+use egui_dock::TabViewer;
 
 use crate::{
     components::{
@@ -17,8 +18,24 @@ use crate::{
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::DatabaseCommand,
-    playback::state::PlayerCommand,
+    playback::state::{PlayerCommand, PlayerEvent},
 };
+
+pub enum ComponentTab {
+    Playlists,
+    Tracks,
+}
+
+impl fmt::Display for ComponentTab {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let label = match self {
+            ComponentTab::Playlists => "Playlists",
+            ComponentTab::Tracks => "Tracks",
+        };
+
+        write!(f, "{}", label)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ComponentChannels {
@@ -44,6 +61,8 @@ pub struct Components {
     pub playlist_tree: Tree,
     pub playback_bar: PlaybackBar,
     pub settings: Settings,
+
+    current_player_event: Option<PlayerEvent>,
 }
 
 impl Components {
@@ -58,6 +77,30 @@ impl Components {
             playlist_tree: Tree::default(),
             playback_bar: PlaybackBar::new(&config, context.clone(), channels),
             settings: Settings::new(config, context),
+            current_player_event: None,
+        }
+    }
+
+    pub fn maybe_current_player_event(&mut self, player_event: Option<PlayerEvent>) {
+        self.current_player_event = player_event;
+    }
+}
+
+impl TabViewer for Components {
+    type Tab = ComponentTab;
+
+    fn title(&mut self, tab: &mut Self::Tab) -> egui::WidgetText {
+        tab.to_string().into()
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Self::Tab) {
+        match tab {
+            ComponentTab::Playlists => {
+                self.playlist_tree.ui(ui);
+            }
+            ComponentTab::Tracks => {
+                self.track_table.ui(ui, &self.current_player_event);
+            }
         }
     }
 }

@@ -29,3 +29,4 @@ rodio = { version = "0.20.1", features = ["symphonia-all"] }
 symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.1", features = ["serde"] }
 notify-rust = "4.11.7"
+egui_dock = "0.16.0"
