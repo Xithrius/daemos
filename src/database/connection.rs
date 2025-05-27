@@ -18,7 +18,7 @@ pub enum DatabaseCommand {
 
 #[derive(Debug)]
 pub enum DatabaseEvent {
-    InsertTracks(Vec<Track>),
+    InsertTrack(Track),
     QueryAllTracks(Result<Vec<Track>>),
     QueryAllPlaylists(Result<Vec<Playlist>>),
 }
@@ -34,10 +34,10 @@ impl Database {
         let (event_tx, event_rx) = unbounded();
 
         thread::spawn(move || {
-            let mut conn =
+            let conn =
                 Connection::open(&database_path).expect("Failed to open database connection");
 
-            if let Err(err) = Database::create_tables(&mut conn) {
+            if let Err(err) = Database::create_tables(&conn) {
                 error!("Failed to create tables: {}", err);
                 std::process::exit(1);
             }
@@ -50,25 +50,24 @@ impl Database {
             while let Ok(cmd) = command_rx.recv() {
                 match cmd {
                     DatabaseCommand::InsertTracks(paths) => {
-                        let mut new_tracks = Vec::new();
                         for path in paths {
-                            match Track::create(&mut conn, path) {
-                                Ok(Some(track)) => new_tracks.push(track),
+                            match Track::create(&conn, path) {
+                                Ok(Some(track)) => {
+                                    let _ = event_tx.send(DatabaseEvent::InsertTrack(track));
+                                }
                                 Ok(None) => {} // Skipped duplicate
                                 Err(err) => {
                                     error!("Error when inserting track: {}", err);
                                 }
                             }
                         }
-
-                        let _ = event_tx.send(DatabaseEvent::InsertTracks(new_tracks));
                     }
                     DatabaseCommand::QueryAllTracks => {
-                        let result = Track::get_all(&mut conn);
+                        let result = Track::get_all(&conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
                     }
                     DatabaseCommand::QueryAllPlaylists => {
-                        let result = Playlist::get_all(&mut conn);
+                        let result = Playlist::get_all(&conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllPlaylists(result));
                     }
                 }

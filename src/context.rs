@@ -82,6 +82,10 @@ impl Context {
     pub fn set_processing_tracks(&mut self, processing: usize) {
         self.processing_tracks = processing;
     }
+
+    pub fn finished_processing_track(&mut self) {
+        self.processing_tracks = self.processing_tracks.saturating_sub(1);
+    }
 }
 
 pub type SharedContext = Rc<RefCell<Context>>;

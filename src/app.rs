@@ -6,10 +6,7 @@ use tracing::{debug, error};
 
 use crate::{
     channels::Channels,
-    components::{
-        ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT,
-        tables::playlists,
-    },
+    components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
@@ -70,12 +67,9 @@ impl App {
         // debug!("UI received database event: {:?}", database_event);
 
         match database_event {
-            DatabaseEvent::InsertTracks(new_tracks) => {
-                for track in new_tracks {
-                    self.components.track_table.add_track(&track);
-                }
-
-                self.context.borrow_mut().set_processing_tracks(0);
+            DatabaseEvent::InsertTrack(track) => {
+                self.components.track_table.add_track(&track);
+                self.context.borrow_mut().finished_processing_track();
             }
             DatabaseEvent::QueryAllTracks(tracks) => match tracks {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
