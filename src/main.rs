@@ -71,7 +71,6 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| {
             install_image_loaders(&cc.egui_ctx);
-
             set_fonts(cc);
 
             let app = App::new(cc, config, channels);

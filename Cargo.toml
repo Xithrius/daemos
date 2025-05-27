@@ -13,6 +13,10 @@ eframe = { version = "0.31", default-features = false, features = [
     "x11",           # To support older Linux distributions (restores one of the default features)
 ] }
 egui_extras = { version = "0.31.1", features = ["image"] }
+catppuccin-egui = { version = "5.5.0", default-features = false, features = [
+    "egui31",
+] }
+egui_dock = "0.16.0"
 color-eyre = "0.6.4"
 rfd = "0.15.3"
 tracing = "0.1.41"
@@ -29,5 +33,4 @@ rodio = { version = "0.20.1", features = ["symphonia-all"] }
 symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.1", features = ["serde"] }
 notify-rust = "4.11.7"
-egui_dock = "0.16.0"
 image = { version = "0.25.6", features = ["png"] }

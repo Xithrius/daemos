@@ -69,9 +69,6 @@ impl MenuBar {
     fn ui_extra(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
             ui.horizontal(|ui| {
-                // Theme switcher
-                egui::widgets::global_theme_preference_switch(ui);
-
                 // Debug build status
                 egui::warn_if_debug_build(ui);
 

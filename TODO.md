@@ -112,7 +112,7 @@
   - [x] When executing tasks, have a loading circle at the top right of the screen\*
     - [x] Number when tasks start executing
     - [x] Change number when tasks are completed
-  - [ ] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
+  - [x] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
   - [ ] Fuzzy track searching
 
 - [ ] Autoplay
