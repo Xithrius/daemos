@@ -45,7 +45,7 @@ impl PlaylistTrack {
 
     pub fn get(conn: &Connection, playlist_id: Uuid, track_id: Uuid) -> Result<PlaylistTrack> {
         let sql = "
-            SELECT playlist_id, track_id, creatcreated_ated
+            SELECT playlist_id, track_id, created_at
             FROM playlist_tracks
             WHERE playlist_id = ?1 AND track_id = ?2
         ";

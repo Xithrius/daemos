@@ -120,7 +120,7 @@
   - [ ] Iterative
     - [x] Play next track in the table once the current one is done
     - [x] Once last track is done, go to the start
-    - [ ] Reverse button on playback bar
+    - [ ] Reverse button on playback bar\*
   - [ ] Shuffle
     - [ ] Pseudo Random (don't play the same thing twice until everything is played)
     - [ ] True Random (Pick any other track)

@@ -71,7 +71,7 @@ const TABLES: [&str; 5] = [
 ];
 
 impl Database {
-    pub(crate) fn create_tables(conn: &mut Connection) -> Result<()> {
+    pub(crate) fn create_tables(conn: &Connection) -> Result<()> {
         for table in TABLES {
             conn.execute(table, ())?;
         }

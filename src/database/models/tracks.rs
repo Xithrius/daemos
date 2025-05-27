@@ -68,7 +68,7 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
-    pub fn create(conn: &mut Connection, path: PathBuf) -> Result<Option<Track>> {
+    pub fn create(conn: &Connection, path: PathBuf) -> Result<Option<Track>> {
         let sql = "
             INSERT INTO Tracks
             VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
@@ -115,7 +115,7 @@ impl Track {
         Ok(Some(track))
     }
 
-    pub fn get_all(conn: &mut Connection) -> Result<Vec<Track>> {
+    pub fn get_all(conn: &Connection) -> Result<Vec<Track>> {
         let sql = "
             SELECT id, path, hash, duration_secs, valid, created_at, updated_at
             FROM tracks
