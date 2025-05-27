@@ -1,32 +1,6 @@
-use std::fmt;
-
-use crate::{config::core::CoreConfig, context::SharedContext};
+use crate::{config::core::CoreConfig, context::SharedContext, themes::AppTheme};
 
 const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
-
-#[derive(Debug, Clone, Copy, Default, PartialEq)]
-pub enum AppTheme {
-    #[default]
-    Dark,
-    Latte,
-    Frappe,
-    Macchiato,
-    Mocha,
-}
-
-impl fmt::Display for AppTheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let label = match self {
-            AppTheme::Dark => "Dark",
-            AppTheme::Latte => "Latte",
-            AppTheme::Frappe => "Frappe",
-            AppTheme::Macchiato => "Macchiato",
-            AppTheme::Mocha => "Mocha",
-        };
-
-        write!(f, "{}", label)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Settings {

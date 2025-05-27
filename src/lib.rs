@@ -8,6 +8,7 @@ pub mod files;
 pub mod fonts;
 pub mod logging;
 pub mod playback;
+pub mod themes;
 pub mod utils;
 
 const BINARY_NAME: &str = "drakn";
