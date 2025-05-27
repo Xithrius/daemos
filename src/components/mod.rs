@@ -7,8 +7,8 @@ pub mod utils;
 use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
-use egui_dock::TabViewer;
-use tables::{playlists::PlaylistTable, tracks::TrackTable};
+use egui_dock::{DockState, NodeIndex, TabViewer};
+use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks::TrackTable};
 
 use crate::{
     components::{menu_bar::MenuBar, playback::PlaybackBar, settings::Settings},
@@ -21,6 +21,8 @@ use crate::{
 pub enum ComponentTab {
     Playlists,
     Tracks,
+    Tags,
+    Tasks,
 }
 
 impl fmt::Display for ComponentTab {
@@ -28,6 +30,8 @@ impl fmt::Display for ComponentTab {
         let label = match self {
             ComponentTab::Playlists => "Playlists",
             ComponentTab::Tracks => "Tracks",
+            ComponentTab::Tags => "Tags",
+            ComponentTab::Tasks => "Tasks",
         };
 
         write!(f, "{}", label)
@@ -54,8 +58,10 @@ impl ComponentChannels {
 
 pub struct Components {
     pub top_menu_bar: MenuBar,
-    pub track_table: TrackTable,
     pub playlist_table: PlaylistTable,
+    pub track_table: TrackTable,
+    pub tag_table: TagTable,
+    pub task_table: TaskTable,
     pub playback_bar: PlaybackBar,
     pub settings: Settings,
 
@@ -70,12 +76,29 @@ impl Components {
     ) -> Self {
         Self {
             top_menu_bar: MenuBar::new(context.clone()),
-            track_table: TrackTable::new(context.clone(), channels.clone()),
             playlist_table: PlaylistTable::new(context.clone(), channels.clone()),
+            track_table: TrackTable::new(context.clone(), channels.clone()),
+            tag_table: TagTable::new(context.clone()),
+            task_table: TaskTable::new(context.clone()),
             playback_bar: PlaybackBar::new(&config, context.clone(), channels),
             settings: Settings::new(config, context),
+
             current_player_event: None,
         }
+    }
+
+    pub fn component_tab_layout(&self) -> DockState<ComponentTab> {
+        let mut dock_state = DockState::new(vec![
+            ComponentTab::Tracks,
+            ComponentTab::Tags,
+            ComponentTab::Tasks,
+        ]);
+
+        let surface = dock_state.main_surface_mut();
+
+        let [_, _] = surface.split_left(NodeIndex::root(), 0.20, vec![ComponentTab::Playlists]);
+
+        dock_state
     }
 
     pub fn maybe_current_player_event(&mut self, player_event: Option<PlayerEvent>) {
@@ -97,6 +120,12 @@ impl TabViewer for Components {
             }
             ComponentTab::Tracks => {
                 self.track_table.ui(ui, &self.current_player_event);
+            }
+            ComponentTab::Tags => {
+                self.tag_table.ui(ui);
+            }
+            ComponentTab::Tasks => {
+                self.task_table.ui(ui);
             }
         }
     }

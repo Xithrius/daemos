@@ -1,11 +1,11 @@
 use crate::context::SharedContext;
 
 #[derive(Debug, Clone)]
-pub struct TasksTable {
+pub struct TaskTable {
     context: SharedContext,
 }
 
-impl TasksTable {
+impl TaskTable {
     pub fn new(context: SharedContext) -> Self {
         Self { context }
     }

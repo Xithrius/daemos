@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
-use egui_dock::{DockArea, DockState, NodeIndex};
+use egui_dock::{DockArea, DockState};
 use tracing::{debug, error};
 
 use crate::{
@@ -19,7 +19,7 @@ pub struct App {
     context: SharedContext,
     channels: Rc<Channels>,
     components: Components,
-    tree: DockState<ComponentTab>,
+    dock_state: DockState<ComponentTab>,
 }
 
 impl App {
@@ -43,19 +43,14 @@ impl App {
             channels.player_command_tx.clone(),
         ));
         let components = Components::new(config.clone(), context.clone(), component_channels);
-
-        let mut dock_state = DockState::new(vec![ComponentTab::Tracks]);
-
-        let surface = dock_state.main_surface_mut();
-
-        let [_, _] = surface.split_left(NodeIndex::root(), 0.20, vec![ComponentTab::Playlists]);
+        let dock_state = components.component_tab_layout();
 
         Self {
             config,
             context,
             channels,
             components,
-            tree: dock_state,
+            dock_state,
         }
     }
 
@@ -200,7 +195,7 @@ impl eframe::App for App {
         egui::CentralPanel::default()
             .frame(Frame::central_panel(&ctx.style()).inner_margin(0.))
             .show(ctx, |ui| {
-                DockArea::new(&mut self.tree)
+                DockArea::new(&mut self.dock_state)
                     .show_close_buttons(false)
                     .show_add_buttons(false)
                     .draggable_tabs(true)
