@@ -12,7 +12,7 @@ eframe = { version = "0.31", default-features = false, features = [
     "wayland",       # To support Linux (and CI)
     "x11",           # To support older Linux distributions (restores one of the default features)
 ] }
-egui_extras = "0.31.1"
+egui_extras = { version = "0.31.1", features = ["image"] }
 color-eyre = "0.6.4"
 rfd = "0.15.3"
 tracing = "0.1.41"
@@ -30,3 +30,4 @@ symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.1", features = ["serde"] }
 notify-rust = "4.11.7"
 egui_dock = "0.16.0"
+image = { version = "0.25.6", features = ["png"] }

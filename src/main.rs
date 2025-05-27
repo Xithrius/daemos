@@ -12,6 +12,7 @@ fn main() -> eframe::Result {
         app::App, channels::Channels, config::load::load_config, database::connection::Database,
         fonts::set_fonts, logging::initialize_logging, playback::state::Player,
     };
+    use egui_extras::install_image_loaders;
     use tracing::{error, info};
 
     initialize_logging().expect("Failed to initialize logger");
@@ -69,11 +70,13 @@ fn main() -> eframe::Result {
         "Drakn",
         options,
         Box::new(|cc| {
+            install_image_loaders(&cc.egui_ctx);
+
             set_fonts(cc);
 
-            let context = App::new(cc, config, channels);
+            let app = App::new(cc, config, channels);
 
-            Ok(Box::new(context))
+            Ok(Box::new(app))
         }),
     )
 }

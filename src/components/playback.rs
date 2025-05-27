@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use egui::RichText;
+use egui::{ImageButton, ImageSource, RichText};
 use tracing::{debug, warn};
 
 use super::ComponentChannels;
@@ -19,12 +19,16 @@ use crate::{
 pub const PLAYBACK_BAR_HEIGHT: f32 = 60.0;
 
 const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
-const PLAYBACK_BUTTON_FONT_SIZE: f32 = 22.5;
 
-const SKIP_BACKWARD_SYMBOL: &str = "\u{23EE}"; // ⏮
-const PLAY_SYMBOL: &str = "\u{25B6}"; // ▶
-const PAUSE_SYMBOL: &str = "\u{23F8}"; // ⏸
-const SKIP_FORWARD_SYMBOL: &str = "\u{23ED}"; // ⏭
+const LARGE_BUTTON_SIZE: f32 = 48.0;
+const MEDIUM_BUTTON_SIZE: f32 = 32.0;
+
+const SKIP_BACK_IMAGE: egui::ImageSource<'_> =
+    egui::include_image!("../../static/assets/skip-back.png");
+const SKIP_NEXT_IMAGE: egui::ImageSource<'_> =
+    egui::include_image!("../../static/assets/skip-next.png");
+const PLAY_IMAGE: egui::ImageSource<'_> = egui::include_image!("../../static/assets/play.png");
+const PAUSE_IMAGE: egui::ImageSource<'_> = egui::include_image!("../../static/assets/pause.png");
 
 #[derive(Debug, Clone)]
 struct TrackState {
@@ -168,12 +172,13 @@ impl PlaybackBar {
     }
 
     pub fn ui_playback_controls(&mut self, ui: &mut egui::Ui) {
-        let button = |ui: &mut egui::Ui, text: &str| -> bool {
-            ui.button(RichText::new(text).size(PLAYBACK_BUTTON_FONT_SIZE))
+        let button = |ui: &mut egui::Ui, image: ImageSource, image_size: f32| -> bool {
+            let image_button = ImageButton::new(image).frame(false);
+            ui.add_sized([image_size, image_size], image_button)
                 .clicked()
         };
 
-        if button(ui, SKIP_BACKWARD_SYMBOL) {
+        if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
             let _ = self
                 .channels
                 .player_command_tx
@@ -183,16 +188,16 @@ impl PlaybackBar {
         let current_track = self.track_state.track.is_some();
 
         let toggle_playing_button = if self.track_state.playing && current_track {
-            PAUSE_SYMBOL
+            PAUSE_IMAGE
         } else {
-            PLAY_SYMBOL
+            PLAY_IMAGE
         };
 
-        if button(ui, toggle_playing_button) && current_track {
+        if button(ui, toggle_playing_button, LARGE_BUTTON_SIZE) && current_track {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }
 
-        if button(ui, SKIP_FORWARD_SYMBOL) {
+        if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
             let _ = self
                 .channels
                 .player_command_tx
