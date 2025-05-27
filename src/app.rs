@@ -6,7 +6,10 @@ use tracing::{debug, error};
 
 use crate::{
     channels::Channels,
-    components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
+    components::{
+        ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT,
+        tables::playlists,
+    },
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
@@ -78,6 +81,12 @@ impl App {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
                 Err(err) => {
                     error!("Error when querying track table: {}", err);
+                }
+            },
+            DatabaseEvent::QueryAllPlaylists(playlists) => match playlists {
+                Ok(playlists) => self.components.playlist_table.set_playlists(playlists),
+                Err(err) => {
+                    error!("Error when querying playlists table: {}", err);
                 }
             },
         }

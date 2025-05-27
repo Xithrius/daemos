@@ -8,6 +8,7 @@ use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 use uuid::Uuid;
 
+use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
     context::SharedContext,
@@ -16,9 +17,6 @@ use crate::{
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
 };
-
-const TABLE_HEADER_HEIGHT: f32 = 25.0;
-const TABLE_ROW_HEIGHT: f32 = 20.0;
 
 #[derive(Debug, Clone)]
 struct TrackState {
@@ -67,12 +65,12 @@ impl TrackTable {
             context,
             channels,
 
-            tracks: Vec::new(),
-            filtered_tracks: Vec::new(),
+            tracks: Vec::default(),
+            filtered_tracks: Vec::default(),
             track_ids: HashSet::default(),
             selection: HashSet::default(),
             playing: None,
-            search_text: String::new(),
+            search_text: String::default(),
             search_changed: false,
             search_focused: false,
             search_focus_requested: false,

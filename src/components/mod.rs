@@ -55,7 +55,7 @@ impl ComponentChannels {
 pub struct Components {
     pub top_menu_bar: MenuBar,
     pub track_table: TrackTable,
-    pub playlists: PlaylistTable,
+    pub playlist_table: PlaylistTable,
     pub playback_bar: PlaybackBar,
     pub settings: Settings,
 
@@ -71,7 +71,7 @@ impl Components {
         Self {
             top_menu_bar: MenuBar::new(context.clone()),
             track_table: TrackTable::new(context.clone(), channels.clone()),
-            playlists: PlaylistTable::new(context.clone()),
+            playlist_table: PlaylistTable::new(context.clone(), channels.clone()),
             playback_bar: PlaybackBar::new(&config, context.clone(), channels),
             settings: Settings::new(config, context),
             current_player_event: None,
@@ -93,7 +93,7 @@ impl TabViewer for Components {
     fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Self::Tab) {
         match tab {
             ComponentTab::Playlists => {
-                self.playlists.ui(ui);
+                self.playlist_table.ui(ui);
             }
             ComponentTab::Tracks => {
                 self.track_table.ui(ui, &self.current_player_event);

@@ -7,17 +7,20 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
+use crate::database::models::playlists::playlist::Playlist;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum DatabaseCommand {
     InsertTracks(Vec<PathBuf>),
     QueryAllTracks,
+    QueryAllPlaylists,
 }
 
 #[derive(Debug)]
 pub enum DatabaseEvent {
     InsertTracks(Vec<Track>),
     QueryAllTracks(Result<Vec<Track>>),
+    QueryAllPlaylists(Result<Vec<Playlist>>),
 }
 
 #[derive(Debug)]
@@ -63,6 +66,10 @@ impl Database {
                     DatabaseCommand::QueryAllTracks => {
                         let result = Track::get_all(&mut conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
+                    }
+                    DatabaseCommand::QueryAllPlaylists => {
+                        let result = Playlist::get_all(&mut conn);
+                        let _ = event_tx.send(DatabaseEvent::QueryAllPlaylists(result));
                     }
                 }
             }
