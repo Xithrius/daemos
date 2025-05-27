@@ -10,7 +10,7 @@ use crate::database::models::utils::parse::{parse_date, parse_uuid};
 struct PlaylistTrack {
     playlist_id: Uuid,
     track_id: Uuid,
-    added_at: DateTime<Utc>,
+    created_at: DateTime<Utc>,
 }
 
 impl TryFrom<&Row<'_>> for PlaylistTrack {
@@ -19,12 +19,12 @@ impl TryFrom<&Row<'_>> for PlaylistTrack {
     fn try_from(row: &Row) -> Result<Self, Self::Error> {
         let playlist_id = parse_uuid(row.get("playlist_id")?)?;
         let track_id = parse_uuid(row.get("track_id")?)?;
-        let added_at = parse_date(row.get::<_, String>("added_at")?)?;
+        let created_at = parse_date(row.get::<_, String>("created_at")?)?;
 
         let playlist_track = PlaylistTrack {
             playlist_id,
             track_id,
-            added_at,
+            created_at,
         };
 
         Ok(playlist_track)
@@ -45,7 +45,7 @@ impl PlaylistTrack {
 
     pub fn get(conn: &Connection, playlist_id: Uuid, track_id: Uuid) -> Result<PlaylistTrack> {
         let sql = "
-            SELECT playlist_id, track_id, added_at
+            SELECT playlist_id, track_id, creatcreated_ated
             FROM playlist_tracks
             WHERE playlist_id = ?1 AND track_id = ?2
         ";
@@ -62,7 +62,7 @@ impl PlaylistTrack {
 
     pub fn get_all(conn: &Connection) -> Result<Vec<PlaylistTrack>> {
         let sql = "
-            SELECT playlist_id, track_id, added_at
+            SELECT playlist_id, track_id, created_at
             FROM playlist_tracks
         ";
 
@@ -77,7 +77,7 @@ impl PlaylistTrack {
 
     pub fn get_by_playlist(conn: &Connection, playlist_id: Uuid) -> Result<Vec<PlaylistTrack>> {
         let sql = "
-            SELECT playlist_id, track_id, added_at
+            SELECT playlist_id, track_id, created_at
             FROM playlist_tracks
             WHERE playlist_id = ?1
         ";
