@@ -73,7 +73,7 @@
 - [ ] Tabs
 
   - [x] Install through [egui_dock](https://crates.io/crates/egui_dock)
-  - [ ] Left panel
+  - [x] Left panel
     - [x] Playlists
   - [ ] Right panel
     - [x] Tracks
@@ -109,9 +109,9 @@
 
 - [ ] Misc
 
-  - [ ] When executing tasks, have a loading circle at the top right of the screen\*
+  - [x] When executing tasks, have a loading circle at the top right of the screen\*
     - [x] Number when tasks start executing
-    - [ ] Change number when tasks are completed
+    - [x] Change number when tasks are completed
   - [ ] [Catppuccin themes](https://crates.io/crates/catppuccin-egui)
   - [ ] Fuzzy track searching
 

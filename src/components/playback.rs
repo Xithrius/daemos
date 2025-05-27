@@ -278,8 +278,11 @@ impl PlaybackBar {
                 let ts = &self.track_state;
 
                 ui.group(|ui| {
-                    ui.label("🎵 Track Info:");
+                    ui.label(RichText::new("Track Info").underline().heading());
+                    ui.add_space(5.0);
+
                     ui.label(format!("Loaded: {}", ts.track.is_some()));
+
                     if let Some(track) = &ts.track {
                         ui.label(format!("Path: {:?}", track.path));
                         ui.label(format!("Duration: {} seconds", track.duration_secs));
@@ -289,7 +292,9 @@ impl PlaybackBar {
                 ui.separator();
 
                 ui.group(|ui| {
-                    ui.label("⏯ Playback State:");
+                    ui.label(RichText::new("Playback State").underline().heading());
+                    ui.add_space(5.0);
+
                     ui.label(format!("Playing: {}", ts.playing));
 
                     if let Some(base) = ts.progress_base {
@@ -314,7 +319,9 @@ impl PlaybackBar {
                 ui.separator();
 
                 ui.group(|ui| {
-                    ui.label("🔊 Volume State:");
+                    ui.label(RichText::new("Volume State").underline().heading());
+                    ui.add_space(5.0);
+
                     ui.label(format!("Volume: {:.2}", ts.volume));
                     ui.label(format!("Last Volume Sent: {:.2}", ts.last_volume_sent));
                 });
