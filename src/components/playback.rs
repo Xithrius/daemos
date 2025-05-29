@@ -4,13 +4,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use egui::{ImageButton, ImageSource, RichText};
+use egui::{ImageButton, ImageSource, RichText, include_image};
 use tracing::{debug, warn};
 
 use super::ComponentChannels;
 use crate::{
     config::core::CoreConfig,
-    context::SharedContext,
+    context::{PlayDirection, SharedContext},
     database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
@@ -23,12 +23,10 @@ const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
 const LARGE_BUTTON_SIZE: f32 = 48.0;
 const MEDIUM_BUTTON_SIZE: f32 = 32.0;
 
-const SKIP_BACK_IMAGE: egui::ImageSource<'_> =
-    egui::include_image!("../../static/assets/skip-back.png");
-const SKIP_NEXT_IMAGE: egui::ImageSource<'_> =
-    egui::include_image!("../../static/assets/skip-next.png");
-const PLAY_IMAGE: egui::ImageSource<'_> = egui::include_image!("../../static/assets/play.png");
-const PAUSE_IMAGE: egui::ImageSource<'_> = egui::include_image!("../../static/assets/pause.png");
+const SKIP_BACK_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/skip-back.png");
+const SKIP_NEXT_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/skip-next.png");
+const PLAY_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/play.png");
+const PAUSE_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pause.png");
 
 #[derive(Debug, Clone)]
 struct TrackState {
@@ -178,15 +176,16 @@ impl PlaybackBar {
                 .clicked()
         };
 
+        // Skip back a track
         if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-            let _ = self
-                .channels
-                .player_command_tx
-                .send(PlayerCommand::SkipPrevious);
+            self.context
+                .borrow_mut()
+                .set_select_new_track(Some(PlayDirection::Backward));
         }
 
         let current_track = self.track_state.track.is_some();
 
+        // Toggle pause/play on a track
         let toggle_playing_button = if self.track_state.playing && current_track {
             PAUSE_IMAGE
         } else {
@@ -197,11 +196,11 @@ impl PlaybackBar {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }
 
+        // Skip to the next track
         if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-            let _ = self
-                .channels
-                .player_command_tx
-                .send(PlayerCommand::SkipNext);
+            self.context
+                .borrow_mut()
+                .set_select_new_track(Some(PlayDirection::Forward));
         }
     }
 
@@ -233,7 +232,9 @@ impl PlaybackBar {
 
             if playback_secs >= total_duration_secs {
                 self.reset_track_state();
-                self.context.borrow_mut().set_select_new_track(true);
+                self.context
+                    .borrow_mut()
+                    .set_select_new_track(Some(PlayDirection::Forward));
                 return;
             }
 

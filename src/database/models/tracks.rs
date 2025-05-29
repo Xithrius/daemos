@@ -129,7 +129,7 @@ impl Track {
             .query_map([], |row| Track::try_from(row))?
             .collect::<Result<_, _>>()?;
 
-        debug!("Found {} track(s) from table query", tracks.len());
+        debug!("Found {} track(s) from tracks table query", tracks.len());
 
         Ok(tracks)
     }

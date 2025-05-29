@@ -17,9 +17,16 @@ pub enum ShuffleType {
 }
 
 #[derive(Debug, Clone, Default)]
+pub enum PlayDirection {
+    #[default]
+    Forward,
+    Backward,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct Context {
     select_previous_track: bool,
-    select_new_track: bool,
+    select_new_track: Option<PlayDirection>,
     shuffle: ShuffleType,
     visible_settings: bool,
     debug_playback: bool,
@@ -31,16 +38,16 @@ impl Context {
         self.select_previous_track
     }
 
-    pub fn select_next_track(&self) -> bool {
-        self.select_new_track
+    pub fn select_new_track(&self) -> Option<PlayDirection> {
+        self.select_new_track.clone()
     }
 
     pub fn shuffle(&self) -> &ShuffleType {
         &self.shuffle
     }
 
-    pub fn set_select_new_track(&mut self, new_track: bool) {
-        self.select_new_track = new_track;
+    pub fn set_select_new_track(&mut self, direction: Option<PlayDirection>) {
+        self.select_new_track = direction;
     }
 
     pub fn set_shuffle(&mut self, shuffle: ShuffleType) {

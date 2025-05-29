@@ -11,7 +11,7 @@ use uuid::Uuid;
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
-    context::SharedContext,
+    context::{PlayDirection, SharedContext},
     database::{connection::DatabaseCommand, models::tracks::Track},
     files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
@@ -168,44 +168,58 @@ impl TrackTable {
     }
 
     fn select_new_track(&mut self) {
-        if let Some(playing) = &self.playing {
-            self.context.borrow_mut().set_select_new_track(false);
+        let Some(autoplay_direction) = self.context.borrow().select_new_track() else {
+            return;
+        };
 
-            let Some(index) = self
-                .filtered_tracks
-                .iter()
-                .position(|track| track.hash == playing.track.hash)
-            else {
-                // Could not find a new track to play, clearing sink
-                let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-                self.playing = None;
-                return;
-            };
+        let Some(playing) = &self.playing else {
+            return;
+        };
 
-            let new_index = (index + 1) % self.filtered_tracks.len();
-            let Some(new_track) = self.filtered_tracks.get(new_index) else {
-                let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-                self.playing = None;
-                return;
-            };
+        self.context.borrow_mut().set_select_new_track(None);
 
-            let _ = self
-                .channels
-                .player_command_tx
-                .send(PlayerCommand::Create(new_track.clone()));
+        let Some(index) = self
+            .filtered_tracks
+            .iter()
+            .position(|track| track.hash == playing.track.hash)
+        else {
+            // Could not find a new track to play, clearing sink
+            let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
+            self.playing = None;
 
-            let new_track_state = TrackState::new(new_index, new_track.clone(), true);
+            return;
+        };
 
-            debug!("Selected new track with autoplay: {:?}", new_track_state);
+        let filtered_len = self.filtered_tracks.len();
 
-            self.playing = Some(new_track_state);
-        }
+        // TODO: Configurable default autoplay direction
+        let new_index = if matches!(autoplay_direction, PlayDirection::Forward) {
+            (index + 1) % filtered_len
+        } else {
+            (index + filtered_len.saturating_sub(1)) % filtered_len
+        };
+
+        let Some(new_track) = self.filtered_tracks.get(new_index) else {
+            let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
+            self.playing = None;
+
+            return;
+        };
+
+        let _ = self
+            .channels
+            .player_command_tx
+            .send(PlayerCommand::Create(new_track.clone()));
+
+        let new_track_state = TrackState::new(new_index, new_track.clone(), true);
+
+        debug!("Selected new track with autoplay: {:?}", new_track_state);
+
+        self.playing = Some(new_track_state);
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
-        if self.context.borrow().select_next_track() {
-            self.select_new_track();
-        }
+        self.select_new_track();
 
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)

@@ -20,10 +20,10 @@
 - [ ] Database
 
   - [x] Sqlite connection
-  - [ ] Table definitions
+  - [x] Table definitions
     - [x] Tracks
-    - [ ] Playlists
-    - [ ] Tags
+    - [x] Playlists
+    - [x] Tags
   - [ ] CRUD
     - [x] Tracks
     - [ ] Playlists
@@ -47,8 +47,8 @@
       - [x] Play
       - [x] Pause
       - [x] Toggle
-      - [ ] Next track
-      - [ ] Previous track
+      - [x] Next track
+      - [x] Previous track
       - [ ] Go back 10 seconds\*
       - [ ] Go forward 10 seconds\*
     - [x] Volume bar
@@ -70,15 +70,15 @@
   - [x] Create commands to communicate to said thread with
   - [x] Replace all current command calls with sending messages
 
-- [ ] Tabs
+- [x] Tabs
 
   - [x] Install through [egui_dock](https://crates.io/crates/egui_dock)
   - [x] Left panel
     - [x] Playlists
-  - [ ] Right panel
+  - [x] Right panel
     - [x] Tracks
-    - [ ] Tags
-    - [ ] Database tasks
+    - [x] Tags
+    - [x] Database tasks
 
 - [x] Keybinds
 
@@ -98,9 +98,14 @@
   - [ ] Toggle to hash tracks on insert
   - [ ] (re)calculation of all track hashes
   - [ ] Validation of tracks
-    - [ ] At startup
-    - [ ] Every once in a while
-    - [ ] Mark with warning and ask user to either correct path or remove entry if invalid
+    - [ ] Timing
+      - [ ] At startup
+      - [ ] Every once in a while
+      - [ ] Check type matching
+        - [ ] path
+        - [ ] Name
+        - [ ] Hash recalculation
+      - [ ] If invalid, mark with warning and ask user to either correct/remove entry
 
 - [ ] First time setup
 

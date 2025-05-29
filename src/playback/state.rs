@@ -35,8 +35,6 @@ pub enum PlayerCommand {
     Toggle,
     Resume,
     Clear,
-    SkipNext,
-    SkipPrevious,
     Volume,
     SetVolume(f32),
     Position,
@@ -167,12 +165,6 @@ impl Player {
             }
             PlayerCommand::Clear => {
                 self.sink.clear();
-            }
-            PlayerCommand::SkipNext => {
-                self.sink.skip_one();
-            }
-            PlayerCommand::SkipPrevious => {
-                todo!();
             }
             PlayerCommand::Volume => {
                 let volume = self.sink.volume();
