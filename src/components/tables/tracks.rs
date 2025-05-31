@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use egui_extras::{Column, TableBuilder};
+use egui_extras::{Column, TableBuilder, TableRow};
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -218,8 +218,75 @@ impl TrackTable {
         self.playing = Some(new_track_state);
     }
 
+    fn table_body_row(&mut self, mut row: TableRow<'_, '_>, shift_hit: bool) {
+        let row_index = row.index();
+
+        let track = self.filtered_tracks.get(row_index).cloned();
+        let playing = self.playing.clone();
+
+        if let Some(track) = track {
+            if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
+                row.set_selected(playing.as_ref().is_some_and(
+                    |TrackState {
+                         index: _,
+                         track:
+                             Track {
+                                 id: _,
+                                 path: _,
+                                 hash,
+                                 duration_secs: _,
+                                 valid: _,
+                                 created_at: _,
+                                 updated_at: _,
+                             },
+                         playing: _,
+                     }| { *hash == track.hash },
+                ));
+
+                row.col(|ui| {
+                    let label = ui
+                        .label(row_index.to_string())
+                        .on_hover_cursor(egui::CursorIcon::Default);
+                    if label.double_clicked() {
+                        self.toggle_row_play(row_index, &track);
+                    }
+                });
+
+                row.col(|ui| {
+                    let label = ui
+                        .label(track_file_name)
+                        .on_hover_cursor(egui::CursorIcon::Default);
+                    if label.double_clicked() {
+                        self.toggle_row_play(row_index, &track);
+                    }
+                });
+
+                row.col(|ui| {
+                    let track_duration = Duration::from_secs_f64(track.duration_secs);
+                    let readable_track_duration = human_duration(track_duration, false);
+
+                    let label = ui
+                        .label(readable_track_duration)
+                        .on_hover_cursor(egui::CursorIcon::Default);
+
+                    if label.double_clicked() {
+                        self.toggle_row_play(row_index, &track);
+                    }
+                });
+
+                if row.response().double_clicked() {
+                    self.toggle_row_play(row_index, &track);
+                } else if row.response().clicked() && shift_hit {
+                    todo!()
+                }
+            }
+        }
+    }
+
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
         self.select_new_track();
+
+        let shift_hit = ui.ctx().input(|i| i.modifiers.shift);
 
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)
@@ -243,67 +310,8 @@ impl TrackTable {
             .body(|body| {
                 let num_rows = self.filtered_tracks.len();
 
-                body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
-                    let row_index = row.index();
-
-                    let track = self.filtered_tracks.get(row_index).cloned();
-                    let playing = self.playing.clone();
-
-                    if let Some(track) = track {
-                        if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
-                            row.set_selected(playing.as_ref().is_some_and(
-                                |TrackState {
-                                     index: _,
-                                     track:
-                                         Track {
-                                             id: _,
-                                             path: _,
-                                             hash,
-                                             duration_secs: _,
-                                             valid: _,
-                                             created_at: _,
-                                             updated_at: _,
-                                         },
-                                     playing: _,
-                                 }| { *hash == track.hash },
-                            ));
-
-                            row.col(|ui| {
-                                let label = ui
-                                    .label(row_index.to_string())
-                                    .on_hover_cursor(egui::CursorIcon::Default);
-                                if label.double_clicked() {
-                                    self.toggle_row_play(row_index, &track);
-                                }
-                            });
-
-                            row.col(|ui| {
-                                let label = ui
-                                    .label(track_file_name)
-                                    .on_hover_cursor(egui::CursorIcon::Default);
-                                if label.double_clicked() {
-                                    self.toggle_row_play(row_index, &track);
-                                }
-                            });
-
-                            row.col(|ui| {
-                                let track_duration = Duration::from_secs_f64(track.duration_secs);
-                                let readable_track_duration = human_duration(track_duration, false);
-
-                                let label = ui
-                                    .label(readable_track_duration)
-                                    .on_hover_cursor(egui::CursorIcon::Default);
-
-                                if label.double_clicked() {
-                                    self.toggle_row_play(row_index, &track);
-                                }
-                            });
-
-                            if row.response().double_clicked() {
-                                self.toggle_row_play(row_index, &track);
-                            }
-                        }
-                    }
+                body.rows(TABLE_ROW_HEIGHT, num_rows, |row| {
+                    self.table_body_row(row, shift_hit);
                 });
             });
     }

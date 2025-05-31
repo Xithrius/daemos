@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use egui::ahash::HashSet;
 use egui_extras::{Column, TableBuilder};
+use tracing::debug;
 use uuid::Uuid;
 
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
@@ -56,14 +57,14 @@ impl PlaylistTable {
             .sense(egui::Sense::click());
 
         table
-            .header(TABLE_HEADER_HEIGHT, |mut header| {
-                header.col(|ui| {
-                    ui.heading("Playlist");
-                });
-                // header.col(|ui| {
-                //     ui.heading("Tracks");
-                // });
-            })
+            // .header(TABLE_HEADER_HEIGHT, |mut header| {
+            //     header.col(|ui| {
+            //         ui.heading("Playlist");
+            //     });
+            //     // header.col(|ui| {
+            //     //     ui.heading("Tracks");
+            //     // });
+            // })
             .body(|body| {
                 let num_rows = self.playlists.len();
 
@@ -88,6 +89,10 @@ impl PlaylistTable {
                             self.toggle_playlist_selection(&playlist);
                         }
                     });
+
+                    if row.response().clicked() {
+                        self.toggle_playlist_selection(&playlist);
+                    }
                 });
             });
     }
@@ -105,5 +110,10 @@ impl PlaylistTable {
                 .borrow_mut()
                 .set_selected_playlist(Some(playlist.clone()));
         }
+
+        debug!(
+            "Selected playlist: {:?}",
+            self.context.borrow().selected_playlist()
+        );
     }
 }
