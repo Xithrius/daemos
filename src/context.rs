@@ -109,6 +109,14 @@ impl Context {
     pub fn visible_playlist_modal_mut(&mut self) -> &mut bool {
         &mut self.visible_playlist_modal
     }
+
+    pub fn selected_playlist(&self) -> Option<Playlist> {
+        self.selected_playlist.clone()
+    }
+
+    pub fn set_selected_playlist(&mut self, playlist: Option<Playlist>) {
+        self.selected_playlist = playlist;
+    }
 }
 
 pub type SharedContext = Rc<RefCell<Context>>;

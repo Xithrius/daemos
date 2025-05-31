@@ -50,7 +50,8 @@ impl CreatePlaylistModal {
                     |_ui| {},
                     |ui| {
                         if ui.button("Save").clicked() {
-                            let new_playlist_name = self.playlist_name.clone();
+                            let new_playlist_name = self.playlist_name.clone().trim().to_string();
+
                             if !new_playlist_name.is_empty() {
                                 if let Err(err) = self
                                     .channels

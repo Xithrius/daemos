@@ -178,7 +178,9 @@ impl eframe::App for App {
         self.handle_database_events();
         self.handle_keybinds(ctx);
 
-        if ctx.input(|i| i.key_pressed(Key::Space)) && !self.components.track_table.search_focused()
+        if ctx.input(|i| i.key_pressed(Key::Space))
+            && !self.components.track_table.search_focused()
+            && !self.context.borrow().visible_playlist_modal()
         {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }

@@ -70,7 +70,6 @@ impl Database {
                         let result = Track::get_all(&conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
                     }
-
                     DatabaseCommand::InsertPlaylist(playlist_name) => {
                         let playlist_result = Playlist::create(&conn, playlist_name);
 
