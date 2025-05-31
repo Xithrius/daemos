@@ -178,6 +178,7 @@ impl eframe::App for App {
         self.handle_database_events();
         self.handle_keybinds(ctx);
 
+        // TODO: If I have a bunch of input boxes, then this is going to get bad
         if ctx.input(|i| i.key_pressed(Key::Space))
             && !self.components.track_table.search_focused()
             && !self.context.borrow().visible_playlist_modal()
@@ -207,6 +208,7 @@ impl eframe::App for App {
                     .secondary_button_on_modifier(false)
                     .secondary_button_context_menu(false)
                     .show_leaf_close_all_buttons(false)
+                    .draggable_tabs(false)
                     .show_inside(ui, &mut self.components);
             });
 
