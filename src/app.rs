@@ -72,6 +72,9 @@ impl App {
                     error!("Error when querying track table: {}", err);
                 }
             },
+            DatabaseEvent::InsertPlaylist(playlist) => {
+                self.components.playlist_table.add_playlist(&playlist);
+            }
             DatabaseEvent::QueryAllPlaylists(playlists) => match playlists {
                 Ok(playlists) => self.components.playlist_table.set_playlists(playlists),
                 Err(err) => {
@@ -206,5 +209,6 @@ impl eframe::App for App {
             });
 
         self.components.settings.ui(ctx);
+        self.components.create_playlist.ui(ctx);
     }
 }

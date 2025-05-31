@@ -13,6 +13,7 @@ use crate::database::models::playlists::playlist::Playlist;
 pub enum DatabaseCommand {
     InsertTracks(Vec<PathBuf>),
     QueryAllTracks,
+    InsertPlaylist(String),
     QueryAllPlaylists,
 }
 
@@ -20,6 +21,7 @@ pub enum DatabaseCommand {
 pub enum DatabaseEvent {
     InsertTrack(Track),
     QueryAllTracks(Result<Vec<Track>>),
+    InsertPlaylist(Playlist),
     QueryAllPlaylists(Result<Vec<Playlist>>),
 }
 
@@ -51,7 +53,9 @@ impl Database {
                 match cmd {
                     DatabaseCommand::InsertTracks(paths) => {
                         for path in paths {
-                            match Track::create(&conn, path) {
+                            let track_result = Track::create(&conn, path);
+
+                            match track_result {
                                 Ok(Some(track)) => {
                                     let _ = event_tx.send(DatabaseEvent::InsertTrack(track));
                                 }
@@ -65,6 +69,20 @@ impl Database {
                     DatabaseCommand::QueryAllTracks => {
                         let result = Track::get_all(&conn);
                         let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
+                    }
+
+                    DatabaseCommand::InsertPlaylist(playlist_name) => {
+                        let playlist_result = Playlist::create(&conn, playlist_name);
+
+                        match playlist_result {
+                            Ok(Some(playlist)) => {
+                                let _ = event_tx.send(DatabaseEvent::InsertPlaylist(playlist));
+                            }
+                            Ok(None) => {}
+                            Err(err) => {
+                                error!("Error when inserting playlist: {}", err);
+                            }
+                        }
                     }
                     DatabaseCommand::QueryAllPlaylists => {
                         let result = Playlist::get_all(&conn);

@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use color_eyre::{Result, eyre::Context};
 use rusqlite::{Connection, Row, params};
 use serde::{Deserialize, Serialize};
+use tracing::{debug, error};
 use uuid::Uuid;
 
 use crate::database::models::utils::parse::{parse_date, parse_uuid};
@@ -46,25 +47,39 @@ impl TryFrom<&Row<'_>> for Playlist {
 }
 
 impl Playlist {
-    pub fn create(conn: &Connection, name: String) -> rusqlite::Result<()> {
+    pub fn create(conn: &Connection, name: String) -> Result<Option<Playlist>> {
         let sql = "
             INSERT INTO playlists (id, name, created_at, updated_at)
             VALUES (?1, ?2, ?3, ?4)
         ";
 
-        let playlist = Playlist::default();
+        let playlist = Playlist {
+            name: name.clone(),
+            ..Default::default()
+        };
 
-        conn.execute(
+        let inserted = conn.execute(
             sql,
             params![
                 playlist.id.to_string(),
-                name,
+                playlist.name,
                 playlist.created_at,
                 playlist.updated_at,
             ],
         )?;
 
-        Ok(())
+        if inserted == 0 {
+            error!(
+                "Something went wrong while creating the new playlist {}",
+                name
+            );
+
+            return Ok(None);
+        }
+
+        debug!("Inserted playlist into database: {}", name);
+
+        Ok(Some(playlist))
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Self>> {

@@ -2,6 +2,8 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+use crate::database::models::playlists::playlist::Playlist;
+
 #[derive(Debug, Clone, Default)]
 pub enum ShuffleType {
     /// Play the next track after this one in the track table
@@ -31,6 +33,8 @@ pub struct Context {
     visible_settings: bool,
     debug_playback: bool,
     processing_tracks: usize,
+    visible_playlist_modal: bool,
+    selected_playlist: Option<Playlist>,
 }
 
 impl Context {
@@ -92,6 +96,18 @@ impl Context {
 
     pub fn finished_processing_track(&mut self) {
         self.processing_tracks = self.processing_tracks.saturating_sub(1);
+    }
+
+    pub fn visible_playlist_modal(&self) -> bool {
+        self.visible_playlist_modal
+    }
+
+    pub fn set_visible_playlist_modal(&mut self, visibility: bool) {
+        self.visible_playlist_modal = visibility;
+    }
+
+    pub fn visible_playlist_modal_mut(&mut self) -> &mut bool {
+        &mut self.visible_playlist_modal
     }
 }
 

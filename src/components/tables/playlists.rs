@@ -37,6 +37,12 @@ impl PlaylistTable {
         self.playlists = playlists;
     }
 
+    pub fn add_playlist(&mut self, playlist: &Playlist) {
+        if self.playlist_ids.insert(playlist.id) {
+            self.playlists.push(playlist.clone());
+        }
+    }
+
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.label("I am a table");
     }

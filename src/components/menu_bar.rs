@@ -28,6 +28,15 @@ impl MenuBar {
 
     fn ui_file(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.menu_button("File", |ui| {
+            ui.menu_button("New", |ui| {
+                if ui.button("Playlist").clicked() {
+                    self.context.borrow_mut().set_visible_playlist_modal(true);
+                    ui.close_menu();
+                }
+            });
+
+            ui.separator();
+
             if ui.button("Preferences").clicked() {
                 self.context.borrow_mut().set_visible_settings(true);
                 ui.close_menu();
