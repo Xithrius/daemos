@@ -22,11 +22,13 @@ const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
 
 const LARGE_BUTTON_SIZE: f32 = 48.0;
 const MEDIUM_BUTTON_SIZE: f32 = 32.0;
+const SMALL_BUTTON_SIZE: f32 = 24.0;
 
 const SKIP_BACK_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/skip-back.png");
 const SKIP_NEXT_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/skip-next.png");
 const PLAY_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/play.png");
 const PAUSE_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pause.png");
+const VOLUME_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/volume-up.png");
 
 #[derive(Debug, Clone)]
 struct TrackState {
@@ -206,10 +208,10 @@ impl PlaybackBar {
 
     fn ui_volume(&mut self, ui: &mut egui::Ui) {
         ui.add(
-            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE)
-                .text("Volume")
-                .show_value(false),
+            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE).show_value(false),
         );
+        let volume_button = ImageButton::new(VOLUME_IMAGE).frame(false);
+        ui.add_sized([SMALL_BUTTON_SIZE, SMALL_BUTTON_SIZE], volume_button);
 
         let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
 
@@ -353,7 +355,11 @@ impl PlaybackBar {
 
             self.ui_seek(ui);
 
-            self.ui_volume(ui);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                ui.horizontal_centered(|ui| {
+                    self.ui_volume(ui);
+                })
+            });
         });
     }
 }

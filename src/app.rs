@@ -197,8 +197,6 @@ impl eframe::App for App {
             .show(ctx, |ui| {
                 DockArea::new(&mut self.dock_state)
                     .show_close_buttons(false)
-                    .show_add_buttons(false)
-                    .draggable_tabs(true)
                     .show_leaf_collapse_buttons(false)
                     .show_secondary_button_hint(false)
                     .secondary_button_on_modifier(false)
