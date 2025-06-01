@@ -167,6 +167,7 @@ impl TrackTable {
         self.playing = Some(new_track_state)
     }
 
+    /// Selects the next track from the track table tracks attribute
     fn select_new_track(&mut self) {
         let Some(autoplay_direction) = self.context.borrow().playback.select_new_track() else {
             return;
@@ -182,7 +183,7 @@ impl TrackTable {
             .set_select_new_track(None);
 
         let Some(index) = self
-            .filtered_tracks
+            .tracks
             .iter()
             .position(|track| track.hash == playing.track.hash)
         else {
@@ -193,16 +194,17 @@ impl TrackTable {
             return;
         };
 
-        let filtered_len = self.filtered_tracks.len();
+        let tracks_len = self.tracks.len();
 
         // TODO: Configurable default autoplay direction
         let new_index = if matches!(autoplay_direction, PlayDirection::Forward) {
-            (index + 1) % filtered_len
+            (index + 1) % tracks_len
         } else {
-            (index + filtered_len.saturating_sub(1)) % filtered_len
+            (index + tracks_len.saturating_sub(1)) % tracks_len
         };
 
-        let Some(new_track) = self.filtered_tracks.get(new_index) else {
+        // TODO: Configurable value to autoplay from filtered tracks
+        let Some(new_track) = self.tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
             self.playing = None;
 
