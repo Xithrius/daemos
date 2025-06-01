@@ -37,14 +37,18 @@ impl PlaylistTable {
         }
     }
 
-    pub fn set_playlists(&mut self, playlists: Vec<Playlist>) {
+    pub fn set_playlists(&mut self, mut playlists: Vec<Playlist>) {
         self.playlist_ids = playlists.iter().map(|playlist| playlist.id).collect();
+
+        playlists.sort_by(|playlist_a, playlist_b| playlist_a.name.cmp(&playlist_b.name));
         self.playlists = playlists;
     }
 
     pub fn add_playlist(&mut self, playlist: &Playlist) {
         if self.playlist_ids.insert(playlist.id) {
             self.playlists.push(playlist.clone());
+            self.playlists
+                .sort_by(|playlist_a, playlist_b| playlist_a.name.cmp(&playlist_b.name));
         }
     }
 

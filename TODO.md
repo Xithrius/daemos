@@ -131,7 +131,7 @@
     - [ ] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
   - [ ] Playlists
-    - [ ] If a playlist is selected, then the context should be held for that playlist even when switching to other filters (including searching)
+    - [ ] If a playlist is selected, then the context should be held for that playlist even when switching to other filters (including searching, and looking at different playlists)
 
 - [ ] Fonts
 
@@ -145,5 +145,6 @@
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
 - [x] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
 - [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
-- [ ] Vertically center the playback previous/toggle/next controls
+- [ ]
+- [ ] Horizontally center playback seek bar
   - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)
