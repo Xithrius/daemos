@@ -1,19 +1,17 @@
-use crate::{config::core::CoreConfig, context::SharedContext, themes::AppTheme};
+use crate::{context::SharedContext, themes::AppTheme};
 
 const DEFAULT_SETTINGS_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 
 #[derive(Debug, Clone)]
 pub struct Settings {
-    #[allow(dead_code)]
-    config: CoreConfig,
+    // config: CoreConfig,
     context: SharedContext,
     selected: AppTheme,
 }
 
 impl Settings {
-    pub fn new(config: CoreConfig, context: SharedContext) -> Self {
+    pub fn new(context: SharedContext) -> Self {
         Self {
-            config,
             context,
             selected: AppTheme::Dark,
         }

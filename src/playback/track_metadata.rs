@@ -3,7 +3,6 @@ use std::{fs::File, path::PathBuf, time::Duration};
 use color_eyre::{Result, eyre::ContextCompat};
 use symphonia::{
     core::{
-        audio::Channels,
         codecs::{CODEC_TYPE_NULL, CodecParameters},
         formats::FormatOptions,
         io::MediaSourceStream,
@@ -43,14 +42,4 @@ pub fn extract_track_duration(codec_params: CodecParameters) -> Option<Duration>
     } else {
         None
     }
-}
-
-#[allow(dead_code)]
-pub fn extract_track_sample_rate(codec_params: CodecParameters) -> Option<u32> {
-    codec_params.sample_rate
-}
-
-#[allow(dead_code)]
-pub fn extract_track_channels(codec_params: CodecParameters) -> Option<Channels> {
-    codec_params.channels
 }

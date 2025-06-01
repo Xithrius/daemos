@@ -84,11 +84,11 @@ impl Components {
 
             playlist_table: PlaylistTable::new(context.clone(), channels.clone()),
             track_table: TrackTable::new(context.clone(), channels.clone()),
-            tag_table: TagTable::new(context.clone()),
-            task_table: TaskTable::new(context.clone()),
+            tag_table: TagTable::default(),
+            task_table: TaskTable::default(),
 
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),
-            settings: Settings::new(config, context.clone()),
+            settings: Settings::new(context.clone()),
 
             current_player_event: None,
         }

@@ -44,8 +44,7 @@ pub struct TrackTable {
     filtered_tracks: Vec<Track>,
     track_ids: HashSet<Uuid>,
 
-    #[allow(dead_code)]
-    selection: HashSet<usize>,
+    // selection: HashSet<usize>,
     playing: Option<TrackState>,
 
     search_text: String,
@@ -57,9 +56,10 @@ pub struct TrackTable {
 
 impl TrackTable {
     pub fn new(context: SharedContext, channels: Rc<ComponentChannels>) -> Self {
+        // TODO: Config for default playlist selection
         let _ = channels
             .database_command_tx
-            .send(DatabaseCommand::QueryAllTracks);
+            .send(DatabaseCommand::QueryTracks(None));
 
         Self {
             context,
@@ -68,7 +68,7 @@ impl TrackTable {
             tracks: Vec::default(),
             filtered_tracks: Vec::default(),
             track_ids: HashSet::default(),
-            selection: HashSet::default(),
+            // selection: HashSet::default(),
             playing: None,
             search_text: String::default(),
             search_changed: false,

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{cell::RefCell, rc::Rc};
 
 use crate::database::models::playlists::playlist::Playlist;

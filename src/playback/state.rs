@@ -42,15 +42,11 @@ pub enum PlayerCommand {
 }
 
 pub struct Player {
-    #[allow(dead_code)]
-    stream: OutputStream,
+    _stream: OutputStream,
     sink: Arc<Sink>,
 
     player_event_tx: Sender<PlayerEvent>,
     player_cmd_rx: Receiver<PlayerCommand>,
-
-    #[allow(dead_code)]
-    track_queue: Vec<Track>,
 }
 
 impl Player {
@@ -84,11 +80,10 @@ impl Player {
         info!("Audio device found!");
 
         Ok(Self {
-            stream,
+            _stream: stream,
             sink: Arc::new(sink),
             player_event_tx,
             player_cmd_rx,
-            track_queue: Vec::new(),
         })
     }
 

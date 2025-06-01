@@ -11,19 +11,22 @@ use crate::database::models::playlists::{playlist::Playlist, playlist_tracks::Pl
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum DatabaseCommand {
-    // All tracks to be added, and the optional playlist
+    /// All tracks to be added, and the optional playlist
     InsertTracks(Vec<PathBuf>, Option<String>),
-    QueryAllTracks,
+    /// Get all tracks within a playlist, if provided then all tracks are returned
+    QueryTracks(Option<Playlist>),
+    /// Create a new playlist with the specified name
     InsertPlaylist(String),
-    QueryAllPlaylists,
+    /// Get all the playlists
+    QueryPlaylists,
 }
 
 #[derive(Debug)]
 pub enum DatabaseEvent {
     InsertTrack(Track),
-    QueryAllTracks(Result<Vec<Track>>),
+    QueryTracks(Result<Vec<Track>>),
     InsertPlaylist(Playlist),
-    QueryAllPlaylists(Result<Vec<Playlist>>),
+    QueryPlaylists(Result<Vec<Playlist>>),
 }
 
 #[derive(Debug)]
@@ -83,9 +86,13 @@ impl Database {
                             }
                         }
                     }
-                    DatabaseCommand::QueryAllTracks => {
-                        let result = Track::get_all(&conn);
-                        let _ = event_tx.send(DatabaseEvent::QueryAllTracks(result));
+                    DatabaseCommand::QueryTracks(playlist) => {
+                        if let Some(_playlist) = playlist {
+                            todo!()
+                        } else {
+                            let result = Track::get_all(&conn);
+                            let _ = event_tx.send(DatabaseEvent::QueryTracks(result));
+                        }
                     }
                     DatabaseCommand::InsertPlaylist(playlist_name) => {
                         let playlist_result = Playlist::create(&conn, playlist_name);
@@ -100,9 +107,9 @@ impl Database {
                             }
                         }
                     }
-                    DatabaseCommand::QueryAllPlaylists => {
+                    DatabaseCommand::QueryPlaylists => {
                         let result = Playlist::get_all(&conn);
-                        let _ = event_tx.send(DatabaseEvent::QueryAllPlaylists(result));
+                        let _ = event_tx.send(DatabaseEvent::QueryPlaylists(result));
                     }
                 }
             }

@@ -69,7 +69,7 @@ impl App {
                     .processing
                     .finished_processing_track();
             }
-            DatabaseEvent::QueryAllTracks(tracks) => match tracks {
+            DatabaseEvent::QueryTracks(tracks) => match tracks {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
                 Err(err) => {
                     error!("Error when querying track table: {}", err);
@@ -78,7 +78,7 @@ impl App {
             DatabaseEvent::InsertPlaylist(playlist) => {
                 self.components.playlist_table.add_playlist(&playlist);
             }
-            DatabaseEvent::QueryAllPlaylists(playlists) => match playlists {
+            DatabaseEvent::QueryPlaylists(playlists) => match playlists {
                 Ok(playlists) => self.components.playlist_table.set_playlists(playlists),
                 Err(err) => {
                     error!("Error when querying playlists table: {}", err);

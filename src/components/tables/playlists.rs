@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use egui::ahash::HashSet;
 use egui_extras::{Column, TableBuilder};
-use tracing::debug;
+use tracing::{debug, error};
 use uuid::Uuid;
 
-use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
+use super::TABLE_ROW_HEIGHT;
 use crate::{
     components::ComponentChannels,
     context::SharedContext,
@@ -27,7 +27,7 @@ impl PlaylistTable {
     pub fn new(context: SharedContext, channels: Rc<ComponentChannels>) -> Self {
         let _ = channels
             .database_command_tx
-            .send(DatabaseCommand::QueryAllPlaylists);
+            .send(DatabaseCommand::QueryPlaylists);
 
         Self {
             context,
@@ -114,6 +114,15 @@ impl PlaylistTable {
                 .borrow_mut()
                 .playlist
                 .set_selected_playlist(Some(playlist.clone()));
+        }
+
+        if let Err(err) = self
+            .channels
+            .database_command_tx
+            .send(DatabaseCommand::QueryTracks(Some(playlist.clone())))
+        {
+            error!("Error when sending playlist track query: {}", err);
+            return;
         }
 
         debug!(
