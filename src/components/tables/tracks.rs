@@ -86,14 +86,19 @@ impl TrackTable {
         self.search_focus_requested = true
     }
 
-    pub fn set_tracks(&mut self, tracks: Vec<Track>) {
+    pub fn set_tracks(&mut self, mut tracks: Vec<Track>) {
         self.track_ids = tracks.iter().map(|track| track.id).collect();
+
+        tracks.sort_by(|track_a, track_b| track_a.path.cmp(&track_b.path));
         self.tracks = tracks;
     }
 
     pub fn add_track(&mut self, track: &Track) {
         if self.track_ids.insert(track.id) {
+            // TODO: Insert as sorted
             self.tracks.push(track.clone());
+            self.tracks
+                .sort_by(|track_a, track_b| track_a.path.cmp(&track_b.path));
         }
     }
 
