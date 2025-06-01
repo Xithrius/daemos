@@ -7,11 +7,12 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
-use crate::database::models::playlists::playlist::Playlist;
+use crate::database::models::playlists::{playlist::Playlist, playlist_tracks::PlaylistTrack};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum DatabaseCommand {
-    InsertTracks(Vec<PathBuf>),
+    // All tracks to be added, and the optional playlist
+    InsertTracks(Vec<PathBuf>, Option<String>),
     QueryAllTracks,
     InsertPlaylist(String),
     QueryAllPlaylists,
@@ -51,17 +52,33 @@ impl Database {
 
             while let Ok(cmd) = command_rx.recv() {
                 match cmd {
-                    DatabaseCommand::InsertTracks(paths) => {
-                        for path in paths {
+                    DatabaseCommand::InsertTracks(track_paths, playlist_name) => {
+                        let playlist = if let Some(playlist_name) = playlist_name {
+                            Playlist::create(&conn, playlist_name).unwrap_or_default()
+                        } else {
+                            None
+                        };
+
+                        for path in track_paths {
                             let track_result = Track::create(&conn, path);
 
-                            match track_result {
-                                Ok(Some(track)) => {
-                                    let _ = event_tx.send(DatabaseEvent::InsertTrack(track));
-                                }
-                                Ok(None) => {} // Skipped duplicate
+                            let track = match track_result {
+                                Ok(Some(track)) => track,
+                                Ok(None) => continue, // Skipped duplicate
                                 Err(err) => {
                                     error!("Error when inserting track: {}", err);
+                                    continue;
+                                }
+                            };
+
+                            let _ = event_tx.send(DatabaseEvent::InsertTrack(track.clone()));
+
+                            if let Some(playlist_id) = playlist.as_ref().map(|playlist| playlist.id)
+                            {
+                                if let Err(err) =
+                                    PlaylistTrack::create(&conn, playlist_id, track.id)
+                                {
+                                    error!("Error when inserting track to playlist: {}", err);
                                 }
                             }
                         }

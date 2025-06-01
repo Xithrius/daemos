@@ -1,5 +1,5 @@
 use std::{
-    env,
+    env, fs,
     path::{Path, PathBuf},
 };
 
@@ -18,17 +18,29 @@ pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
         .pick_folders()
 }
 
-pub fn get_tracks<P: AsRef<Path>>(dir: &P) -> Vec<PathBuf> {
+/// Returns a list of audio track paths from the given directory.
+/// If `recursive` is true, subdirectories will also be searched.
+pub fn get_tracks<P: AsRef<Path>>(dir: &P, recursive: bool) -> Vec<PathBuf> {
     let mut tracks = Vec::new();
 
-    for entry in WalkDir::new(dir).into_iter().filter_map(Result::ok) {
-        let path = entry.path();
-
-        if path.is_file() {
-            if let Some(extension) = path.extension() {
-                if let Some(ext_str) = extension.to_str() {
-                    if ALLOWED_AUDIO_FORMATS.contains(&ext_str) {
+    if recursive {
+        for entry in WalkDir::new(dir).into_iter().filter_map(Result::ok) {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(extension) = path.extension().and_then(|e| e.to_str()) {
+                    if ALLOWED_AUDIO_FORMATS.contains(&extension) {
                         tracks.push(path.to_path_buf());
+                    }
+                }
+            }
+        }
+    } else if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(extension) = path.extension().and_then(|e| e.to_str()) {
+                    if ALLOWED_AUDIO_FORMATS.contains(&extension) {
+                        tracks.push(path);
                     }
                 }
             }

@@ -109,25 +109,29 @@ impl App {
             );
 
             if let Some(selected_folders) = select_folders_dialog() {
-                let mut tracks = Vec::new();
-
                 for folder in selected_folders {
-                    let folder_tracks = get_tracks(&folder);
-                    tracks.extend(folder_tracks);
-                }
+                    let folder_tracks = get_tracks(&folder, false);
 
-                debug!("Found {} total track(s) in selected folders", tracks.len());
+                    debug!(
+                        "Found {} total track(s) in selected folders",
+                        folder_tracks.len()
+                    );
 
-                self.context
-                    .borrow_mut()
-                    .set_processing_tracks(tracks.len());
+                    self.context
+                        .borrow_mut()
+                        .set_processing_tracks(folder_tracks.len());
 
-                if let Err(err) = self
-                    .channels
-                    .database_command_tx
-                    .send(DatabaseCommand::InsertTracks(tracks))
-                {
-                    error!("Failed to send insert tracks command to database: {}", err);
+                    // TODO: Ask the user with a popup if a playlist should be created from this
+                    let playlist_name = folder
+                        .file_name()
+                        .and_then(|file_name| file_name.to_str())
+                        .map(|folder| folder.to_string());
+
+                    let insert_tracks = DatabaseCommand::InsertTracks(folder_tracks, playlist_name);
+
+                    if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
+                        error!("Failed to send insert tracks command to database: {}", err);
+                    }
                 }
             }
         }

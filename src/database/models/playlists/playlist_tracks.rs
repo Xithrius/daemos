@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::database::models::utils::parse::{parse_date, parse_uuid};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-struct PlaylistTrack {
+pub struct PlaylistTrack {
     playlist_id: Uuid,
     track_id: Uuid,
     created_at: DateTime<Utc>,
