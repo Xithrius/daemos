@@ -62,7 +62,10 @@ impl App {
         // debug!("UI received database event: {:?}", database_event);
 
         match database_event {
-            DatabaseEvent::InsertTrack(track) => {
+            DatabaseEvent::InsertTrack(track, playlist) => {
+                if let Some(playlist) = playlist {
+                    self.components.playlist_table.add_playlist(&playlist);
+                }
                 self.components.track_table.add_track(&track);
                 self.context
                     .borrow_mut()

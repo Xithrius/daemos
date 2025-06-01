@@ -23,7 +23,7 @@ pub enum DatabaseCommand {
 
 #[derive(Debug)]
 pub enum DatabaseEvent {
-    InsertTrack(Track),
+    InsertTrack(Track, Option<Playlist>),
     QueryTracks(Result<Vec<Track>>),
     InsertPlaylist(Playlist),
     QueryPlaylists(Result<Vec<Playlist>>),
@@ -74,7 +74,8 @@ impl Database {
                                 }
                             };
 
-                            let _ = event_tx.send(DatabaseEvent::InsertTrack(track.clone()));
+                            let _ = event_tx
+                                .send(DatabaseEvent::InsertTrack(track.clone(), playlist.clone()));
 
                             if let Some(playlist_id) = playlist.as_ref().map(|playlist| playlist.id)
                             {
