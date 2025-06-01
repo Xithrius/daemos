@@ -20,12 +20,12 @@ impl Settings {
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.context.borrow().visible_settings() {
+        if !self.context.borrow().ui.visible_settings() {
             return;
         }
 
         egui::Window::new("Settings")
-            .open(self.context.borrow_mut().visible_settings_mut())
+            .open(self.context.borrow_mut().ui.visible_settings_mut())
             .resizable(true)
             .title_bar(true)
             .show(ctx, |ui| {

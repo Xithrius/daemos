@@ -25,7 +25,7 @@ impl CreatePlaylistModal {
     pub fn ui(&mut self, ctx: &egui::Context) {
         let show_modal = {
             let context = self.context.borrow();
-            context.visible_playlist_modal()
+            context.ui.visible_playlist_modal()
         };
 
         if !show_modal {
@@ -35,7 +35,7 @@ impl CreatePlaylistModal {
         let mut should_close = false;
 
         egui::Window::new("Create Playlist")
-            .open(self.context.borrow_mut().visible_playlist_modal_mut())
+            .open(self.context.borrow_mut().ui.visible_playlist_modal_mut())
             .resizable(false)
             .title_bar(true)
             .show(ctx, |ui| {
@@ -74,7 +74,10 @@ impl CreatePlaylistModal {
             });
 
         if should_close {
-            self.context.borrow_mut().set_visible_playlist_modal(false);
+            self.context
+                .borrow_mut()
+                .ui
+                .set_visible_playlist_modal(false);
         }
     }
 }

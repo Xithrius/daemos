@@ -76,7 +76,7 @@ impl PlaylistTable {
 
                     let selected = self
                         .context
-                        .borrow()
+                        .borrow().playlist
                         .selected_playlist()
                         .is_some_and(|selected_playlist| selected_playlist.id == playlist.id);
                     row.set_selected(selected);
@@ -101,19 +101,24 @@ impl PlaylistTable {
         if self
             .context
             .borrow()
+            .playlist
             .selected_playlist()
             .is_some_and(|selected_playlist| selected_playlist.id == playlist.id)
         {
-            self.context.borrow_mut().set_selected_playlist(None);
+            self.context
+                .borrow_mut()
+                .playlist
+                .set_selected_playlist(None);
         } else {
             self.context
                 .borrow_mut()
+                .playlist
                 .set_selected_playlist(Some(playlist.clone()));
         }
 
         debug!(
             "Selected playlist: {:?}",
-            self.context.borrow().selected_playlist()
+            self.context.borrow().playlist.selected_playlist()
         );
     }
 }

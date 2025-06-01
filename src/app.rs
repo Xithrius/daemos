@@ -64,7 +64,10 @@ impl App {
         match database_event {
             DatabaseEvent::InsertTrack(track) => {
                 self.components.track_table.add_track(&track);
-                self.context.borrow_mut().finished_processing_track();
+                self.context
+                    .borrow_mut()
+                    .processing
+                    .finished_processing_track();
             }
             DatabaseEvent::QueryAllTracks(tracks) => match tracks {
                 Ok(tracks) => self.components.track_table.set_tracks(tracks),
@@ -119,6 +122,7 @@ impl App {
 
                     self.context
                         .borrow_mut()
+                        .processing
                         .set_processing_tracks(folder_tracks.len());
 
                     // TODO: Ask the user with a popup if a playlist should be created from this
@@ -157,7 +161,7 @@ impl App {
         }) {
             debug!("`Ctrl + ,` has been used to toggle the settings popup window");
 
-            self.context.borrow_mut().toggle_settings();
+            self.context.borrow_mut().ui.toggle_settings();
         }
     }
 }
@@ -185,7 +189,7 @@ impl eframe::App for App {
         // TODO: If I have a bunch of input boxes, then this is going to get bad
         if ctx.input(|i| i.key_pressed(Key::Space))
             && !self.components.track_table.search_focused()
-            && !self.context.borrow().visible_playlist_modal()
+            && !self.context.borrow().ui.visible_playlist_modal()
         {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }

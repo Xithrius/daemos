@@ -168,7 +168,7 @@ impl TrackTable {
     }
 
     fn select_new_track(&mut self) {
-        let Some(autoplay_direction) = self.context.borrow().select_new_track() else {
+        let Some(autoplay_direction) = self.context.borrow().playback.select_new_track() else {
             return;
         };
 
@@ -176,7 +176,10 @@ impl TrackTable {
             return;
         };
 
-        self.context.borrow_mut().set_select_new_track(None);
+        self.context
+            .borrow_mut()
+            .playback
+            .set_select_new_track(None);
 
         let Some(index) = self
             .filtered_tracks

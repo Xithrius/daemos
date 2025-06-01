@@ -182,6 +182,7 @@ impl PlaybackBar {
         if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
             self.context
                 .borrow_mut()
+                .playback
                 .set_select_new_track(Some(PlayDirection::Backward));
         }
 
@@ -202,6 +203,7 @@ impl PlaybackBar {
         if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
             self.context
                 .borrow_mut()
+                .playback
                 .set_select_new_track(Some(PlayDirection::Forward));
         }
     }
@@ -236,6 +238,7 @@ impl PlaybackBar {
                 self.reset_track_state();
                 self.context
                     .borrow_mut()
+                    .playback
                     .set_select_new_track(Some(PlayDirection::Forward));
                 return;
             }
@@ -278,7 +281,7 @@ impl PlaybackBar {
 
     fn debug_window(&mut self, ui: &mut egui::Ui) {
         egui::Window::new("Playback Debug Info")
-            .open(self.context.borrow_mut().debug_playback_mut())
+            .open(self.context.borrow_mut().ui.debug_playback_mut())
             .collapsible(true)
             .resizable(true)
             .default_size([400.0, 250.0])
@@ -346,7 +349,7 @@ impl PlaybackBar {
             ui.ctx().request_repaint();
         }
 
-        if self.context.borrow().debug_playback() {
+        if self.context.borrow().ui.debug_playback() {
             self.debug_window(ui);
         }
 
