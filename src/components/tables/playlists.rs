@@ -98,6 +98,7 @@ impl PlaylistTable {
     }
 
     fn toggle_playlist_selection(&mut self, playlist: &Playlist) {
+        let mut query_all_tracks = false;
         if self
             .context
             .borrow()
@@ -109,6 +110,7 @@ impl PlaylistTable {
                 .borrow_mut()
                 .playlist
                 .set_selected_playlist(None);
+            query_all_tracks = true;
         } else {
             self.context
                 .borrow_mut()
@@ -116,18 +118,25 @@ impl PlaylistTable {
                 .set_selected_playlist(Some(playlist.clone()));
         }
 
+        let query = if query_all_tracks {
+            debug!("De-selected playlist, querying all");
+
+            None
+        } else {
+            debug!(
+                "Selected playlist: {:?}",
+                self.context.borrow().playlist.selected_playlist()
+            );
+
+            Some(playlist.clone())
+        };
+
         if let Err(err) = self
             .channels
             .database_command_tx
-            .send(DatabaseCommand::QueryTracks(Some(playlist.clone())))
+            .send(DatabaseCommand::QueryTracks(query))
         {
-            error!("Error when sending playlist track query: {}", err);
-            return;
+            error!("Error when sending playlist track query: {}", err)
         }
-
-        debug!(
-            "Selected playlist: {:?}",
-            self.context.borrow().playlist.selected_playlist()
-        );
     }
 }

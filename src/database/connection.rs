@@ -87,12 +87,13 @@ impl Database {
                         }
                     }
                     DatabaseCommand::QueryTracks(playlist) => {
-                        if let Some(_playlist) = playlist {
-                            todo!()
+                        let result = if let Some(playlist) = playlist {
+                            Playlist::get_tracks(&conn, playlist.id)
                         } else {
-                            let result = Track::get_all(&conn);
-                            let _ = event_tx.send(DatabaseEvent::QueryTracks(result));
-                        }
+                            Track::get_all(&conn)
+                        };
+
+                        let _ = event_tx.send(DatabaseEvent::QueryTracks(result));
                     }
                     DatabaseCommand::InsertPlaylist(playlist_name) => {
                         let playlist_result = Playlist::create(&conn, playlist_name);

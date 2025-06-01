@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, error};
 use uuid::Uuid;
 
-use crate::database::models::utils::parse::{parse_date, parse_uuid};
+use crate::database::models::{
+    tracks::Track,
+    utils::parse::{parse_date, parse_uuid},
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct Playlist {
@@ -105,5 +108,29 @@ impl Playlist {
         conn.execute(sql, params![id.to_string()])?;
 
         Ok(())
+    }
+
+    pub fn get_tracks(conn: &Connection, id: Uuid) -> Result<Vec<Track>> {
+        let sql = "
+            SELECT t.id, t.path, t.hash, t.duration_secs, t.valid, t.created_at, t.updated_at
+            FROM tracks t
+            JOIN playlist_tracks pt ON t.id = pt.track_id
+            WHERE pt.playlist_id = ?1;
+        ";
+
+        let mut stmt = conn
+            .prepare(sql)
+            .context("Failed to prepare query for select all tracks from playlist")?;
+
+        let playlist_tracks: Vec<Track> = stmt
+            .query_map(params![id.to_string()], |row| Track::try_from(row))?
+            .collect::<Result<_, _>>()?;
+
+        debug!(
+            "Found {} track(s) from playlist/tracks query",
+            playlist_tracks.len()
+        );
+
+        Ok(playlist_tracks)
     }
 }

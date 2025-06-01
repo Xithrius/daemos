@@ -26,7 +26,7 @@
     - [x] Tags
   - [ ] CRUD
     - [x] Tracks
-    - [ ] Playlists
+    - [x] Playlists
     - [ ] Tags
 
 - [ ] Track UI table
@@ -130,6 +130,8 @@
     - [ ] Pseudo Random (don't play the same thing twice until everything is played)
     - [ ] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
+  - [ ] Playlists
+    - [ ] If a playlist is selected, then the context should be held for that playlist even when switching to other filters (including searching)
 
 - [ ] Fonts
 
