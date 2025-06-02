@@ -130,8 +130,6 @@
     - [ ] Pseudo Random (don't play the same thing twice until everything is played)
     - [ ] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
-  - [ ] Playlists
-    - [ ] If a playlist is selected, then the context should be held for that playlist even when switching to other filters (including searching, and looking at different playlists)
 
 - [ ] Fonts
 
@@ -145,6 +143,7 @@
 - [x] Playback seek bar skips a second, or pauses on a duration for too long
 - [x] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
 - [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
-- [ ]
+- [ ] If a playlist is playing a track and we focus elsewhere (such as another playlist), that playlist should still autoplay in the correct order
+- [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the tracks vector
 - [ ] Horizontally center playback seek bar
   - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)
