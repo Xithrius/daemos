@@ -3,9 +3,9 @@ use tracing::error;
 
 pub fn now_playing(track_name: String) {
     if let Err(err) = Notification::new()
-        .summary("Drakn")
+        .summary("Daemos")
         .body(&format!("Now playing - {}", track_name))
-        .icon("drakn")
+        .icon("daemos")
         .show()
     {
         error!("Failed to send now playing notification: {}", err)

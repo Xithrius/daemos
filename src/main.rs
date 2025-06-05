@@ -8,7 +8,7 @@ fn main() -> eframe::Result {
     use std::{rc::Rc, thread};
 
     use crossbeam::channel;
-    use drakn::{
+    use daemos::{
         app::App, channels::Channels, config::load::load_config, database::connection::Database,
         fonts::set_fonts, logging::initialize_logging, playback::state::Player,
     };
@@ -67,7 +67,7 @@ fn main() -> eframe::Result {
     ));
 
     eframe::run_native(
-        "Drakn",
+        "Daemos",
         options,
         Box::new(|cc| {
             install_image_loaders(&cc.egui_ctx);
@@ -82,5 +82,5 @@ fn main() -> eframe::Result {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    unimplemented!("Wasm32 is not implemented for Drakn")
+    unimplemented!("Wasm32 is not implemented for Daemos")
 }

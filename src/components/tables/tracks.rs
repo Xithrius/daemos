@@ -237,7 +237,7 @@ impl TrackTable {
             .send(PlayerCommand::Create(new_track.clone()));
 
         let current_playlist = self.context.borrow().playlist.selected_playlist();
-        let new_track_state = TrackState::new(new_index, new_track.clone(), true, current_playlist);
+        let new_track_state = TrackState::new(new_index, new_track.clone(), true);
 
         debug!("Selected new track with autoplay: {:?}", new_track_state);
 
@@ -266,7 +266,6 @@ impl TrackTable {
                                  updated_at: _,
                              },
                          playing: _,
-                         playlist: _,
                      }| { *hash == track.hash },
                 ));
 
