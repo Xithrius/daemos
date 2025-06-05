@@ -12,7 +12,10 @@ use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
     context::{PlayDirection, SharedContext},
-    database::{connection::DatabaseCommand, models::tracks::Track},
+    database::{
+        connection::DatabaseCommand,
+        models::{playlists::playlist::Playlist, tracks::Track},
+    },
     files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
@@ -36,22 +39,35 @@ impl TrackState {
 }
 
 #[derive(Debug, Clone)]
+struct PlaylistState {
+    playlist: Playlist,
+    tracks: Vec<Track>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct TrackSearch {
+    pub text: String,
+    pub changed: bool,
+    pub focused: bool,
+    pub focus_requested: bool,
+    pub duration: Option<Duration>,
+}
+
+#[derive(Debug, Clone)]
 pub struct TrackTable {
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 
     tracks: Vec<Track>,
+    // TODO: Convert to vector of indices
     filtered_tracks: Vec<Track>,
     track_ids: HashSet<Uuid>,
 
     // selection: HashSet<usize>,
-    playing: Option<TrackState>,
+    current_track: Option<TrackState>,
+    current_playlist: Option<PlaylistState>,
 
-    search_text: String,
-    search_changed: bool,
-    search_focused: bool,
-    search_focus_requested: bool,
-    search_duration: Option<Duration>,
+    search: TrackSearch,
 }
 
 impl TrackTable {
@@ -69,21 +85,18 @@ impl TrackTable {
             filtered_tracks: Vec::default(),
             track_ids: HashSet::default(),
             // selection: HashSet::default(),
-            playing: None,
-            search_text: String::default(),
-            search_changed: false,
-            search_focused: false,
-            search_focus_requested: false,
-            search_duration: None,
+            current_track: None,
+            current_playlist: None,
+            search: TrackSearch::default(),
         }
     }
 
     pub fn search_focused(&self) -> bool {
-        self.search_focused
+        self.search.focused
     }
 
     pub fn request_search_focus(&mut self) {
-        self.search_focus_requested = true
+        self.search.focus_requested = true;
     }
 
     pub fn set_tracks(&mut self, mut tracks: Vec<Track>) {
@@ -123,7 +136,7 @@ impl TrackTable {
         #[allow(clippy::single_match)]
         match player_event {
             PlayerEvent::TrackPlayingStatus(playing) => {
-                if let Some(track_state) = self.playing.as_mut() {
+                if let Some(track_state) = self.current_track.as_mut() {
                     track_state.playing = playing;
                 }
             }
@@ -142,7 +155,7 @@ impl TrackTable {
     // }
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
-        if self.playing.as_ref().is_some_and(
+        if self.current_track.as_ref().is_some_and(
             |TrackState {
                  index: playing_index,
                  track: playing_track,
@@ -169,7 +182,9 @@ impl TrackTable {
 
         let new_track_state = TrackState::new(row_index, track.clone(), true);
 
-        self.playing = Some(new_track_state)
+        let current_playlist = self.context.borrow().playlist.selected_playlist();
+
+        self.current_track = Some(new_track_state)
     }
 
     /// Selects the next track from the track table tracks attribute
@@ -178,7 +193,7 @@ impl TrackTable {
             return;
         };
 
-        let Some(playing) = &self.playing else {
+        let Some(playing) = &self.current_track else {
             return;
         };
 
@@ -194,7 +209,7 @@ impl TrackTable {
         else {
             // Could not find a new track to play, clearing sink
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            self.playing = None;
+            self.current_track = None;
 
             return;
         };
@@ -211,7 +226,7 @@ impl TrackTable {
         // TODO: Configurable value to autoplay from filtered tracks
         let Some(new_track) = self.tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            self.playing = None;
+            self.current_track = None;
 
             return;
         };
@@ -221,18 +236,19 @@ impl TrackTable {
             .player_command_tx
             .send(PlayerCommand::Create(new_track.clone()));
 
-        let new_track_state = TrackState::new(new_index, new_track.clone(), true);
+        let current_playlist = self.context.borrow().playlist.selected_playlist();
+        let new_track_state = TrackState::new(new_index, new_track.clone(), true, current_playlist);
 
         debug!("Selected new track with autoplay: {:?}", new_track_state);
 
-        self.playing = Some(new_track_state);
+        self.current_track = Some(new_track_state);
     }
 
     fn table_body_row(&mut self, mut row: TableRow<'_, '_>, shift_hit: bool) {
         let row_index = row.index();
 
         let track = self.filtered_tracks.get(row_index).cloned();
-        let playing = self.playing.clone();
+        let playing = self.current_track.clone();
 
         if let Some(track) = track {
             if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
@@ -250,6 +266,7 @@ impl TrackTable {
                                  updated_at: _,
                              },
                          playing: _,
+                         playlist: _,
                      }| { *hash == track.hash },
                 ));
 
@@ -327,7 +344,7 @@ impl TrackTable {
     }
 
     fn ui_search(&mut self, ui: &mut egui::Ui) {
-        if self.search_text.is_empty() {
+        if self.search.text.is_empty() {
             self.filtered_tracks = self.tracks.clone();
         }
         // Only recalculate the filtered tracks if the search input has changed
@@ -337,8 +354,8 @@ impl TrackTable {
         // Keep track of previous search that yielded result such that if we
         // delete characters to go back to that same search length, then add more characters,
         // calculation of filtered tracks will begin again
-        else if self.search_changed && !self.filtered_tracks.is_empty() {
-            let search_lower = self.search_text.to_lowercase();
+        else if self.search.changed && !self.filtered_tracks.is_empty() {
+            let search_lower = self.search.text.to_lowercase();
 
             let start = Instant::now();
 
@@ -357,7 +374,7 @@ impl TrackTable {
                 .collect();
 
             let duration = start.elapsed();
-            self.search_duration = Some(duration);
+            self.search.duration = Some(duration);
             debug!(
                 "Filtered into {} tracks in {:?}",
                 filtered_tracks.len(),
@@ -368,17 +385,17 @@ impl TrackTable {
         }
 
         let search_text_edit =
-            egui::TextEdit::singleline(&mut self.search_text).hint_text("Search...");
+            egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
 
         let response = ui.add(search_text_edit);
 
-        if self.search_focus_requested {
+        if self.search.focus_requested {
             response.request_focus();
-            self.search_focus_requested = false;
+            self.search.focus_requested = false;
         }
 
-        self.search_changed = response.changed();
-        self.search_focused = response.has_focus();
+        self.search.changed = response.changed();
+        self.search.focused = response.has_focus();
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
@@ -393,7 +410,7 @@ impl TrackTable {
             ui.horizontal(|ui| {
                 self.ui_search(ui);
 
-                if let Some(search_duration) = self.search_duration {
+                if let Some(search_duration) = self.search.duration {
                     if self.filtered_tracks.len() != self.tracks.len() {
                         ui.label(format!(
                             "{} results in {:?}",
