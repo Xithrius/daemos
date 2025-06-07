@@ -8,6 +8,12 @@ use walkdir::WalkDir;
 
 const ALLOWED_AUDIO_FORMATS: [&str; 3] = ["mp3", "wav", "flac"];
 
+pub fn select_file_dialog() -> Option<PathBuf> {
+    let home = env::var("HOME").unwrap_or_default();
+
+    FileDialog::new().set_directory(home).pick_file()
+}
+
 pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
     // TODO: Windows
     let home = env::var("HOME").unwrap_or_default();
@@ -20,7 +26,7 @@ pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
 
 /// Returns a list of audio track paths from the given directory.
 /// If `recursive` is true, subdirectories will also be searched.
-pub fn get_tracks<P: AsRef<Path>>(dir: &P, recursive: bool) -> Vec<PathBuf> {
+pub fn get_folder_tracks<P: AsRef<Path>>(dir: &P, recursive: bool) -> Vec<PathBuf> {
     let mut tracks = Vec::new();
 
     if recursive {

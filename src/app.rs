@@ -10,7 +10,7 @@ use crate::{
     config::core::CoreConfig,
     context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
-    files::open::{get_tracks, select_folders_dialog},
+    files::open::{get_folder_tracks, select_file_dialog, select_folders_dialog},
     playback::state::PlayerCommand,
 };
 
@@ -103,8 +103,30 @@ impl App {
             }
         }
 
-        // Open OS file explorer to select folder of tracks
+        // Open OS file explorer to select a file as a track
         if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL,
+                logical_key: Key::O,
+            })
+        }) {
+            debug!("`Ctrl + O` has been used to open OS file explorer for track file selection");
+
+            if let Some(selected_file) = select_file_dialog() {
+                self.context
+                    .borrow_mut()
+                    .processing
+                    .set_processing_tracks(1);
+
+                let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None);
+
+                if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
+                    error!("Failed to send insert track command to database: {}", err);
+                }
+            }
+        }
+        // Open OS file explorer to select folder of tracks
+        else if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL | Modifiers::SHIFT,
                 logical_key: Key::O,
@@ -116,7 +138,7 @@ impl App {
 
             if let Some(selected_folders) = select_folders_dialog() {
                 for folder in selected_folders {
-                    let folder_tracks = get_tracks(&folder, false);
+                    let folder_tracks = get_folder_tracks(&folder, false);
 
                     debug!(
                         "Found {} total track(s) in selected folders",
@@ -142,9 +164,8 @@ impl App {
                 }
             }
         }
-
         // Focus search input box
-        if ctx.input_mut(|i| {
+        else if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL,
                 logical_key: Key::F,
@@ -154,9 +175,8 @@ impl App {
 
             self.components.track_table.request_search_focus();
         }
-
         // Toggle settings popup window
-        if ctx.input_mut(|i| {
+        else if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL,
                 logical_key: Key::Comma,

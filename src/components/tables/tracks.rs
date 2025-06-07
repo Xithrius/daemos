@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -272,7 +273,7 @@ impl TrackTable {
                 row.col(|ui| {
                     let label = ui
                         .label(row_index.to_string())
-                        .on_hover_cursor(egui::CursorIcon::Default);
+                        .on_hover_cursor(CursorIcon::Default);
                     if label.double_clicked() {
                         self.toggle_row_play(row_index, &track);
                     }
@@ -281,7 +282,7 @@ impl TrackTable {
                 row.col(|ui| {
                     let label = ui
                         .label(track_file_name)
-                        .on_hover_cursor(egui::CursorIcon::Default);
+                        .on_hover_cursor(CursorIcon::Default);
                     if label.double_clicked() {
                         self.toggle_row_play(row_index, &track);
                     }
@@ -293,7 +294,7 @@ impl TrackTable {
 
                     let label = ui
                         .label(readable_track_duration)
-                        .on_hover_cursor(egui::CursorIcon::Default);
+                        .on_hover_cursor(CursorIcon::Default);
 
                     if label.double_clicked() {
                         self.toggle_row_play(row_index, &track);
