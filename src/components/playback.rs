@@ -12,6 +12,7 @@ use crate::{
     config::core::CoreConfig,
     context::{PlayDirection, SharedContext},
     database::models::tracks::Track,
+    files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
 };
@@ -279,6 +280,18 @@ impl PlaybackBar {
         }
     }
 
+    fn ui_track_name(&mut self, ui: &mut egui::Ui) {
+        let Some(track) = &self.track_state.track else {
+            return;
+        };
+
+        let Some(track_file_name) = get_track_file_name(track.path.clone()) else {
+            return;
+        };
+
+        ui.label(track_file_name);
+    }
+
     fn debug_window(&mut self, ui: &mut egui::Ui) {
         egui::Window::new("Playback Debug Info")
             .open(self.context.borrow_mut().ui.debug_playback_mut())
@@ -357,6 +370,8 @@ impl PlaybackBar {
             self.ui_playback_controls(ui);
 
             self.ui_seek(ui);
+
+            self.ui_track_name(ui);
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                 ui.horizontal_centered(|ui| {
