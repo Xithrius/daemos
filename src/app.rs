@@ -164,6 +164,17 @@ impl App {
                 }
             }
         }
+        // Focus on currently playing track
+        else if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL,
+                logical_key: Key::E,
+            })
+        }) {
+            debug!("`Ctrl + E` has been used to focus currently playing track in playlist");
+
+            self.components.track_table.set_scroll_to_playing(true);
+        }
         // Focus search input box
         else if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {

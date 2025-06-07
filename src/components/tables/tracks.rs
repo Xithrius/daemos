@@ -41,13 +41,16 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 struct PlaylistState {
-    playlist: Playlist,
+    _playlist: Playlist,
     tracks: Vec<Track>,
 }
 
 impl PlaylistState {
     fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
-        Self { playlist, tracks }
+        Self {
+            _playlist: playlist,
+            tracks,
+        }
     }
 }
 
@@ -74,6 +77,8 @@ pub struct TrackTable {
     current_track: Option<TrackState>,
     current_playlist: Option<PlaylistState>,
 
+    scroll_to_playing: bool,
+
     search: TrackSearch,
 }
 
@@ -94,8 +99,13 @@ impl TrackTable {
             // selection: HashSet::default(),
             current_track: None,
             current_playlist: None,
+            scroll_to_playing: false,
             search: TrackSearch::default(),
         }
+    }
+
+    pub fn set_scroll_to_playing(&mut self, scroll: bool) {
+        self.scroll_to_playing = scroll;
     }
 
     pub fn search_focused(&self) -> bool {
@@ -197,7 +207,7 @@ impl TrackTable {
             self.current_playlist = None;
         }
 
-        self.current_track = Some(new_track_state)
+        self.current_track = Some(new_track_state);
     }
 
     /// Selects the next track from the track table tracks attribute
@@ -259,9 +269,11 @@ impl TrackTable {
         debug!("Selected new track with autoplay: {:?}", new_track_state);
 
         self.current_track = Some(new_track_state);
+
+        self.scroll_to_playing = true;
     }
 
-    fn table_body_row(&mut self, mut row: TableRow<'_, '_>, shift_hit: bool) {
+    fn table_body_row(&mut self, mut row: TableRow<'_, '_>) {
         let row_index = row.index();
 
         let track = self.filtered_tracks.get(row_index).cloned();
@@ -317,11 +329,12 @@ impl TrackTable {
                     }
                 });
 
-                if row.response().double_clicked() {
+                let response = row.response();
+
+                if response.double_clicked() {
                     self.toggle_row_play(row_index, &track);
-                } else if row.response().clicked() && shift_hit {
-                    todo!()
                 }
+                // else if row.response().clicked() && shift_hit {}
             }
         }
     }
@@ -329,14 +342,22 @@ impl TrackTable {
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
         self.select_new_track();
 
-        let shift_hit = ui.ctx().input(|i| i.modifiers.shift);
+        // let shift_hit = ui.ctx().input(|i| i.modifiers.shift);
 
-        let table = TableBuilder::new(ui)
+        let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
             .column(Column::auto().at_least(50.0).resizable(true))
             .column(Column::remainder())
             .column(Column::auto().at_least(50.0))
             .sense(egui::Sense::click());
+
+        if self.scroll_to_playing {
+            if let Some(playing_track) = &self.current_track {
+                let index = playing_track.index;
+                table = table.scroll_to_row(index, None);
+                self.scroll_to_playing = false;
+            }
+        }
 
         table
             .header(TABLE_HEADER_HEIGHT, |mut header| {
@@ -354,7 +375,7 @@ impl TrackTable {
                 let num_rows = self.filtered_tracks.len();
 
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |row| {
-                    self.table_body_row(row, shift_hit);
+                    self.table_body_row(row);
                 });
             });
     }
