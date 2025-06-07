@@ -103,16 +103,25 @@ impl UIContext {
 
 #[derive(Debug, Clone, Default)]
 pub struct PlaylistContext {
-    selected_playlist: Option<Playlist>,
+    selected: Option<Playlist>,
+    autoplay: Option<Playlist>,
 }
 
 impl PlaylistContext {
-    pub fn selected_playlist(&self) -> Option<Playlist> {
-        self.selected_playlist.clone()
+    pub fn selected(&self) -> Option<Playlist> {
+        self.selected.clone()
     }
 
-    pub fn set_selected_playlist(&mut self, playlist: Option<Playlist>) {
-        self.selected_playlist = playlist;
+    pub fn set_selected(&mut self, playlist: Option<Playlist>) {
+        self.selected = playlist;
+    }
+
+    pub fn autoplay(&self) -> Option<Playlist> {
+        self.autoplay.clone()
+    }
+
+    pub fn set_autoplay(&mut self, playlist: Option<Playlist>) {
+        self.autoplay = playlist;
     }
 }
 

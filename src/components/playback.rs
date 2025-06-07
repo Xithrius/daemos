@@ -31,6 +31,12 @@ const PLAY_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pl
 const PAUSE_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pause.png");
 const VOLUME_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/volume-up.png");
 
+const AUTOPLAY_FONT_SIZE: f32 = 10.0;
+
+const NOW_PLAYING_SPACE: f32 = 15.0;
+const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
+const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
+
 #[derive(Debug, Clone)]
 struct TrackState {
     track: Option<Track>,
@@ -280,7 +286,7 @@ impl PlaybackBar {
         }
     }
 
-    fn ui_track_name(&mut self, ui: &mut egui::Ui) {
+    fn ui_currently_playing(&mut self, ui: &mut egui::Ui) {
         let Some(track) = &self.track_state.track else {
             return;
         };
@@ -289,7 +295,21 @@ impl PlaybackBar {
             return;
         };
 
-        ui.label(track_file_name);
+        let autoplay_context = if let Some(playlist) = self.context.borrow().playlist.autoplay() {
+            playlist.name
+        } else {
+            "All tracks".to_string()
+        };
+
+        ui.vertical(|ui| {
+            ui.add_space(NOW_PLAYING_SPACE);
+
+            let autoplay_text =
+                RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
+            ui.label(autoplay_text);
+
+            ui.label(track_file_name);
+        });
     }
 
     fn debug_window(&mut self, ui: &mut egui::Ui) {
@@ -303,7 +323,7 @@ impl PlaybackBar {
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Track Info").underline().heading());
-                    ui.add_space(5.0);
+                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
                     ui.label(format!("Loaded: {}", ts.track.is_some()));
 
@@ -317,7 +337,7 @@ impl PlaybackBar {
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Playback State").underline().heading());
-                    ui.add_space(5.0);
+                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
                     ui.label(format!("Playing: {}", ts.playing));
 
@@ -344,7 +364,7 @@ impl PlaybackBar {
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Volume State").underline().heading());
-                    ui.add_space(5.0);
+                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
                     ui.label(format!("Volume: {:.2}", ts.volume));
                     ui.label(format!("Last Volume Sent: {:.2}", ts.last_volume_sent));
@@ -371,7 +391,9 @@ impl PlaybackBar {
 
             self.ui_seek(ui);
 
-            self.ui_track_name(ui);
+            ui.add_space(SEEK_AND_AUTOPLAY_SPACING);
+
+            self.ui_currently_playing(ui);
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                 ui.horizontal_centered(|ui| {

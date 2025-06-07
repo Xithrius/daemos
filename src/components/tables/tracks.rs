@@ -22,6 +22,9 @@ use crate::{
     utils::formatting::human_duration,
 };
 
+const INDEX_COLUMN_WIDTH: f32 = 50.0;
+const DURATION_COLUMN_WIDTH: f32 = 100.0;
+
 #[derive(Debug, Clone)]
 struct TrackState {
     index: usize,
@@ -199,7 +202,13 @@ impl TrackTable {
 
         let new_track_state = TrackState::new(row_index, track.clone(), true);
 
-        if let Some(playlist) = self.context.borrow().playlist.selected_playlist() {
+        let selected_playlist = self.context.borrow().playlist.selected();
+        self.context
+            .borrow_mut()
+            .playlist
+            .set_autoplay(selected_playlist.clone());
+
+        if let Some(playlist) = selected_playlist {
             let playlist_state = PlaylistState::new(playlist, self.tracks.clone());
 
             self.current_playlist = Some(playlist_state);
@@ -346,15 +355,15 @@ impl TrackTable {
 
         let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
-            .column(Column::auto().at_least(50.0).resizable(true))
+            .column(Column::auto().at_least(INDEX_COLUMN_WIDTH).resizable(true))
             .column(Column::remainder())
-            .column(Column::auto().at_least(50.0))
+            .column(Column::auto().at_least(DURATION_COLUMN_WIDTH))
             .sense(egui::Sense::click());
 
         if self.scroll_to_playing {
             if let Some(playing_track) = &self.current_track {
-                let index = playing_track.index;
-                table = table.scroll_to_row(index, None);
+                // TODO: Auto-scroll alignment configuration
+                table = table.scroll_to_row(playing_track.index, None);
                 self.scroll_to_playing = false;
             }
         }
