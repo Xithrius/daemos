@@ -31,9 +31,9 @@ const PLAY_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pl
 const PAUSE_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/pause.png");
 const VOLUME_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/volume-up.png");
 
-const AUTOPLAY_FONT_SIZE: f32 = 10.0;
+const AUTOPLAY_FONT_SIZE: f32 = 12.0;
 
-const NOW_PLAYING_SPACE: f32 = 15.0;
+const NOW_PLAYING_SPACE: f32 = 12.0;
 const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
 const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
 
@@ -309,7 +309,8 @@ impl PlaybackBar {
                 RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
             ui.label(autoplay_text);
 
-            ui.label(track_file_name);
+            let track_text = RichText::new(track_file_name).strong();
+            ui.label(track_text);
         });
     }
 
