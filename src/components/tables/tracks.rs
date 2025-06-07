@@ -45,6 +45,12 @@ struct PlaylistState {
     tracks: Vec<Track>,
 }
 
+impl PlaylistState {
+    fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
+        Self { playlist, tracks }
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct TrackSearch {
     pub text: String,
@@ -183,7 +189,13 @@ impl TrackTable {
 
         let new_track_state = TrackState::new(row_index, track.clone(), true);
 
-        let current_playlist = self.context.borrow().playlist.selected_playlist();
+        if let Some(playlist) = self.context.borrow().playlist.selected_playlist() {
+            let playlist_state = PlaylistState::new(playlist, self.tracks.clone());
+
+            self.current_playlist = Some(playlist_state);
+        } else {
+            self.current_playlist = None;
+        }
 
         self.current_track = Some(new_track_state)
     }
@@ -203,8 +215,13 @@ impl TrackTable {
             .playback
             .set_select_new_track(None);
 
-        let Some(index) = self
-            .tracks
+        let tracks = if let Some(playlist_state) = &self.current_playlist {
+            &playlist_state.tracks
+        } else {
+            &self.tracks
+        };
+
+        let Some(index) = tracks
             .iter()
             .position(|track| track.hash == playing.track.hash)
         else {
@@ -215,7 +232,7 @@ impl TrackTable {
             return;
         };
 
-        let tracks_len = self.tracks.len();
+        let tracks_len = tracks.len();
 
         // TODO: Configurable default autoplay direction
         let new_index = if matches!(autoplay_direction, PlayDirection::Forward) {
@@ -225,7 +242,7 @@ impl TrackTable {
         };
 
         // TODO: Configurable value to autoplay from filtered tracks
-        let Some(new_track) = self.tracks.get(new_index) else {
+        let Some(new_track) = tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
             self.current_track = None;
 
@@ -237,7 +254,6 @@ impl TrackTable {
             .player_command_tx
             .send(PlayerCommand::Create(new_track.clone()));
 
-        let current_playlist = self.context.borrow().playlist.selected_playlist();
         let new_track_state = TrackState::new(new_index, new_track.clone(), true);
 
         debug!("Selected new track with autoplay: {:?}", new_track_state);
