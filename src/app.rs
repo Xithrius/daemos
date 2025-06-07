@@ -7,7 +7,7 @@ use tracing::{debug, error};
 use crate::{
     channels::Channels,
     components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
-    config::core::CoreConfig,
+    config::core::SharedConfig,
     context::SharedContext,
     database::connection::{DatabaseCommand, DatabaseEvent},
     files::open::{get_folder_tracks, select_file_dialog, select_folders_dialog},
@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub struct App {
-    config: CoreConfig,
+    config: SharedConfig,
     context: SharedContext,
     channels: Rc<Channels>,
     components: Components,
@@ -25,7 +25,7 @@ pub struct App {
 impl App {
     pub fn new(
         _cc: &eframe::CreationContext<'_>,
-        config: CoreConfig,
+        config: SharedConfig,
         channels: Rc<Channels>,
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -96,10 +96,12 @@ impl App {
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             debug!("`F3` Has been used to toggle the debug wireframe");
 
-            self.config.general.debug = !self.config.general.debug;
+            self.config.borrow_mut().general.debug = !self.config.borrow().general.debug;
 
-            if self.config.general.debug != ctx.debug_on_hover() {
-                ctx.set_debug_on_hover(self.config.general.debug);
+            let debug = self.config.borrow().general.debug;
+
+            if debug != ctx.debug_on_hover() {
+                ctx.set_debug_on_hover(debug);
             }
         }
 
@@ -173,7 +175,7 @@ impl App {
         }) {
             debug!("`Ctrl + E` has been used to focus currently playing track in playlist");
 
-            self.components.track_table.set_scroll_to_playing(true);
+            self.components.track_table.set_scroll_to_selected(true);
         }
         // Focus search input box
         else if ctx.input_mut(|i| {

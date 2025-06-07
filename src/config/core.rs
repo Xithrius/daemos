@@ -1,3 +1,6 @@
+use std::{cell::RefCell, rc::Rc};
+
+use egui::Align;
 use serde::{Deserialize, Serialize};
 
 use crate::themes::AppTheme;
@@ -9,6 +12,7 @@ const DEFAULT_PLAYER_VOLUME: f32 = 0.5;
 pub struct CoreConfig {
     pub general: GeneralConfig,
     pub volume: VolumeConfig,
+    pub autoplay: AutoplayConfig,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
@@ -30,3 +34,10 @@ impl Default for VolumeConfig {
         }
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct AutoplayConfig {
+    pub align: Option<Align>,
+}
+
+pub type SharedConfig = Rc<RefCell<CoreConfig>>;

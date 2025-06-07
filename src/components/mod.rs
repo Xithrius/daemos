@@ -13,7 +13,7 @@ use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks:
 
 use crate::{
     components::{menu_bar::MenuBar, playback::PlaybackBar},
-    config::core::CoreConfig,
+    config::core::SharedConfig,
     context::SharedContext,
     database::connection::DatabaseCommand,
     playback::state::{PlayerCommand, PlayerEvent},
@@ -74,16 +74,16 @@ pub struct Components {
 
 impl Components {
     pub fn new(
-        config: CoreConfig,
+        config: SharedConfig,
         context: SharedContext,
         channels: Rc<ComponentChannels>,
     ) -> Self {
         Self {
             top_menu_bar: MenuBar::new(context.clone()),
-            playback_bar: PlaybackBar::new(&config, context.clone(), channels.clone()),
+            playback_bar: PlaybackBar::new(config.clone(), context.clone(), channels.clone()),
 
             playlist_table: PlaylistTable::new(context.clone(), channels.clone()),
-            track_table: TrackTable::new(context.clone(), channels.clone()),
+            track_table: TrackTable::new(config.clone(), context.clone(), channels.clone()),
             tag_table: TagTable::default(),
             task_table: TaskTable::default(),
 

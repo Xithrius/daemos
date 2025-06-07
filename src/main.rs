@@ -5,7 +5,7 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-    use std::{rc::Rc, thread};
+    use std::{cell::RefCell, rc::Rc, thread};
 
     use crossbeam::channel;
     use daemos::{
@@ -17,7 +17,10 @@ fn main() -> eframe::Result {
 
     initialize_logging().expect("Failed to initialize logger");
 
-    let config = load_config().expect("Failed to load config");
+    let config = {
+        let core_config = load_config().expect("Failed to load config");
+        Rc::new(RefCell::new(core_config))
+    };
 
     let icon_data = eframe::icon_data::from_png_bytes(include_bytes!("../static/assets/icon.png"))
         .unwrap_or_default();
@@ -26,7 +29,7 @@ fn main() -> eframe::Result {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([320.0, 240.0])
             .with_icon(icon_data),
-        vsync: config.general.vsync,
+        vsync: config.borrow().general.vsync,
         ..Default::default()
     };
 

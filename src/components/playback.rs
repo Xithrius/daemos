@@ -9,7 +9,7 @@ use tracing::{debug, warn};
 
 use super::ComponentChannels;
 use crate::{
-    config::core::CoreConfig,
+    config::core::SharedConfig,
     context::{PlayDirection, SharedContext},
     database::models::tracks::Track,
     files::open::get_track_file_name,
@@ -93,11 +93,12 @@ pub struct PlaybackBar {
 
 impl PlaybackBar {
     pub fn new(
-        config: &CoreConfig,
+        config: SharedConfig,
         context: SharedContext,
         channels: Rc<ComponentChannels>,
     ) -> Self {
-        let track_state = TrackState::new(config.volume.default);
+        let config_volume = config.borrow().volume.default;
+        let track_state = TrackState::new(config_volume);
 
         Self {
             context,

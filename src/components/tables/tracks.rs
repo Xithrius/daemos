@@ -12,6 +12,7 @@ use uuid::Uuid;
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
+    config::core::SharedConfig,
     context::{PlayDirection, SharedContext},
     database::{
         connection::DatabaseCommand,
@@ -68,6 +69,7 @@ pub struct TrackSearch {
 
 #[derive(Debug, Clone)]
 pub struct TrackTable {
+    config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 
@@ -80,19 +82,24 @@ pub struct TrackTable {
     current_track: Option<TrackState>,
     current_playlist: Option<PlaylistState>,
 
-    scroll_to_playing: bool,
+    scroll_to_selected: bool,
 
     search: TrackSearch,
 }
 
 impl TrackTable {
-    pub fn new(context: SharedContext, channels: Rc<ComponentChannels>) -> Self {
+    pub fn new(
+        config: SharedConfig,
+        context: SharedContext,
+        channels: Rc<ComponentChannels>,
+    ) -> Self {
         // TODO: Config for default playlist selection
         let _ = channels
             .database_command_tx
             .send(DatabaseCommand::QueryTracks(None));
 
         Self {
+            config,
             context,
             channels,
 
@@ -102,13 +109,13 @@ impl TrackTable {
             // selection: HashSet::default(),
             current_track: None,
             current_playlist: None,
-            scroll_to_playing: false,
+            scroll_to_selected: false,
             search: TrackSearch::default(),
         }
     }
 
-    pub fn set_scroll_to_playing(&mut self, scroll: bool) {
-        self.scroll_to_playing = scroll;
+    pub fn set_scroll_to_selected(&mut self, scroll: bool) {
+        self.scroll_to_selected = scroll;
     }
 
     pub fn search_focused(&self) -> bool {
@@ -279,7 +286,7 @@ impl TrackTable {
 
         self.current_track = Some(new_track_state);
 
-        self.scroll_to_playing = true;
+        self.scroll_to_selected = true;
     }
 
     fn table_body_row(&mut self, mut row: TableRow<'_, '_>) {
@@ -360,11 +367,12 @@ impl TrackTable {
             .column(Column::auto().at_least(DURATION_COLUMN_WIDTH))
             .sense(egui::Sense::click());
 
-        if self.scroll_to_playing {
+        if self.scroll_to_selected {
             if let Some(playing_track) = &self.current_track {
                 // TODO: Auto-scroll alignment configuration
-                table = table.scroll_to_row(playing_track.index, None);
-                self.scroll_to_playing = false;
+                let autoplay_align = self.config.borrow().autoplay.align;
+                table = table.scroll_to_row(playing_track.index, autoplay_align);
+                self.scroll_to_selected = false;
             }
         }
 
@@ -452,7 +460,7 @@ impl TrackTable {
 
         let height = ui.available_height();
 
-        ui.vertical(|ui| {
+        ui.vertical(|ui: &mut egui::Ui| {
             ui.horizontal(|ui| {
                 self.ui_search(ui);
 
