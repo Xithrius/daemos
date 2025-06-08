@@ -144,8 +144,8 @@
 - [x] Mutability of specific component attributes is getting messy, either create an inner context or get a better method of passing things around
 - [x] If a playlist is playing a track and we focus elsewhere (such as another playlist), that playlist should still autoplay in the correct order
 - [x] Volume is reset when a new track is selected with autoplay
+- [x] When selecting a new track to play on another playlist, autoplay and now playing track labels in the playback bar aren't visually set at the same time
 - [ ] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the tracks vector
-- [ ] When selecting a new track to play on another playlist, autoplay and now playing track labels in the playback bar aren't visually set at the same time
 - [ ] Horizontally center playback seek bar
   - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)

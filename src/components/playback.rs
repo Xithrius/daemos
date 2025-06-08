@@ -64,12 +64,10 @@ impl Default for TrackState {
 impl TrackState {
     pub fn new(volume: f32) -> Self {
         Self {
-            track: None,
             playing: true,
             volume,
             last_volume_sent: volume,
-            progress_base: None,
-            progress_timestamp: None,
+            ..Default::default()
         }
     }
 
@@ -311,14 +309,13 @@ impl PlaybackBar {
             "All tracks".to_string()
         };
 
+        let autoplay_text =
+            RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
+        let track_text = RichText::new(track_file_name).strong();
+
         ui.vertical(|ui| {
             ui.add_space(NOW_PLAYING_SPACE);
-
-            let autoplay_text =
-                RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
             ui.label(autoplay_text);
-
-            let track_text = RichText::new(track_file_name).strong();
             ui.label(track_text);
         });
     }

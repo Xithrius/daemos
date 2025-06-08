@@ -230,11 +230,11 @@ impl TrackTable {
 
     /// Selects the next track from the track table tracks attribute
     fn select_new_track(&mut self) {
-        let Some(autoplay_direction) = self.context.borrow().playback.select_new_track() else {
+        let Some(playing) = &self.current_track else {
             return;
         };
 
-        let Some(playing) = &self.current_track else {
+        let Some(autoplay_direction) = self.context.borrow().playback.select_new_track() else {
             return;
         };
 
