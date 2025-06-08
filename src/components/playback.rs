@@ -86,6 +86,7 @@ impl TrackState {
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
+    config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
     track_state: TrackState,
@@ -101,6 +102,7 @@ impl PlaybackBar {
         let track_state = TrackState::new(config_volume);
 
         Self {
+            config,
             context,
             channels,
             track_state,
@@ -108,7 +110,13 @@ impl PlaybackBar {
     }
 
     fn reset_track_state(&mut self) {
-        self.track_state = TrackState::default();
+        let volume = self.config.borrow().volume.default;
+
+        self.track_state = TrackState {
+            volume,
+            last_volume_sent: volume,
+            ..Default::default()
+        }
     }
 
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
@@ -232,6 +240,7 @@ impl PlaybackBar {
                 .send(PlayerCommand::SetVolume(self.track_state.volume));
 
             self.track_state.last_volume_sent = self.track_state.volume;
+            self.config.borrow_mut().volume.default = self.track_state.volume;
         }
     }
 

@@ -29,7 +29,7 @@ pub enum PlayerEvent {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum PlayerCommand {
-    Create(Track),
+    Create(Track, f32),
     Play,
     Pause,
     Toggle,
@@ -98,7 +98,7 @@ impl Player {
         }
     }
 
-    fn create_player_track(&self, track: &Track) -> Result<()> {
+    fn create_player_track(&self, track: &Track, volume: &f32) -> Result<()> {
         if !self.sink.empty() {
             self.sink.clear();
         }
@@ -111,7 +111,7 @@ impl Player {
         let decoder = Decoder::new(BufReader::new(file))?;
 
         self.sink.append(decoder);
-        self.sink.set_volume(0.5);
+        self.sink.set_volume(*volume);
         self.sink.play();
 
         self.player_event_tx
@@ -130,8 +130,8 @@ impl Player {
         debug!("Player received command: {:?}", command);
 
         match command {
-            PlayerCommand::Create(track) => {
-                self.create_player_track(track)?;
+            PlayerCommand::Create(track, volume) => {
+                self.create_player_track(track, volume)?;
             }
             PlayerCommand::Play => {
                 self.sink.play();

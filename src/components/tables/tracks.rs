@@ -199,10 +199,12 @@ impl TrackTable {
             return;
         }
 
+        let volume = self.config.borrow().volume.default;
+
         if let Err(err) = self
             .channels
             .player_command_tx
-            .send(PlayerCommand::Create(track.clone()))
+            .send(PlayerCommand::Create(track.clone(), volume))
         {
             error!("Failed to start track on path {:?}: {}", track.path, err);
         }
@@ -275,10 +277,12 @@ impl TrackTable {
             return;
         };
 
+        let volume = self.config.borrow().volume.default;
+
         let _ = self
             .channels
             .player_command_tx
-            .send(PlayerCommand::Create(new_track.clone()));
+            .send(PlayerCommand::Create(new_track.clone(), volume));
 
         let new_track_state = TrackState::new(new_index, new_track.clone(), true);
 
