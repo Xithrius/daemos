@@ -102,7 +102,7 @@
       - [ ] At startup
       - [ ] Every once in a while
       - [ ] Check type matching
-        - [ ] path
+        - [ ] Path
         - [ ] Name
         - [ ] Hash recalculation
       - [ ] If invalid, mark with warning and ask user to either correct/remove entry
@@ -146,6 +146,7 @@
 - [x] Volume is reset when a new track is selected with autoplay
 - [x] When selecting a new track to play on another playlist, autoplay and now playing track labels in the playback bar aren't visually set at the same time
 - [x] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
+- [ ] If a track is skipped due to being a duplicate, the spinner will spin forever
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the tracks vector
 - [ ] Horizontally center playback seek bar
   - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)

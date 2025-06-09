@@ -1,4 +1,5 @@
 pub mod menu_bar;
+pub mod modals;
 pub mod playback;
 pub mod popups;
 pub mod tables;
@@ -8,11 +9,13 @@ use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
 use egui_dock::{DockState, NodeIndex, TabViewer};
-use popups::{create_playlist::CreatePlaylistModal, settings::Settings};
+use popups::settings::Settings;
 use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks::TrackTable};
 
 use crate::{
-    components::{menu_bar::MenuBar, playback::PlaybackBar},
+    components::{
+        menu_bar::MenuBar, modals::create_playlist::CreatePlaylistModal, playback::PlaybackBar,
+    },
     config::core::SharedConfig,
     context::SharedContext,
     database::connection::DatabaseCommand,
