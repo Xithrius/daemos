@@ -46,6 +46,7 @@ struct TrackState {
 
     progress_base: Option<Duration>,
     progress_timestamp: Option<Instant>,
+    changing_track: bool,
 }
 
 impl Default for TrackState {
@@ -57,6 +58,7 @@ impl Default for TrackState {
             last_volume_sent: 0.5,
             progress_base: None,
             progress_timestamp: None,
+            changing_track: false,
         }
     }
 }
@@ -73,9 +75,7 @@ impl TrackState {
 
     fn current_progress(&self) -> Option<Duration> {
         match (self.progress_base, self.progress_timestamp) {
-            (Some(base), Some(ts)) if self.playing => {
-                Some(base + Instant::now().duration_since(ts))
-            }
+            (Some(base), Some(ts)) => Some(base + Instant::now().duration_since(ts)),
             (Some(base), _) => Some(base),
             _ => None,
         }
@@ -107,16 +107,6 @@ impl PlaybackBar {
         }
     }
 
-    fn reset_track_state(&mut self) {
-        let volume = self.config.borrow().volume.default;
-
-        self.track_state = TrackState {
-            volume,
-            last_volume_sent: volume,
-            ..Default::default()
-        }
-    }
-
     fn handle_player_event(&mut self, player_event: PlayerEvent) {
         debug!(
             "Playback bar UI component received event: {:?}",
@@ -136,6 +126,7 @@ impl PlaybackBar {
                     self.track_state.playing = true;
                     self.track_state.progress_base = Some(Duration::ZERO);
                     self.track_state.progress_timestamp = Some(Instant::now());
+                    self.track_state.changing_track = false;
                 }
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
@@ -249,13 +240,12 @@ impl PlaybackBar {
             let mut playback_secs = progress.as_secs_f64();
             let total_duration_secs = track.duration_secs;
 
-            if playback_secs >= total_duration_secs {
-                self.reset_track_state();
+            if playback_secs >= total_duration_secs && !self.track_state.changing_track {
+                self.track_state.changing_track = true;
                 self.context
                     .borrow_mut()
                     .playback
                     .set_select_new_track(Some(PlayDirection::Forward));
-                return;
             }
 
             let slider =
@@ -263,7 +253,7 @@ impl PlaybackBar {
 
             let response = ui.add(slider);
 
-            if response.drag_stopped() {
+            if !self.track_state.changing_track && response.drag_stopped() {
                 self.track_state.progress_base = Some(Duration::from_secs_f64(playback_secs));
                 self.track_state.progress_timestamp = Some(Instant::now());
 
@@ -286,6 +276,8 @@ impl PlaybackBar {
                 human_duration(total_time, has_hours)
             ));
         } else {
+            // This state should only be reached when there is no track playing,
+            // and we're not currently selecting a new track
             let mut dummy = 0.0;
             let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).show_value(false);
 
