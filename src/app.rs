@@ -105,30 +105,8 @@ impl App {
             }
         }
 
-        // Open OS file explorer to select a file as a track
-        if ctx.input_mut(|i| {
-            i.consume_shortcut(&KeyboardShortcut {
-                modifiers: Modifiers::CTRL,
-                logical_key: Key::O,
-            })
-        }) {
-            debug!("`Ctrl + O` has been used to open OS file explorer for track file selection");
-
-            if let Some(selected_file) = select_file_dialog() {
-                self.context
-                    .borrow_mut()
-                    .processing
-                    .set_processing_tracks(1);
-
-                let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None);
-
-                if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
-                    error!("Failed to send insert track command to database: {}", err);
-                }
-            }
-        }
         // Open OS file explorer to select folder of tracks
-        else if ctx.input_mut(|i| {
+        if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
                 modifiers: Modifiers::CTRL | Modifiers::SHIFT,
                 logical_key: Key::O,
@@ -163,6 +141,28 @@ impl App {
                     if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
                         error!("Failed to send insert tracks command to database: {}", err);
                     }
+                }
+            }
+        }
+        // Open OS file explorer to select a file as a track
+        else if ctx.input_mut(|i| {
+            i.consume_shortcut(&KeyboardShortcut {
+                modifiers: Modifiers::CTRL,
+                logical_key: Key::O,
+            })
+        }) {
+            debug!("`Ctrl + O` has been used to open OS file explorer for track file selection");
+
+            if let Some(selected_file) = select_file_dialog() {
+                self.context
+                    .borrow_mut()
+                    .processing
+                    .set_processing_tracks(1);
+
+                let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None);
+
+                if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
+                    error!("Failed to send insert track command to database: {}", err);
                 }
             }
         }
