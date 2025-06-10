@@ -13,6 +13,7 @@ use uuid::Uuid;
 use super::utils::parse::{parse_date, parse_uuid};
 use crate::{
     database::hash::hash_file,
+    files::open::get_file_name,
     playback::track_metadata::{extract_track_duration, extract_track_metadata},
 };
 
@@ -20,6 +21,7 @@ use crate::{
 pub struct Track {
     pub id: Uuid,
     pub path: PathBuf,
+    pub name: String,
     pub hash: Option<String>,
     pub duration_secs: f64,
     pub valid: bool,
@@ -32,6 +34,7 @@ impl Default for Track {
         Self {
             id: Uuid::new_v4(),
             path: PathBuf::new(),
+            name: String::default(),
             hash: None,
             duration_secs: 0.0,
             valid: true,
@@ -47,6 +50,7 @@ impl TryFrom<&Row<'_>> for Track {
     fn try_from(row: &Row) -> Result<Self, Self::Error> {
         let id = parse_uuid(row.get::<_, String>("id")?)?;
         let path = PathBuf::from(row.get::<_, String>("path")?);
+        let name = row.get::<_, String>("name")?;
         let hash = row.get("hash")?;
         let duration_secs = row.get::<_, f64>("duration_secs")?;
         let valid = row.get("valid")?;
@@ -56,6 +60,7 @@ impl TryFrom<&Row<'_>> for Track {
         let track = Track {
             id,
             path,
+            name,
             hash,
             duration_secs,
             valid,
@@ -71,7 +76,7 @@ impl Track {
     pub fn create(conn: &Connection, path: PathBuf) -> Result<Option<Track>> {
         let sql = "
             INSERT INTO Tracks
-            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
             ON CONFLICT DO NOTHING
         ";
 
@@ -82,8 +87,12 @@ impl Track {
             .context(format!("Failed to get duration from track {:?}", path))?
             .as_secs_f64();
 
+        let name = get_file_name(path.clone())
+            .context(format!("Failed to get track file name from {:?}", path))?;
+
         let track = Track {
             path: path.clone(),
+            name,
             hash: Some(hash),
             duration_secs,
             ..Default::default()
@@ -95,6 +104,7 @@ impl Track {
                 params![
                     track.id.to_string(),
                     track.path.to_str(),
+                    track.name,
                     track.hash,
                     track.duration_secs,
                     track.valid,
@@ -117,7 +127,7 @@ impl Track {
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Track>> {
         let sql = "
-            SELECT id, path, hash, duration_secs, valid, created_at, updated_at
+            SELECT id, path, name, hash, duration_secs, valid, created_at, updated_at
             FROM tracks
         ";
 

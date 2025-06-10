@@ -56,7 +56,7 @@ pub fn get_folder_tracks<P: AsRef<Path>>(dir: &P, recursive: bool) -> Vec<PathBu
     tracks
 }
 
-pub fn get_track_file_name(track_file_path: PathBuf) -> Option<String> {
+pub fn get_file_name(track_file_path: PathBuf) -> Option<String> {
     let extension = track_file_path.extension().and_then(|ext| ext.to_str());
 
     track_file_path

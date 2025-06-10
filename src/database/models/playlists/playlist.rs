@@ -112,7 +112,7 @@ impl Playlist {
 
     pub fn get_tracks(conn: &Connection, id: Uuid) -> Result<Vec<Track>> {
         let sql = "
-            SELECT t.id, t.path, t.hash, t.duration_secs, t.valid, t.created_at, t.updated_at
+            SELECT t.id, t.path, t.name, t.hash, t.duration_secs, t.valid, t.created_at, t.updated_at
             FROM tracks t
             JOIN playlist_tracks pt ON t.id = pt.track_id
             WHERE pt.playlist_id = ?1;

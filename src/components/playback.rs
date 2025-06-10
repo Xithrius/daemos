@@ -12,7 +12,6 @@ use crate::{
     config::core::SharedConfig,
     context::{PlayDirection, SharedContext},
     database::models::tracks::Track,
-    files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
 };
@@ -291,10 +290,6 @@ impl PlaybackBar {
             return;
         };
 
-        let Some(track_file_name) = get_track_file_name(track.path.clone()) else {
-            return;
-        };
-
         let autoplay_context = if let Some(playlist) = self.context.borrow().playlist.autoplay() {
             playlist.name
         } else {
@@ -303,7 +298,7 @@ impl PlaybackBar {
 
         let autoplay_text =
             RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
-        let track_text = RichText::new(track_file_name).strong();
+        let track_text = RichText::new(&track.name).strong();
 
         ui.vertical(|ui| {
             ui.add_space(NOW_PLAYING_SPACE);

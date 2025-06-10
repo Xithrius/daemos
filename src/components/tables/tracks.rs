@@ -18,7 +18,6 @@ use crate::{
         connection::DatabaseCommand,
         models::{playlists::playlist::Playlist, tracks::Track},
     },
-    files::open::get_track_file_name,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
 };
@@ -300,62 +299,59 @@ impl TrackTable {
         let playing = self.current_track.clone();
 
         if let Some(track) = track {
-            if let Some(track_file_name) = get_track_file_name(track.path.clone()) {
-                row.set_selected(playing.as_ref().is_some_and(
-                    |TrackState {
-                         index: _,
-                         track:
-                             Track {
-                                 id: _,
-                                 path: _,
-                                 hash,
-                                 duration_secs: _,
-                                 valid: _,
-                                 created_at: _,
-                                 updated_at: _,
-                             },
-                         playing: _,
-                     }| { *hash == track.hash },
-                ));
+            row.set_selected(playing.as_ref().is_some_and(
+                |TrackState {
+                     index: _,
+                     track:
+                         Track {
+                             id: _,
+                             path: _,
+                             name: _,
+                             hash,
+                             duration_secs: _,
+                             valid: _,
+                             created_at: _,
+                             updated_at: _,
+                         },
+                     playing: _,
+                 }| { *hash == track.hash },
+            ));
 
-                row.col(|ui| {
-                    let label = ui
-                        .label(row_index.to_string())
-                        .on_hover_cursor(CursorIcon::Default);
-                    if label.double_clicked() {
-                        self.toggle_row_play(row_index, &track);
-                    }
-                });
-
-                row.col(|ui| {
-                    let label = ui
-                        .label(track_file_name)
-                        .on_hover_cursor(CursorIcon::Default);
-                    if label.double_clicked() {
-                        self.toggle_row_play(row_index, &track);
-                    }
-                });
-
-                row.col(|ui| {
-                    let track_duration = Duration::from_secs_f64(track.duration_secs);
-                    let readable_track_duration = human_duration(track_duration, false);
-
-                    let label = ui
-                        .label(readable_track_duration)
-                        .on_hover_cursor(CursorIcon::Default);
-
-                    if label.double_clicked() {
-                        self.toggle_row_play(row_index, &track);
-                    }
-                });
-
-                let response = row.response();
-
-                if response.double_clicked() {
+            row.col(|ui| {
+                let label = ui
+                    .label(row_index.to_string())
+                    .on_hover_cursor(CursorIcon::Default);
+                if label.double_clicked() {
                     self.toggle_row_play(row_index, &track);
                 }
-                // else if row.response().clicked() && shift_hit {}
+            });
+
+            row.col(|ui| {
+                let label = ui.label(&track.name).on_hover_cursor(CursorIcon::Default);
+                if label.double_clicked() {
+                    self.toggle_row_play(row_index, &track);
+                }
+            });
+
+            row.col(|ui| {
+                let track_duration = Duration::from_secs_f64(track.duration_secs);
+                let readable_track_duration = human_duration(track_duration, false);
+
+                let label = ui
+                    .label(readable_track_duration)
+                    .on_hover_cursor(CursorIcon::Default);
+
+                if label.double_clicked() {
+                    self.toggle_row_play(row_index, &track);
+                }
+            });
+
+            let response = row.response();
+
+            if response.double_clicked() {
+                self.toggle_row_play(row_index, &track);
             }
+            // else if row.response().clicked() && shift_hit {}
         }
     }
 
@@ -421,13 +417,11 @@ impl TrackTable {
                 .tracks
                 .iter()
                 .filter_map(|track| {
-                    get_track_file_name(track.path.clone()).and_then(|name| {
-                        if name.to_lowercase().contains(&search_lower) {
-                            Some(track.clone())
-                        } else {
-                            None
-                        }
-                    })
+                    if track.name.to_lowercase().contains(&search_lower) {
+                        Some(track.clone())
+                    } else {
+                        None
+                    }
                 })
                 .collect();
 
