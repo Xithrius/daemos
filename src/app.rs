@@ -96,9 +96,8 @@ impl App {
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             debug!("`F3` Has been used to toggle the debug wireframe");
 
-            self.config.borrow_mut().general.debug = !self.config.borrow().general.debug;
-
             let debug = self.config.borrow().general.debug;
+            self.config.borrow_mut().general.debug = !debug;
 
             if debug != ctx.debug_on_hover() {
                 ctx.set_debug_on_hover(debug);

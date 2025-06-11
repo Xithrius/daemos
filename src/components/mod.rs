@@ -22,6 +22,7 @@ use crate::{
     playback::state::{PlayerCommand, PlayerEvent},
 };
 
+#[derive(Debug, Clone)]
 pub enum ComponentTab {
     Playlists,
     Tracks,

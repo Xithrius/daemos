@@ -2,18 +2,18 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::database::models::playlists::playlist::Playlist;
 
-#[derive(Debug, Clone, Default)]
-pub enum ShuffleType {
-    /// Play the next track after this one in the track table
-    /// If the end has been reached, loop back to the first track
-    #[default]
-    AutoPlay,
-    /// Select a random track that hasn't been played yet in the current session
-    /// If all tracks have been played, select a random one to start with
-    /// TODO: In the first half of played ones? We don't want the chance to replay a recent one
-    PseudoRandom,
-    /// Uses a random number generator on the loaded list of tracks, repeats are allowed
-    TrueRandom,
+#[derive(Debug, Clone)]
+pub enum AutoplayType {
+    /// Play the next (or previous) track in the track list
+    /// If the end has been reached, loop back around to the other side
+    Iterative(PlayDirection),
+    Shuffle(ShuffleType),
+}
+
+impl Default for AutoplayType {
+    fn default() -> Self {
+        Self::Iterative(PlayDirection::Forward)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -24,17 +24,24 @@ pub enum PlayDirection {
 }
 
 #[derive(Debug, Clone, Default)]
+pub enum ShuffleType {
+    /// Select a random track that hasn't been played yet in the current session
+    /// If all tracks have been played, select a random one to start with
+    // TODO: In the first half of played ones? We don't want the chance to replay a recent one
+    // TODO: Make this the default once implementation is done
+    PseudoRandom,
+    #[default]
+    /// Uses a random number generator on the loaded list of tracks, repeats are allowed
+    TrueRandom,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
-    select_previous_track: bool,
     select_new_track: Option<PlayDirection>,
-    shuffle: ShuffleType,
+    autoplay: AutoplayType,
 }
 
 impl PlaybackContext {
-    pub fn select_previous_track(&self) -> bool {
-        self.select_previous_track
-    }
-
     pub fn select_new_track(&self) -> Option<PlayDirection> {
         self.select_new_track.clone()
     }
@@ -43,12 +50,12 @@ impl PlaybackContext {
         self.select_new_track = direction;
     }
 
-    pub fn shuffle(&self) -> &ShuffleType {
-        &self.shuffle
+    pub fn autoplay(&self) -> &AutoplayType {
+        &self.autoplay
     }
 
-    pub fn set_shuffle(&mut self, shuffle: ShuffleType) {
-        self.shuffle = shuffle;
+    pub fn set_autoplay(&mut self, autoplay: AutoplayType) {
+        self.autoplay = autoplay;
     }
 }
 
