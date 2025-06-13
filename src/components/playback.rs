@@ -36,6 +36,8 @@ const NOW_PLAYING_SPACE: f32 = 8.0;
 const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
 const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
 
+const MINUTES_SECONDS_PROGRESS_TEXT_WIDTH: f32 = 42.7;
+
 #[derive(Debug, Clone)]
 struct TrackState {
     track: Option<Track>,
@@ -241,7 +243,13 @@ impl PlaybackBar {
     }
 
     fn ui_seek(&mut self, ui: &mut egui::Ui) {
-        ui.spacing_mut().slider_width = ui.available_width();
+        // TODO: Get rid of this terribleness
+        let available_width = ui.available_width();
+        let slider_width = available_width / 3.0;
+        let side_spacing =
+            (available_width - slider_width - (MINUTES_SECONDS_PROGRESS_TEXT_WIDTH * 2.0)) / 2.0;
+        ui.spacing_mut().slider_width = slider_width;
+        ui.add_space(side_spacing);
 
         if let (Some(progress), Some(track)) =
             (self.track_state.current_progress(), &self.track_state.track)
@@ -257,10 +265,20 @@ impl PlaybackBar {
                     .set_select_new_track(Some(PlayDirection::Forward));
             }
 
+            let current_time = Duration::from_secs_f64(playback_secs.floor());
+            let total_time = Duration::from_secs_f64(total_duration_secs.floor());
+
+            let has_hours = (total_time.as_secs() / 3600) > 0;
+
             let slider =
                 egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).show_value(false);
 
+            let human_current_time = human_duration(current_time, has_hours).to_string();
+            let human_total_time = human_duration(total_time, has_hours).to_string();
+
+            ui.label(human_current_time);
             let response = ui.add(slider);
+            ui.label(human_total_time);
 
             if !self.track_state.changing_track && response.drag_stopped() {
                 self.track_state.progress_base = Some(Duration::from_secs_f64(playback_secs));
@@ -273,25 +291,15 @@ impl PlaybackBar {
                         std::time::Duration::from_secs_f64(playback_secs),
                     ));
             }
-
-            let current_time = Duration::from_secs_f64(playback_secs.floor());
-            let total_time = Duration::from_secs_f64(total_duration_secs.floor());
-
-            let has_hours = (total_time.as_secs() / 3600) > 0;
-
-            ui.label(format!(
-                "{}/{}",
-                human_duration(current_time, has_hours),
-                human_duration(total_time, has_hours)
-            ));
         } else {
             // This state should only be reached when there is no track playing,
             // and we're not currently selecting a new track
             let mut dummy = 0.0;
             let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).show_value(false);
 
+            ui.label("--:--");
             ui.add_enabled(false, slider);
-            ui.label("--:--/--:--");
+            ui.label("--:--");
         }
     }
 
