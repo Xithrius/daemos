@@ -16,7 +16,7 @@ use crate::{
     utils::formatting::human_duration,
 };
 
-pub const PLAYBACK_BAR_HEIGHT: f32 = 60.0;
+pub const PLAYBACK_BAR_HEIGHT: f32 = 75.0;
 
 const DEFAULT_VOLUME_RANGE: RangeInclusive<f32> = 0.0..=1.0;
 
@@ -32,7 +32,7 @@ const VOLUME_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/
 
 const AUTOPLAY_FONT_SIZE: f32 = 12.0;
 
-const NOW_PLAYING_SPACE: f32 = 12.0;
+const NOW_PLAYING_SPACE: f32 = 8.0;
 const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
 const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
 
@@ -182,34 +182,42 @@ impl PlaybackBar {
                 .clicked()
         };
 
-        // Skip back a track
-        if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-            self.context
-                .borrow_mut()
-                .playback
-                .set_select_new_track(Some(PlayDirection::Backward));
-        }
+        // TODO: Get rid of this terrible layout
+        ui.horizontal(|ui| {
+            ui.vertical(|ui| {
+                // TODO: Dynamic spacing based on something else if this layout has to be kept?
+                ui.add_space(8.0);
 
-        let current_track = self.track_state.track.is_some();
+                // Skip back a track
+                if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
+                    self.context
+                        .borrow_mut()
+                        .playback
+                        .set_select_new_track(Some(PlayDirection::Backward));
+                }
+            });
 
-        // Toggle pause/play on a track
-        let toggle_playing_button = if self.track_state.playing && current_track {
-            PAUSE_IMAGE
-        } else {
-            PLAY_IMAGE
-        };
+            let current_track = self.track_state.track.is_some();
 
-        if button(ui, toggle_playing_button, LARGE_BUTTON_SIZE) && current_track {
-            let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
-        }
+            // Toggle pause/play on a track
+            let toggle_playing_button = if self.track_state.playing && current_track {
+                PAUSE_IMAGE
+            } else {
+                PLAY_IMAGE
+            };
 
-        // Skip to the next track
-        if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-            self.context
-                .borrow_mut()
-                .playback
-                .set_select_new_track(Some(PlayDirection::Forward));
-        }
+            if button(ui, toggle_playing_button, LARGE_BUTTON_SIZE) && current_track {
+                let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
+            }
+
+            // Skip to the next track
+            if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
+                self.context
+                    .borrow_mut()
+                    .playback
+                    .set_select_new_track(Some(PlayDirection::Forward));
+            }
+        });
     }
 
     fn ui_volume(&mut self, ui: &mut egui::Ui) {
@@ -233,6 +241,8 @@ impl PlaybackBar {
     }
 
     fn ui_seek(&mut self, ui: &mut egui::Ui) {
+        ui.spacing_mut().slider_width = ui.available_width();
+
         if let (Some(progress), Some(track)) =
             (self.track_state.current_progress(), &self.track_state.track)
         {
@@ -381,19 +391,23 @@ impl PlaybackBar {
             self.debug_window(ui);
         }
 
-        ui.horizontal_centered(|ui| {
-            self.ui_playback_controls(ui);
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                self.ui_playback_controls(ui);
 
-            self.ui_seek(ui);
+                ui.add_space(SEEK_AND_AUTOPLAY_SPACING);
 
-            ui.add_space(SEEK_AND_AUTOPLAY_SPACING);
+                self.ui_currently_playing(ui);
 
-            self.ui_currently_playing(ui);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    ui.horizontal_centered(|ui| {
+                        self.ui_volume(ui);
+                    })
+                });
+            });
 
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-                ui.horizontal_centered(|ui| {
-                    self.ui_volume(ui);
-                })
+            ui.horizontal(|ui| {
+                self.ui_seek(ui);
             });
         });
     }
