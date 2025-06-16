@@ -5,7 +5,7 @@ use serde::{
     de::{Error as SerdeError, Unexpected},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AutoplayType {
     /// Play the next (or previous) track in the track list
     /// If the end has been reached, loop back around to the other side
@@ -19,14 +19,14 @@ impl Default for AutoplayType {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default, PartialEq)]
 pub enum PlayDirection {
     #[default]
     Forward,
     Backward,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default, PartialEq)]
 pub enum ShuffleType {
     /// Select a random track that hasn't been played yet in the current session or playlist
     /// If all tracks have been played, select a random one to start with

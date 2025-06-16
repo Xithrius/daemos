@@ -127,9 +127,10 @@
     - [x] Once last track is done, go to the start
     - [ ] Reverse button on playback bar\*
   - [ ] Shuffle
-    - [ ] Pseudo Random (don't play the same thing twice until everything is played)
-    - [ ] True Random (Pick any other track)
+    - [x] Pseudo Random (don't play the same thing twice until everything is played)
+    - [x] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
+  - [ ] When shuffle is selected, going back a track should go to the one previously played
 
 - [ ] Fonts
 
@@ -146,7 +147,10 @@
 - [x] Volume is reset when a new track is selected with autoplay
 - [x] When selecting a new track to play on another playlist, autoplay and now playing track labels in the playback bar aren't visually set at the same time
 - [x] Playback timer has a couple frames of idle state then playing when autoplay selects a new track
+- [x] Horizontally center playback seek bar
 - [ ] If a new track is skipped on insert due to being a duplicate, the spinner will spin forever
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the original tracks vector
-- [ ] Horizontally center playback seek bar
-  - [Possibly relevant issue](https://github.com/emilk/egui/discussions/1197)
+- [ ] Move attributes of UI components to higher-up context, as some components would have to directly call other components instead of calling context methods
+  - [ ] `TrackState` is duplicated between the playback bar and the track table, combine into one structure and keep in playback context
+  - [ ] Move any playlist/track(s) attributes into playback context
+- [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls

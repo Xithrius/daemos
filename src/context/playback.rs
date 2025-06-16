@@ -34,7 +34,11 @@ impl PlaybackContext {
         self.autoplay = autoplay;
     }
 
-    pub fn controlled_autoplay(&self) -> Option<AutoplayType> {
-        self.controlled_autoplay.clone()
+    pub fn is_autoplay_shuffle(&self) -> bool {
+        matches!(self.autoplay, AutoplayType::Shuffle(_))
+    }
+
+    pub fn consume_controlled_autoplay(&mut self) -> Option<AutoplayType> {
+        self.controlled_autoplay.take()
     }
 }

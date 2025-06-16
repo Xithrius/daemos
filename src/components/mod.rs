@@ -92,7 +92,7 @@ impl Components {
             task_table: TaskTable::default(),
 
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),
-            settings: Settings::new(context.clone()),
+            settings: Settings::new(config.clone(), context.clone()),
 
             current_player_event: None,
         }

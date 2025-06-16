@@ -194,10 +194,18 @@ impl PlaybackBar {
                 // TODO: Configure based on autoplay direction
                 // Skip back a track
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-                    self.context.borrow_mut().playback.set_incoming_track(
-                        true,
-                        Some(AutoplayType::Iterative(PlayDirection::Backward)),
-                    );
+                    if self.context.borrow().playback.is_autoplay_shuffle() {
+                        // TODO: Save the previous track and go there instead of selecting another random one
+                        self.context
+                            .borrow_mut()
+                            .playback
+                            .set_select_new_track(true);
+                    } else {
+                        self.context.borrow_mut().playback.set_incoming_track(
+                            true,
+                            Some(AutoplayType::Iterative(PlayDirection::Backward)),
+                        );
+                    }
                 }
             });
 
@@ -216,10 +224,17 @@ impl PlaybackBar {
 
             // Skip to the next track
             if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-                self.context.borrow_mut().playback.set_incoming_track(
-                    true,
-                    Some(AutoplayType::Iterative(PlayDirection::Forward)),
-                );
+                if self.context.borrow().playback.is_autoplay_shuffle() {
+                    self.context
+                        .borrow_mut()
+                        .playback
+                        .set_select_new_track(true);
+                } else {
+                    self.context.borrow_mut().playback.set_incoming_track(
+                        true,
+                        Some(AutoplayType::Iterative(PlayDirection::Forward)),
+                    );
+                }
             }
         });
     }
@@ -261,10 +276,10 @@ impl PlaybackBar {
 
             if playback_secs >= total_duration_secs && !self.track_state.changing_track {
                 self.track_state.changing_track = true;
-                self.context.borrow_mut().playback.set_incoming_track(
-                    true,
-                    Some(AutoplayType::Iterative(PlayDirection::Forward)),
-                );
+                self.context
+                    .borrow_mut()
+                    .playback
+                    .set_select_new_track(true);
             }
 
             let current_time = Duration::from_secs_f64(playback_secs.floor());
@@ -310,19 +325,33 @@ impl PlaybackBar {
             return;
         };
 
-        let autoplay_context = if let Some(playlist) = self.context.borrow().playlist.autoplay() {
+        let context = self.context.borrow();
+
+        let autoplay_playlist_context = if let Some(playlist) = context.playlist.autoplay() {
             playlist.name
         } else {
             "All tracks".to_string()
         };
 
-        let autoplay_text =
-            RichText::new(format!("Autoplay: {}", autoplay_context)).size(AUTOPLAY_FONT_SIZE);
+        let autoplay_type = context.playback.autoplay();
+
+        let autoplay_text = if matches!(
+            autoplay_type,
+            AutoplayType::Iterative(PlayDirection::Forward)
+        ) {
+            RichText::new(format!("Autoplay: {}", autoplay_playlist_context))
+        } else {
+            RichText::new(format!(
+                "Autoplay {}: {}",
+                autoplay_type, autoplay_playlist_context
+            ))
+        };
+
         let track_text = RichText::new(&track.name).strong();
 
         ui.vertical(|ui| {
             ui.add_space(NOW_PLAYING_SPACE);
-            ui.label(autoplay_text);
+            ui.label(autoplay_text.size(AUTOPLAY_FONT_SIZE));
             ui.label(track_text);
         });
     }

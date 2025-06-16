@@ -247,8 +247,11 @@ impl TrackTable {
         }
 
         // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
-        let autoplay_selector = if let Some(controlled_autoplay) =
-            self.context.borrow().playback.controlled_autoplay()
+        let autoplay_selector = if let Some(controlled_autoplay) = self
+            .context
+            .borrow_mut()
+            .playback
+            .consume_controlled_autoplay()
         {
             controlled_autoplay
         } else {
