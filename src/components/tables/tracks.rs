@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{BTreeSet, HashSet},
     rc::Rc,
     time::{Duration, Instant},
 };
@@ -20,7 +20,7 @@ use crate::{
         models::{playlists::playlist::Playlist, tracks::Track},
     },
     playback::state::{PlayerCommand, PlayerEvent},
-    utils::formatting::human_duration,
+    utils::{formatting::human_duration, random::filtered_random_index},
 };
 
 const INDEX_COLUMN_WIDTH: f32 = 50.0;
@@ -67,6 +67,7 @@ pub struct TrackSearch {
     pub duration: Option<Duration>,
 }
 
+// TODO: Move all items here that are or could be set in other components to a higher context
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     config: SharedConfig,
@@ -82,6 +83,7 @@ pub struct TrackTable {
     // Where autoplay is happening
     current_track: Option<TrackState>,
     current_playlist: Option<PlaylistState>,
+    seen_tracks: BTreeSet<usize>,
 
     scroll_to_selected: bool,
 
@@ -110,6 +112,7 @@ impl TrackTable {
             // selection: HashSet::default(),
             current_track: None,
             current_playlist: None,
+            seen_tracks: BTreeSet::default(),
             scroll_to_selected: false,
             search: TrackSearch::default(),
         }
@@ -274,6 +277,9 @@ impl TrackTable {
             return;
         };
 
+        // Only add a track once it's finished autoplaying, and we're selecting the next track to autoplay
+        self.seen_tracks.insert(index);
+
         let tracks_len = tracks.len();
 
         // TODO: Configurable default autoplay direction
@@ -285,12 +291,18 @@ impl TrackTable {
             AutoplayType::Shuffle(shuffle_type) => match shuffle_type {
                 // TODO: There's the possibility of indices being offset during tracks being added to playlist(s)
                 ShuffleType::PseudoRandom => {
-                    // filtered_random_index
-                    todo!();
+                    if let Some(filtered_index) = filtered_random_index(tracks_len, &self.seen_tracks) {
+                        filtered_index
+                    } else {
+                        debug!("All tracks have been in the Pseudo random shuffler -- resetting");
+                        self.seen_tracks = BTreeSet::default();
+
+                        let mut rng = rand::rng();
+                        rng.random_range(0..tracks_len)
+                    }
                 }
                 ShuffleType::TrueRandom => {
                     let mut rng = rand::rng();
-
                     rng.random_range(0..tracks_len)
                 }
             },
