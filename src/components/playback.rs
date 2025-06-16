@@ -191,13 +191,13 @@ impl PlaybackBar {
                 // TODO: Dynamic spacing based on something else if this layout has to be kept?
                 ui.add_space(8.0);
 
-                // Skip back a track
                 // TODO: Configure based on autoplay direction
+                // Skip back a track
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-                    self.context
-                        .borrow_mut()
-                        .playback
-                        .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Backward));
+                    self.context.borrow_mut().playback.set_incoming_track(
+                        true,
+                        Some(AutoplayType::Iterative(PlayDirection::Backward)),
+                    );
                 }
             });
 
@@ -216,10 +216,10 @@ impl PlaybackBar {
 
             // Skip to the next track
             if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-                self.context
-                    .borrow_mut()
-                    .playback
-                    .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Forward));
+                self.context.borrow_mut().playback.set_incoming_track(
+                    true,
+                    Some(AutoplayType::Iterative(PlayDirection::Forward)),
+                );
             }
         });
     }
@@ -261,10 +261,10 @@ impl PlaybackBar {
 
             if playback_secs >= total_duration_secs && !self.track_state.changing_track {
                 self.track_state.changing_track = true;
-                self.context
-                    .borrow_mut()
-                    .playback
-                    .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Forward));
+                self.context.borrow_mut().playback.set_incoming_track(
+                    true,
+                    Some(AutoplayType::Iterative(PlayDirection::Forward)),
+                );
             }
 
             let current_time = Duration::from_secs_f64(playback_secs.floor());
@@ -289,9 +289,9 @@ impl PlaybackBar {
                 let _ = self
                     .channels
                     .player_command_tx
-                    .send(PlayerCommand::SetPosition(
-                        std::time::Duration::from_secs_f64(playback_secs),
-                    ));
+                    .send(PlayerCommand::SetPosition(Duration::from_secs_f64(
+                        playback_secs,
+                    )));
             }
         } else {
             // This state should only be reached when there is no track playing,

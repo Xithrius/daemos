@@ -238,8 +238,18 @@ impl TrackTable {
             return;
         };
 
+        // There's nothing to select, return early
         if !self.context.borrow().playback.select_new_track() {
             return;
+        }
+
+        // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
+        let autoplay_selector = if let Some(controlled_autoplay) =
+            self.context.borrow().playback.controlled_autoplay()
+        {
+            controlled_autoplay
+        } else {
+            self.context.borrow().playback.autoplay().to_owned()
         };
 
         self.context
@@ -265,9 +275,6 @@ impl TrackTable {
         };
 
         let tracks_len = tracks.len();
-
-        let context = self.context.borrow();
-        let autoplay_selector = context.playback.autoplay();
 
         // TODO: Configurable default autoplay direction
         let new_index = match autoplay_selector {
