@@ -78,6 +78,7 @@ pub struct TrackTable {
     track_ids: HashSet<Uuid>,
 
     // selection: HashSet<usize>,
+    // Where autoplay is happening
     current_track: Option<TrackState>,
     current_playlist: Option<PlaylistState>,
 
@@ -181,6 +182,7 @@ impl TrackTable {
     // }
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
+        // if the selected track is one that is playing, pause it.
         if self.current_track.as_ref().is_some_and(
             |TrackState {
                  index: playing_index,
@@ -210,7 +212,9 @@ impl TrackTable {
 
         let new_track_state = TrackState::new(row_index, track.clone(), true);
 
+        // If we're currently in the context of a playlist
         let selected_playlist = self.context.borrow().playlist.selected();
+        // Set autoplay to the playlist we're in (if any)
         self.context
             .borrow_mut()
             .playlist
@@ -262,10 +266,23 @@ impl TrackTable {
         let tracks_len = tracks.len();
 
         // TODO: Configurable default autoplay direction
-        let new_index = if matches!(autoplay_direction, PlayDirection::Forward) {
-            (index + 1) % tracks_len
-        } else {
-            (index + tracks_len.saturating_sub(1)) % tracks_len
+        let new_index = match autoplay_selector {
+            AutoplayType::Iterative(play_direction) => match play_direction {
+                PlayDirection::Forward => (index + 1) % tracks_len,
+                PlayDirection::Backward => (index + tracks_len.saturating_sub(1)) % tracks_len,
+            },
+            AutoplayType::Shuffle(shuffle_type) => match shuffle_type {
+                // TODO: There's the possibility of indices being offset during tracks being added to playlist(s)
+                ShuffleType::PseudoRandom => {
+                    // filtered_random_index
+                    todo!();
+                }
+                ShuffleType::TrueRandom => {
+                    let mut rng = rand::rng();
+
+                    rng.random_range(0..tracks_len)
+                }
+            },
         };
 
         // TODO: Configurable value to autoplay from filtered tracks

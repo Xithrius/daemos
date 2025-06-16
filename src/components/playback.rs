@@ -36,6 +36,7 @@ const NOW_PLAYING_SPACE: f32 = 8.0;
 const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
 const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
 
+const SEEK_BAR_WIDTH_RATIO: f32 = 2.5;
 const MINUTES_SECONDS_PROGRESS_TEXT_WIDTH: f32 = 42.7;
 
 #[derive(Debug, Clone)]
@@ -191,6 +192,7 @@ impl PlaybackBar {
                 ui.add_space(8.0);
 
                 // Skip back a track
+                // TODO: Configure based on autoplay direction
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
                     self.context
                         .borrow_mut()
@@ -245,7 +247,7 @@ impl PlaybackBar {
     fn ui_seek(&mut self, ui: &mut egui::Ui) {
         // TODO: Get rid of this terribleness
         let available_width = ui.available_width();
-        let slider_width = available_width / 3.0;
+        let slider_width = available_width / SEEK_BAR_WIDTH_RATIO;
         let side_spacing =
             (available_width - slider_width - (MINUTES_SECONDS_PROGRESS_TEXT_WIDTH * 2.0)) / 2.0;
         ui.spacing_mut().slider_width = slider_width;
