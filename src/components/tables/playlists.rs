@@ -1,6 +1,5 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
-use egui::ahash::HashSet;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 use uuid::Uuid;
