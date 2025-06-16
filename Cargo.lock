@@ -996,6 +996,7 @@ dependencies = [
  "egui_extras",
  "image",
  "notify-rust",
+ "rand 0.9.1",
  "rfd",
  "rodio",
  "rusqlite",
