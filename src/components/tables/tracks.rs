@@ -6,6 +6,7 @@ use std::{
 
 use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
+use rand::Rng;
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -13,7 +14,7 @@ use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
     config::core::SharedConfig,
-    context::{PlayDirection, SharedContext},
+    context::{AutoplayType, PlayDirection, SharedContext, ShuffleType},
     database::{
         connection::DatabaseCommand,
         models::{playlists::playlist::Playlist, tracks::Track},
@@ -237,14 +238,14 @@ impl TrackTable {
             return;
         };
 
-        let Some(autoplay_direction) = self.context.borrow().playback.select_new_track() else {
+        if !self.context.borrow().playback.select_new_track() {
             return;
         };
 
         self.context
             .borrow_mut()
             .playback
-            .set_select_new_track(None);
+            .set_select_new_track(false);
 
         let tracks = if let Some(playlist_state) = &self.current_playlist {
             &playlist_state.tracks
@@ -264,6 +265,9 @@ impl TrackTable {
         };
 
         let tracks_len = tracks.len();
+
+        let context = self.context.borrow();
+        let autoplay_selector = context.playback.autoplay();
 
         // TODO: Configurable default autoplay direction
         let new_index = match autoplay_selector {

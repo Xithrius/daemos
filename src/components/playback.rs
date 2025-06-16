@@ -10,7 +10,7 @@ use tracing::{debug, warn};
 use super::ComponentChannels;
 use crate::{
     config::core::SharedConfig,
-    context::{PlayDirection, SharedContext},
+    context::{AutoplayType, PlayDirection, SharedContext},
     database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
@@ -197,7 +197,7 @@ impl PlaybackBar {
                     self.context
                         .borrow_mut()
                         .playback
-                        .set_select_new_track(Some(PlayDirection::Backward));
+                        .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Backward));
                 }
             });
 
@@ -219,7 +219,7 @@ impl PlaybackBar {
                 self.context
                     .borrow_mut()
                     .playback
-                    .set_select_new_track(Some(PlayDirection::Forward));
+                    .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Forward));
             }
         });
     }
@@ -264,7 +264,7 @@ impl PlaybackBar {
                 self.context
                     .borrow_mut()
                     .playback
-                    .set_select_new_track(Some(PlayDirection::Forward));
+                    .set_incoming_track(true, AutoplayType::Iterative(PlayDirection::Forward));
             }
 
             let current_time = Duration::from_secs_f64(playback_secs.floor());

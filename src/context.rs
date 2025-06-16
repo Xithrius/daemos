@@ -37,17 +37,22 @@ pub enum ShuffleType {
 
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
-    select_new_track: Option<PlayDirection>,
+    select_new_track: bool,
     autoplay: AutoplayType,
 }
 
 impl PlaybackContext {
-    pub fn select_new_track(&self) -> Option<PlayDirection> {
+    pub fn select_new_track(&self) -> bool {
         self.select_new_track.clone()
     }
 
-    pub fn set_select_new_track(&mut self, direction: Option<PlayDirection>) {
-        self.select_new_track = direction;
+    pub fn set_select_new_track(&mut self, select_new_track: bool) {
+        self.select_new_track = select_new_track;
+    }
+
+    pub fn set_incoming_track(&mut self, select_new_track: bool, autoplay: AutoplayType) {
+        self.select_new_track = select_new_track;
+        self.autoplay = autoplay;
     }
 
     pub fn autoplay(&self) -> &AutoplayType {
