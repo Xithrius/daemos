@@ -1,5 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error as SerdeError, Unexpected},
+};
+
 use crate::database::models::playlists::playlist::Playlist;
 
 #[derive(Debug, Clone)]
@@ -16,23 +21,55 @@ impl Default for AutoplayType {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub enum PlayDirection {
     #[default]
     Forward,
     Backward,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub enum ShuffleType {
-    /// Select a random track that hasn't been played yet in the current session
+    /// Select a random track that hasn't been played yet in the current session or playlist
     /// If all tracks have been played, select a random one to start with
-    // TODO: In the first half of played ones? We don't want the chance to replay a recent one
-    // TODO: Make this the default once implementation is done
     PseudoRandom,
     #[default]
-    /// Uses a random number generator on the loaded list of tracks, repeats are allowed
+    /// Pick any track regardless if it's been played before
     TrueRandom,
+}
+
+impl Serialize for AutoplayType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = match self {
+            AutoplayType::Iterative(PlayDirection::Forward) => "iterative_forward",
+            AutoplayType::Iterative(PlayDirection::Backward) => "iterative_backward",
+            AutoplayType::Shuffle(ShuffleType::PseudoRandom) => "pseudo_shuffle",
+            AutoplayType::Shuffle(ShuffleType::TrueRandom) => "true_shuffle",
+        };
+        serializer.serialize_str(s)
+    }
+}
+
+impl<'de> Deserialize<'de> for AutoplayType {
+    fn deserialize<D>(deserializer: D) -> Result<AutoplayType, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: &str = Deserialize::deserialize(deserializer)?;
+        match s {
+            "iterative_forward" => Ok(AutoplayType::Iterative(PlayDirection::Forward)),
+            "iterative_backward" => Ok(AutoplayType::Iterative(PlayDirection::Backward)),
+            "pseudo_shuffle" => Ok(AutoplayType::Shuffle(ShuffleType::PseudoRandom)),
+            "true_shuffle" => Ok(AutoplayType::Shuffle(ShuffleType::TrueRandom)),
+            _ => Err(D::Error::invalid_value(
+                Unexpected::Str(s),
+                &"Invalid autoplay type passed",
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default)]

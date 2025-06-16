@@ -89,6 +89,7 @@ impl CreatePlaylistModal {
 
             ui.separator();
 
+            // TODO: Move this into the sides above
             ui.horizontal(|ui| {
                 if ui.button("Create").clicked() {
                     // TODO: Send information somewhere for playlist creation

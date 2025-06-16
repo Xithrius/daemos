@@ -291,7 +291,9 @@ impl TrackTable {
             AutoplayType::Shuffle(shuffle_type) => match shuffle_type {
                 // TODO: There's the possibility of indices being offset during tracks being added to playlist(s)
                 ShuffleType::PseudoRandom => {
-                    if let Some(filtered_index) = filtered_random_index(tracks_len, &self.seen_tracks) {
+                    if let Some(filtered_index) =
+                        filtered_random_index(tracks_len, &self.seen_tracks)
+                    {
                         filtered_index
                     } else {
                         debug!("All tracks have been in the Pseudo random shuffler -- resetting");
@@ -410,7 +412,7 @@ impl TrackTable {
         if self.scroll_to_selected {
             if let Some(playing_track) = &self.current_track {
                 // TODO: Auto-scroll alignment configuration
-                let autoplay_align = self.config.borrow().autoplay.align;
+                let autoplay_align = self.config.borrow().autoplay.align_scroll;
                 table = table.scroll_to_row(playing_track.index, autoplay_align);
                 self.scroll_to_selected = false;
             }
