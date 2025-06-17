@@ -35,10 +35,19 @@ impl Default for VolumeConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AutoplayConfig {
     pub align_scroll: Option<Align>,
     pub autoplay: AutoplayType,
+}
+
+impl Default for AutoplayConfig {
+    fn default() -> Self {
+        Self {
+            align_scroll: Some(Align::Center),
+            autoplay: AutoplayType::default(),
+        }
+    }
 }
 
 pub type SharedConfig = Rc<RefCell<CoreConfig>>;

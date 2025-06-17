@@ -133,7 +133,7 @@ impl TrackTable {
     pub fn set_tracks(&mut self, mut tracks: Vec<Track>) {
         self.track_ids = tracks.iter().map(|track| track.id).collect();
 
-        tracks.sort_by(|track_a, track_b| track_a.path.cmp(&track_b.path));
+        tracks.sort_by(|track_a, track_b| track_a.name.cmp(&track_b.name));
         self.tracks = tracks;
     }
 
@@ -142,7 +142,7 @@ impl TrackTable {
             // TODO: Insert as sorted
             self.tracks.push(track.clone());
             self.tracks
-                .sort_by(|track_a, track_b| track_a.path.cmp(&track_b.path));
+                .sort_by(|track_a, track_b| track_a.name.cmp(&track_b.name));
         }
     }
 
