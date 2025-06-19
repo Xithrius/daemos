@@ -130,6 +130,7 @@
     - [x] Pseudo Random (don't play the same thing twice until everything is played)
     - [x] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
+    - [ ] [Fisher–Yates shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle)
   - [ ] When shuffle is selected, going back a track should go to the one previously played
 
 - [ ] Fonts
@@ -154,3 +155,4 @@
   - [ ] `TrackState` is duplicated between the playback bar and the track table, combine into one structure and keep in playback context
   - [ ] Move any playlist/track(s) attributes into playback context
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
+- [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)

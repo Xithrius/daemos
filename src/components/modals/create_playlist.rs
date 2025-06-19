@@ -20,6 +20,10 @@ pub struct CreatePlaylistModal {
 }
 
 impl UIModal for CreatePlaylistModal {
+    fn visibility(&self) -> bool {
+        self.context.borrow().ui.visible_playlist_modal()
+    }
+
     fn set_visibility(&mut self, visibility: bool) {
         self.context
             .borrow_mut()
@@ -55,8 +59,15 @@ impl CreatePlaylistModal {
 
         let modal = Modal::new(Id::new(PLAYLIST_MODAL_ID)).show(ctx, |ui| {
             ui.set_min_size(DEFAULT_PLAYLIST_MODAL_WINDOW_SIZE.into());
-            ui.label("New playlist name:");
-            ui.text_edit_singleline(&mut self.playlist_name);
+
+            ui.heading("New Playlist");
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Name:");
+                ui.text_edit_singleline(&mut self.playlist_name);
+            });
 
             ui.separator();
 
@@ -64,7 +75,7 @@ impl CreatePlaylistModal {
                 ui,
                 |_ui| {},
                 |ui| {
-                    if ui.button("Save").clicked() {
+                    if ui.button("Create").clicked() {
                         let new_playlist_name = self.playlist_name.clone().trim().to_string();
 
                         if !new_playlist_name.is_empty() {
@@ -81,25 +92,12 @@ impl CreatePlaylistModal {
                         }
                         should_close = true;
                     }
+
                     if ui.button("Cancel").clicked() {
                         should_close = true;
                     }
                 },
             );
-
-            ui.separator();
-
-            // TODO: Move this into the sides above
-            ui.horizontal(|ui| {
-                if ui.button("Create").clicked() {
-                    // TODO: Send information somewhere for playlist creation
-                    self.set_visibility(false);
-                }
-
-                if ui.button("Cancel").clicked() {
-                    self.set_visibility(false);
-                }
-            });
         });
 
         if modal.should_close() || should_close {
