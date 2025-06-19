@@ -217,19 +217,21 @@ impl eframe::App for App {
         self.handle_database_events();
         self.handle_keybinds(ctx);
 
-        let mut context = self.context.borrow_mut();
-
-        // TODO: Are these repaints necessary?
-        if let Ok(player_event) = self.channels.player_event_rx.try_recv() {
-            context.playback.handle_player_event(player_event.clone());
-            ctx.request_repaint();
-        } else if context
-            .playback
-            .track
-            .as_ref()
-            .is_some_and(|track| track.playing)
         {
-            ctx.request_repaint();
+            let mut context = self.context.borrow_mut();
+
+            // TODO: Are these repaints necessary?
+            if let Ok(player_event) = self.channels.player_event_rx.try_recv() {
+                context.playback.handle_player_event(player_event.clone());
+                ctx.request_repaint();
+            } else if context
+                .playback
+                .track
+                .as_ref()
+                .is_some_and(|track| track.playing)
+            {
+                ctx.request_repaint();
+            }
         }
 
         // TODO: If I have a bunch of input boxes, then this is going to get bad

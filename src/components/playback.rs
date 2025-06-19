@@ -39,6 +39,7 @@ const MINUTES_SECONDS_PROGRESS_TEXT_WIDTH: f32 = 42.7;
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
+    config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 }
@@ -56,7 +57,11 @@ impl PlaybackBar {
             .control
             .set_volume(config_volume);
 
-        Self { context, channels }
+        Self {
+            config,
+            context,
+            channels,
+        }
     }
 
     pub fn ui_playback_controls(&mut self, ui: &mut egui::Ui) {
@@ -65,6 +70,8 @@ impl PlaybackBar {
             ui.add_sized([image_size, image_size], image_button)
                 .clicked()
         };
+
+        let mut context = self.context.borrow_mut();
 
         // TODO: Get rid of this terrible layout
         ui.horizontal(|ui| {
@@ -75,14 +82,11 @@ impl PlaybackBar {
                 // TODO: Configure based on autoplay direction
                 // Skip back a track
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-                    if self.context.borrow().playback.is_autoplay_shuffle() {
+                    if context.playback.is_autoplay_shuffle() {
                         // TODO: Save the previous track and go there instead of selecting another random one
-                        self.context
-                            .borrow_mut()
-                            .playback
-                            .set_select_new_track(true);
+                        context.playback.set_select_new_track(true);
                     } else {
-                        self.context.borrow_mut().playback.set_incoming_track(
+                        context.playback.set_incoming_track(
                             true,
                             Some(AutoplayType::Iterative(PlayDirection::Backward)),
                         );
@@ -90,7 +94,6 @@ impl PlaybackBar {
                 }
             });
 
-            let context = self.context.borrow();
             let current_track = &context.playback.track;
 
             // Toggle pause/play on a track
@@ -107,13 +110,10 @@ impl PlaybackBar {
 
             // Skip to the next track
             if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-                if self.context.borrow().playback.is_autoplay_shuffle() {
-                    self.context
-                        .borrow_mut()
-                        .playback
-                        .set_select_new_track(true);
+                if context.playback.is_autoplay_shuffle() {
+                    context.playback.set_select_new_track(true);
                 } else {
-                    self.context.borrow_mut().playback.set_incoming_track(
+                    context.playback.set_incoming_track(
                         true,
                         Some(AutoplayType::Iterative(PlayDirection::Forward)),
                     );
@@ -133,7 +133,7 @@ impl PlaybackBar {
         }
 
         let volume = context.playback.control.volume;
-        let last_volume_sent = context.playback.control.volume;
+        let last_volume_sent = context.playback.control.last_volume_sent;
 
         let volume_dx = (volume - last_volume_sent).abs();
 
@@ -144,7 +144,7 @@ impl PlaybackBar {
                 .send(PlayerCommand::SetVolume(volume));
 
             context.playback.control.last_volume_sent = volume;
-            context.playback.control.volume = volume;
+            self.config.borrow_mut().volume.default = volume;
         }
     }
 
@@ -252,15 +252,17 @@ impl PlaybackBar {
     }
 
     fn debug_window(&mut self, ui: &mut egui::Ui) {
+        let mut context = self.context.borrow_mut();
+        let playback_context = context.playback.clone();
+
         egui::Window::new("Playback Debug Info")
-            .open(self.context.borrow_mut().ui.debug_playback_mut())
+            .open(context.ui.debug_playback_mut())
             .collapsible(true)
             .resizable(true)
             .default_size([400.0, 250.0])
             .show(ui.ctx(), |ui| {
-                let playback_context = self.context.borrow();
-                let track = &playback_context.playback.track;
-                let control = &playback_context.playback.control;
+                let track = &playback_context.track;
+                let control = &playback_context.control;
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Track Info").underline().heading());
@@ -317,9 +319,7 @@ impl PlaybackBar {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        if self.context.borrow().ui.debug_playback() {
-            self.debug_window(ui);
-        }
+        self.debug_window(ui);
 
         ui.vertical(|ui| {
             ui.horizontal(|ui| {

@@ -191,56 +191,52 @@ impl TrackTable {
 
     /// Selects the next track from the track table tracks attribute
     fn select_new_track(&mut self) {
-        let Some(track_context) = &self.context.borrow().playback.track else {
-            return;
-        };
+        let track_context = {
+            let context = self.context.borrow();
 
-        // There's nothing to select, return early
-        if !self.context.borrow().playback.select_new_track() {
-            return;
-        }
-
-        // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
-        let autoplay_selector = if let Some(controlled_autoplay) = self
-            .context
-            .borrow_mut()
-            .playback
-            .consume_controlled_autoplay()
-        {
-            controlled_autoplay
-        } else {
-            self.context.borrow().playback.autoplay().to_owned()
-        };
-
-        self.context
-            .borrow_mut()
-            .playback
-            .set_select_new_track(false);
-
-        let tracks =
-            if let Some(playlist_state) = &self.context.borrow().playback.playlist.playlist() {
-                &playlist_state.tracks()
-            } else {
-                &self.tracks
+            let Some(track) = &context.playback.track else {
+                return;
             };
 
-        let Some(index) = tracks
-            .iter()
-            .position(|track| track.hash == track_context.track.hash)
-        else {
+            if !context.playback.select_new_track() {
+                return;
+            }
+
+            Some(track.clone())
+        };
+
+        let mut context = self.context.borrow_mut();
+
+        // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
+        let autoplay_selector =
+            if let Some(controlled_autoplay) = context.playback.consume_controlled_autoplay() {
+                controlled_autoplay
+            } else {
+                context.playback.autoplay().to_owned()
+            };
+
+        context.playback.set_select_new_track(false);
+
+        let tracks = if let Some(playlist_state) = &context.playback.playlist.playlist() {
+            &playlist_state.tracks()
+        } else {
+            &self.tracks
+        };
+
+        let Some(index) = track_context.and_then(|track_context| {
+            tracks
+                .iter()
+                .position(|track| track.hash == track_context.track.hash)
+        }) else {
             // Could not find a new track to play, clearing sink
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            self.context.borrow_mut().playback.set_track(None);
+            context.playback.set_track(None);
 
             return;
         };
 
         // Only add a track once it's finished autoplaying, and we're selecting the next track to autoplay
-        self.context
-            .borrow_mut()
-            .playback
-            .playlist
-            .add_played_track(index);
+        context.playback.playlist.add_played_track(index);
 
         let tracks_len = tracks.len();
 
@@ -253,7 +249,7 @@ impl TrackTable {
             AutoplayType::Shuffle(shuffle_type) => match shuffle_type {
                 // TODO: There's the possibility of indices being offset during tracks being added to playlist(s)
                 ShuffleType::PseudoRandom => {
-                    let played_tracks = self.context.borrow().playback.playlist.played_tracks();
+                    let played_tracks = context.playback.playlist.played_tracks();
 
                     if let Some(filtered_index) = filtered_random_index(tracks_len, &played_tracks)
                     {
@@ -261,11 +257,7 @@ impl TrackTable {
                     } else {
                         debug!("All tracks have been in the Pseudo random shuffler -- resetting");
 
-                        self.context
-                            .borrow_mut()
-                            .playback
-                            .playlist
-                            .clear_played_tracks();
+                        context.playback.playlist.clear_played_tracks();
 
                         let mut rng = rand::rng();
                         rng.random_range(0..tracks_len)
@@ -281,7 +273,7 @@ impl TrackTable {
         // TODO: Configurable value to autoplay from filtered tracks
         let Some(new_track) = tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            self.context.borrow_mut().playback.set_track(None);
+            context.playback.set_track(None);
 
             return;
         };
@@ -297,10 +289,7 @@ impl TrackTable {
 
         debug!("Selected new track with autoplay: {:?}", new_track_context);
 
-        self.context
-            .borrow_mut()
-            .playback
-            .set_track(Some(new_track_context));
+        context.playback.set_track(Some(new_track_context));
 
         self.scroll_to_selected = true;
     }
