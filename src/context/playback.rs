@@ -200,7 +200,6 @@ impl PlaybackContext {
                     self.control.progress_timestamp = Some(Instant::now());
                 }
 
-                // self.track.playing = playing;
                 if let Some(track) = self.track.as_mut() {
                     track.playing = playing;
                 }

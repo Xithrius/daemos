@@ -214,12 +214,23 @@ impl eframe::App for App {
         // TODO: Is there a way around this?
         ctx.request_repaint_after(std::time::Duration::from_millis(16));
 
-        let player_event = self.channels.player_event_rx.try_recv().ok();
-        self.components
-            .maybe_current_player_event(player_event.clone());
-
         self.handle_database_events();
         self.handle_keybinds(ctx);
+
+        let mut context = self.context.borrow_mut();
+
+        // TODO: Are these repaints necessary?
+        if let Some(player_event) = self.channels.player_event_rx.try_recv().ok() {
+            context.playback.handle_player_event(player_event.clone());
+            ctx.request_repaint();
+        } else if context
+            .playback
+            .track
+            .as_ref()
+            .is_some_and(|track| track.playing)
+        {
+            ctx.request_repaint();
+        }
 
         // TODO: If I have a bunch of input boxes, then this is going to get bad
         if ctx.input(|i| i.key_pressed(Key::Space))
@@ -238,7 +249,7 @@ impl eframe::App for App {
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.set_height(PLAYBACK_BAR_HEIGHT);
 
-            self.components.playback_bar.ui(ui, &player_event);
+            self.components.playback_bar.ui(ui);
         });
 
         egui::CentralPanel::default()

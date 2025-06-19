@@ -115,23 +115,6 @@ impl TrackTable {
         }
     }
 
-    fn handle_player_event(&mut self, player_event: PlayerEvent) {
-        debug!(
-            "Track table UI component received event: {:?}",
-            player_event
-        );
-
-        #[allow(clippy::single_match)]
-        match player_event {
-            PlayerEvent::TrackPlayingStatus(playing) => {
-                if let Some(track_state) = self.current_track.as_mut() {
-                    track_state.playing = playing;
-                }
-            }
-            _ => {}
-        }
-    }
-
     // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
     //     if row_response.clicked() {
     //         if self.selection.contains(&row_index) {
@@ -452,12 +435,7 @@ impl TrackTable {
         self.search.focused = response.has_focus();
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        if let Some(event) = player_event {
-            self.handle_player_event(event.clone());
-            ui.ctx().request_repaint();
-        }
-
+    pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
         ui.vertical(|ui: &mut egui::Ui| {

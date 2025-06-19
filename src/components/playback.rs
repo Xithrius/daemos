@@ -321,25 +321,7 @@ impl PlaybackBar {
             });
     }
 
-    pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        {
-            let mut context = self.context.borrow_mut();
-
-            if let Some(event) = player_event {
-                context.playback.handle_player_event(event.clone());
-                ui.ctx().request_repaint();
-            }
-
-            if context
-                .playback
-                .track
-                .as_ref()
-                .is_some_and(|track| track.playing)
-            {
-                ui.ctx().request_repaint();
-            }
-        }
-
+    pub fn ui(&mut self, ui: &mut egui::Ui) {
         if self.context.borrow().ui.debug_playback() {
             self.debug_window(ui);
         }

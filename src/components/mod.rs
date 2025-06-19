@@ -19,7 +19,7 @@ use crate::{
     config::core::SharedConfig,
     context::SharedContext,
     database::connection::DatabaseCommand,
-    playback::state::{PlayerCommand, PlayerEvent},
+    playback::state::PlayerCommand,
 };
 
 #[derive(Debug, Clone)]
@@ -72,8 +72,6 @@ pub struct Components {
 
     pub settings: Settings,
     pub create_playlist: CreatePlaylistModal,
-
-    current_player_event: Option<PlayerEvent>,
 }
 
 impl Components {
@@ -93,8 +91,6 @@ impl Components {
 
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),
             settings: Settings::new(config.clone(), context.clone()),
-
-            current_player_event: None,
         }
     }
 
@@ -111,10 +107,6 @@ impl Components {
 
         dock_state
     }
-
-    pub fn maybe_current_player_event(&mut self, player_event: Option<PlayerEvent>) {
-        self.current_player_event = player_event;
-    }
 }
 
 impl TabViewer for Components {
@@ -130,7 +122,7 @@ impl TabViewer for Components {
                 self.playlist_table.ui(ui);
             }
             ComponentTab::Tracks => {
-                self.track_table.ui(ui, &self.current_player_event);
+                self.track_table.ui(ui);
             }
             ComponentTab::Tags => {
                 self.tag_table.ui(ui);
