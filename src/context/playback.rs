@@ -12,27 +12,10 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-struct TrackPlayingState {
+struct TrackContext {
     pub track: Track,
     pub index: usize,
     pub playing: bool,
-}
-
-#[derive(Debug, Clone)]
-struct TrackContext {
-    pub track: Option<TrackPlayingState>,
-}
-
-impl Default for TrackContext {
-    fn default() -> Self {
-        Self { track: None }
-    }
-}
-
-impl TrackContext {
-    pub fn track(&self) -> Option<&TrackPlayingState> {
-        self.track.as_ref()
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -138,7 +121,7 @@ pub struct AutoplayContext {
 
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
-    pub track: TrackContext,
+    pub track: Option<TrackContext>,
     pub control: ControlContext,
     pub playlist: PlaylistContext,
     pub autoplay: AutoplayContext,
@@ -187,11 +170,10 @@ impl PlaybackContext {
                 // Only if the track hash is different or track doesn't exist, then we should restart the state
                 if self
                     .track
-                    .track
                     .as_ref()
                     .is_none_or(|prev| prev.track.hash != track.hash)
                 {
-                    if let Some(track_state) = self.track.track.as_mut() {
+                    if let Some(track_state) = self.track.as_mut() {
                         track_state.track = track;
                         track_state.playing = true;
                     }
@@ -202,7 +184,7 @@ impl PlaybackContext {
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
                 // If we are pausing, freeze current progress
-                if !playing && self.track.track.as_ref().is_some_and(|track| track.playing) {
+                if !playing && self.track.as_ref().is_some_and(|track| track.playing) {
                     // Capture how much time has passed
                     if let (Some(base), Some(ts)) =
                         (self.control.progress_base, self.control.progress_timestamp)
@@ -214,12 +196,12 @@ impl PlaybackContext {
                 }
 
                 // If we are resuming, set the timestamp so progress resumes from base
-                if playing && !self.track.track.as_ref().is_some_and(|track| track.playing) {
+                if playing && !self.track.as_ref().is_some_and(|track| track.playing) {
                     self.control.progress_timestamp = Some(Instant::now());
                 }
 
                 // self.track.playing = playing;
-                if let Some(track) = self.track.track.as_mut() {
+                if let Some(track) = self.track.as_mut() {
                     track.playing = playing;
                 }
             }

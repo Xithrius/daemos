@@ -54,7 +54,7 @@ impl PlaybackBar {
         context
             .borrow_mut()
             .playback
-            .track
+            .control
             .set_volume(config_volume);
 
         Self {
@@ -96,10 +96,11 @@ impl PlaybackBar {
             });
 
             let context = self.context.borrow();
-            let current_track = context.playback.track.track();
+            let current_track = &context.playback.track;
 
             // Toggle pause/play on a track
-            let toggle_playing_button = if current_track.is_some_and(|track| track.playing) {
+            let toggle_playing_button = if current_track.as_ref().is_some_and(|track| track.playing)
+            {
                 PAUSE_IMAGE
             } else {
                 PLAY_IMAGE
@@ -130,14 +131,14 @@ impl PlaybackBar {
         let mut context = self.context.borrow_mut();
 
         {
-            let volume = context.playback.track.volume_mut();
+            let volume = context.playback.control.volume_mut();
             ui.add(egui::Slider::new(volume, DEFAULT_VOLUME_RANGE).show_value(false));
             let volume_button = ImageButton::new(VOLUME_IMAGE).frame(false);
             ui.add_sized([SMALL_BUTTON_SIZE, SMALL_BUTTON_SIZE], volume_button);
         }
 
-        let volume = context.playback.track.volume;
-        let last_volume_sent = context.playback.track.volume;
+        let volume = context.playback.control.volume;
+        let last_volume_sent = context.playback.control.volume;
 
         let volume_dx = (volume - last_volume_sent).abs();
 
@@ -147,8 +148,8 @@ impl PlaybackBar {
                 .player_command_tx
                 .send(PlayerCommand::SetVolume(volume));
 
-            context.playback.track.last_volume_sent = volume;
-            context.playback.track.volume = volume;
+            context.playback.control.last_volume_sent = volume;
+            context.playback.control.volume = volume;
         }
     }
 
@@ -163,16 +164,18 @@ impl PlaybackBar {
 
         let mut context = self.context.borrow_mut();
 
+        let playback = &mut context.playback;
 
-
-        if let (Some(progress), Some(track)) =
-            (context.playback.track.current_progress(), &context.playback.track.track)
+        if let (Some(progress), Some(track_context)) =
+            (playback.control.current_progress(), &playback.track)
         {
             let mut playback_secs = progress.as_secs_f64();
-            let total_duration_secs = track.duration_secs;
+            let total_duration_secs = track_context.track.duration_secs;
 
-            if playback_secs >= total_duration_secs && !self.track_state.changing_track {
-                self.track_state.changing_track = true;
+            let control = &mut playback.control;
+
+            if playback_secs >= total_duration_secs && !control.changing_track {
+                control.changing_track = true;
                 self.context
                     .borrow_mut()
                     .playback
@@ -194,9 +197,9 @@ impl PlaybackBar {
             let response = ui.add(slider);
             ui.label(human_total_time);
 
-            if !self.track_state.changing_track && response.drag_stopped() {
-                self.track_state.progress_base = Some(Duration::from_secs_f64(playback_secs));
-                self.track_state.progress_timestamp = Some(Instant::now());
+            if !control.changing_track && response.drag_stopped() {
+                control.progress_base = Some(Duration::from_secs_f64(playback_secs));
+                control.progress_timestamp = Some(Instant::now());
 
                 let _ = self
                     .channels
@@ -218,7 +221,7 @@ impl PlaybackBar {
     }
 
     fn ui_currently_playing(&mut self, ui: &mut egui::Ui) {
-        let Some(track) = &self.context.borrow().playback.track.track else {
+        let Some(track) = &self.context.borrow().playback.track else {
             return;
         };
 
@@ -260,15 +263,17 @@ impl PlaybackBar {
             .resizable(true)
             .default_size([400.0, 250.0])
             .show(ui.ctx(), |ui| {
-                let ts = &self.context.borrow().playback.track;
+                let playback_context = self.context.borrow();
+                let track = &playback_context.playback.track;
+                let control = &playback_context.playback.control;
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Track Info").underline().heading());
                     ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
-                    ui.label(format!("Loaded: {}", ts.track.is_some()));
+                    ui.label(format!("Loaded: {}", track.is_some()));
 
-                    if let Some(track) = &ts.track {
+                    if let Some(track) = &track {
                         ui.label(format!("Path: {:?}", track.track.path));
                         ui.label(format!("Duration: {} seconds", track.track.duration_secs));
                     }
@@ -282,22 +287,22 @@ impl PlaybackBar {
 
                     ui.label(format!(
                         "Playing: {:?}",
-                        ts.track.as_ref().map(|track| track.playing)
+                        track.as_ref().map(|track| track.playing)
                     ));
 
-                    if let Some(base) = ts.progress_base {
+                    if let Some(base) = control.progress_base {
                         ui.label(format!("Progress Base: {:.2?}", base));
                     } else {
                         ui.label("Progress Base: None");
                     }
 
-                    if let Some(ts) = ts.progress_timestamp {
+                    if let Some(ts) = control.progress_timestamp {
                         ui.label(format!("Progress Timestamp: {:?}", ts));
                     } else {
                         ui.label("Progress Timestamp: None");
                     }
 
-                    if let Some(simulated) = ts.current_progress() {
+                    if let Some(simulated) = control.current_progress() {
                         ui.label(format!("Simulated Current Progress: {:.2?}", simulated));
                     } else {
                         ui.label("Simulated Current Progress: None");
@@ -310,8 +315,8 @@ impl PlaybackBar {
                     ui.label(RichText::new("Volume State").underline().heading());
                     ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
-                    ui.label(format!("Volume: {:.2}", ts.volume));
-                    ui.label(format!("Last Volume Sent: {:.2}", ts.last_volume_sent));
+                    ui.label(format!("Volume: {:.2}", control.volume));
+                    ui.label(format!("Last Volume Sent: {:.2}", control.last_volume_sent));
                 });
             });
     }
@@ -328,7 +333,7 @@ impl PlaybackBar {
             if context
                 .playback
                 .track
-                .track()
+                .as_ref()
                 .is_some_and(|track| track.playing)
             {
                 ui.ctx().request_repaint();

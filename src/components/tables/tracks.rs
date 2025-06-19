@@ -70,9 +70,6 @@ impl TrackTable {
             filtered_tracks: Vec::default(),
             track_ids: HashSet::default(),
             // selection: HashSet::default(),
-            current_track: None,
-            current_playlist: None,
-            seen_tracks: BTreeSet::default(),
             scroll_to_selected: false,
             search: TrackSearch::default(),
         }
