@@ -5,13 +5,11 @@ use std::{
 };
 
 use egui::{ImageButton, ImageSource, RichText, include_image};
-use tracing::{debug, warn};
 
 use super::ComponentChannels;
 use crate::{
     config::core::SharedConfig,
     context::{AutoplayType, PlayDirection, SharedContext},
-    database::models::tracks::Track,
     playback::state::{PlayerCommand, PlayerEvent},
     utils::formatting::human_duration,
 };
@@ -40,56 +38,10 @@ const SEEK_BAR_WIDTH_RATIO: f32 = 2.5;
 const MINUTES_SECONDS_PROGRESS_TEXT_WIDTH: f32 = 42.7;
 
 #[derive(Debug, Clone)]
-struct TrackState {
-    track: Option<Track>,
-    playing: bool,
-    volume: f32,
-    last_volume_sent: f32,
-
-    progress_base: Option<Duration>,
-    progress_timestamp: Option<Instant>,
-    changing_track: bool,
-}
-
-impl Default for TrackState {
-    fn default() -> Self {
-        Self {
-            track: None,
-            playing: false,
-            volume: 0.5,
-            last_volume_sent: 0.5,
-            progress_base: None,
-            progress_timestamp: None,
-            changing_track: false,
-        }
-    }
-}
-
-impl TrackState {
-    pub fn new(volume: f32) -> Self {
-        Self {
-            playing: true,
-            volume,
-            last_volume_sent: volume,
-            ..Default::default()
-        }
-    }
-
-    fn current_progress(&self) -> Option<Duration> {
-        match (self.progress_base, self.progress_timestamp) {
-            (Some(base), Some(ts)) => Some(base + Instant::now().duration_since(ts)),
-            (Some(base), _) => Some(base),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct PlaybackBar {
     config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
-    track_state: TrackState,
 }
 
 impl PlaybackBar {
@@ -99,82 +51,16 @@ impl PlaybackBar {
         channels: Rc<ComponentChannels>,
     ) -> Self {
         let config_volume = config.borrow().volume.default;
-        let track_state = TrackState::new(config_volume);
+        context
+            .borrow_mut()
+            .playback
+            .track
+            .set_volume(config_volume);
 
         Self {
             config,
             context,
             channels,
-            track_state,
-        }
-    }
-
-    fn handle_player_event(&mut self, player_event: PlayerEvent) {
-        debug!(
-            "Playback bar UI component received event: {:?}",
-            player_event
-        );
-
-        match player_event {
-            PlayerEvent::TrackChanged(track) => {
-                // Only if the track hash is different or track doesn't exist, then we should restart the state
-                if self
-                    .track_state
-                    .track
-                    .as_ref()
-                    .is_none_or(|prev| prev.hash != track.hash)
-                {
-                    self.track_state.track = Some(track.clone());
-                    self.track_state.playing = true;
-                    self.track_state.progress_base = Some(Duration::ZERO);
-                    self.track_state.progress_timestamp = Some(Instant::now());
-                    self.track_state.changing_track = false;
-                }
-            }
-            PlayerEvent::TrackPlayingStatus(playing) => {
-                // If we are pausing, freeze current progress
-                if !playing && self.track_state.playing {
-                    // Capture how much time has passed
-                    if let (Some(base), Some(ts)) = (
-                        self.track_state.progress_base,
-                        self.track_state.progress_timestamp,
-                    ) {
-                        let elapsed = Instant::now().duration_since(ts);
-                        self.track_state.progress_base = Some(base + elapsed);
-                        self.track_state.progress_timestamp = None;
-                    }
-                }
-
-                // If we are resuming, set the timestamp so progress resumes from base
-                if playing && !self.track_state.playing {
-                    self.track_state.progress_timestamp = Some(Instant::now());
-                }
-
-                self.track_state.playing = playing;
-            }
-            PlayerEvent::TrackProgress(duration) => {
-                // If duration is not synced properly, do it here
-                if self
-                    .track_state
-                    .progress_base
-                    .is_some_and(|progress_base| progress_base < duration)
-                {
-                    warn!(
-                        "Track progress desync detected, setting progress base to received player position"
-                    );
-                    self.track_state.progress_base = Some(duration);
-                    self.track_state.progress_timestamp = Some(Instant::now());
-                }
-            }
-            PlayerEvent::CurrentVolume(volume) => {
-                if self.track_state.volume != volume {
-                    warn!(
-                        "Volume desync detected, UI track state does not equal player volume ({} != {})",
-                        self.track_state.volume, volume
-                    );
-                    self.track_state.volume = volume;
-                }
-            }
         }
     }
 
@@ -209,16 +95,17 @@ impl PlaybackBar {
                 }
             });
 
-            let current_track = self.track_state.track.is_some();
+            let context = self.context.borrow();
+            let current_track = context.playback.track.track();
 
             // Toggle pause/play on a track
-            let toggle_playing_button = if self.track_state.playing && current_track {
+            let toggle_playing_button = if current_track.is_some_and(|track| track.playing) {
                 PAUSE_IMAGE
             } else {
                 PLAY_IMAGE
             };
 
-            if button(ui, toggle_playing_button, LARGE_BUTTON_SIZE) && current_track {
+            if button(ui, toggle_playing_button, LARGE_BUTTON_SIZE) && current_track.is_some() {
                 let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
             }
 
@@ -240,27 +127,33 @@ impl PlaybackBar {
     }
 
     fn ui_volume(&mut self, ui: &mut egui::Ui) {
-        ui.add(
-            egui::Slider::new(&mut self.track_state.volume, DEFAULT_VOLUME_RANGE).show_value(false),
-        );
-        let volume_button = ImageButton::new(VOLUME_IMAGE).frame(false);
-        ui.add_sized([SMALL_BUTTON_SIZE, SMALL_BUTTON_SIZE], volume_button);
+        let mut context = self.context.borrow_mut();
 
-        let volume_dx = (self.track_state.volume - self.track_state.last_volume_sent).abs();
+        {
+            let volume = context.playback.track.volume_mut();
+            ui.add(egui::Slider::new(volume, DEFAULT_VOLUME_RANGE).show_value(false));
+            let volume_button = ImageButton::new(VOLUME_IMAGE).frame(false);
+            ui.add_sized([SMALL_BUTTON_SIZE, SMALL_BUTTON_SIZE], volume_button);
+        }
+
+        let volume = context.playback.track.volume;
+        let last_volume_sent = context.playback.track.volume;
+
+        let volume_dx = (volume - last_volume_sent).abs();
 
         if volume_dx > f32::EPSILON {
             let _ = self
                 .channels
                 .player_command_tx
-                .send(PlayerCommand::SetVolume(self.track_state.volume));
+                .send(PlayerCommand::SetVolume(volume));
 
-            self.track_state.last_volume_sent = self.track_state.volume;
-            self.config.borrow_mut().volume.default = self.track_state.volume;
+            context.playback.track.last_volume_sent = volume;
+            context.playback.track.volume = volume;
         }
     }
 
     fn ui_seek(&mut self, ui: &mut egui::Ui) {
-        // TODO: Get rid of this terribleness
+        // TODO: Get rid of this terrible UI centering calculation
         let available_width = ui.available_width();
         let slider_width = available_width / SEEK_BAR_WIDTH_RATIO;
         let side_spacing =
@@ -268,8 +161,12 @@ impl PlaybackBar {
         ui.spacing_mut().slider_width = slider_width;
         ui.add_space(side_spacing);
 
+        let mut context = self.context.borrow_mut();
+
+
+
         if let (Some(progress), Some(track)) =
-            (self.track_state.current_progress(), &self.track_state.track)
+            (context.playback.track.current_progress(), &context.playback.track.track)
         {
             let mut playback_secs = progress.as_secs_f64();
             let total_duration_secs = track.duration_secs;
@@ -321,7 +218,7 @@ impl PlaybackBar {
     }
 
     fn ui_currently_playing(&mut self, ui: &mut egui::Ui) {
-        let Some(track) = &self.track_state.track else {
+        let Some(track) = &self.context.borrow().playback.track.track else {
             return;
         };
 
@@ -347,7 +244,7 @@ impl PlaybackBar {
             ))
         };
 
-        let track_text = RichText::new(&track.name).strong();
+        let track_text = RichText::new(&track.track.name).strong();
 
         ui.vertical(|ui| {
             ui.add_space(NOW_PLAYING_SPACE);
@@ -363,7 +260,7 @@ impl PlaybackBar {
             .resizable(true)
             .default_size([400.0, 250.0])
             .show(ui.ctx(), |ui| {
-                let ts = &self.track_state;
+                let ts = &self.context.borrow().playback.track;
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Track Info").underline().heading());
@@ -372,8 +269,8 @@ impl PlaybackBar {
                     ui.label(format!("Loaded: {}", ts.track.is_some()));
 
                     if let Some(track) = &ts.track {
-                        ui.label(format!("Path: {:?}", track.path));
-                        ui.label(format!("Duration: {} seconds", track.duration_secs));
+                        ui.label(format!("Path: {:?}", track.track.path));
+                        ui.label(format!("Duration: {} seconds", track.track.duration_secs));
                     }
                 });
 
@@ -383,7 +280,10 @@ impl PlaybackBar {
                     ui.label(RichText::new("Playback State").underline().heading());
                     ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
-                    ui.label(format!("Playing: {}", ts.playing));
+                    ui.label(format!(
+                        "Playing: {:?}",
+                        ts.track.as_ref().map(|track| track.playing)
+                    ));
 
                     if let Some(base) = ts.progress_base {
                         ui.label(format!("Progress Base: {:.2?}", base));
@@ -417,13 +317,22 @@ impl PlaybackBar {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui, player_event: &Option<PlayerEvent>) {
-        if let Some(event) = player_event {
-            self.handle_player_event(event.clone());
-            ui.ctx().request_repaint();
-        }
+        {
+            let mut context = self.context.borrow_mut();
 
-        if self.track_state.track.is_some() && self.track_state.playing {
-            ui.ctx().request_repaint();
+            if let Some(event) = player_event {
+                context.playback.handle_player_event(event.clone());
+                ui.ctx().request_repaint();
+            }
+
+            if context
+                .playback
+                .track
+                .track()
+                .is_some_and(|track| track.playing)
+            {
+                ui.ctx().request_repaint();
+            }
         }
 
         if self.context.borrow().ui.debug_playback() {

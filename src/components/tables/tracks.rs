@@ -15,48 +15,13 @@ use crate::{
     components::ComponentChannels,
     config::core::SharedConfig,
     context::{AutoplayType, PlayDirection, SharedContext, ShuffleType},
-    database::{
-        connection::DatabaseCommand,
-        models::{playlists::playlist::Playlist, tracks::Track},
-    },
+    database::{connection::DatabaseCommand, models::tracks::Track},
     playback::state::{PlayerCommand, PlayerEvent},
     utils::{formatting::human_duration, random::filtered_random_index},
 };
 
 const INDEX_COLUMN_WIDTH: f32 = 50.0;
 const DURATION_COLUMN_WIDTH: f32 = 100.0;
-
-#[derive(Debug, Clone)]
-struct TrackState {
-    index: usize,
-    track: Track,
-    playing: bool,
-}
-
-impl TrackState {
-    fn new(index: usize, track: Track, playing: bool) -> Self {
-        Self {
-            index,
-            track,
-            playing,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct PlaylistState {
-    _playlist: Playlist,
-    tracks: Vec<Track>,
-}
-
-impl PlaylistState {
-    fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
-        Self {
-            _playlist: playlist,
-            tracks,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Default)]
 pub struct TrackSearch {
@@ -80,11 +45,6 @@ pub struct TrackTable {
     track_ids: HashSet<Uuid>,
 
     // selection: HashSet<usize>,
-    // Where autoplay is happening
-    current_track: Option<TrackState>,
-    current_playlist: Option<PlaylistState>,
-    seen_tracks: BTreeSet<usize>,
-
     scroll_to_selected: bool,
 
     search: TrackSearch,
