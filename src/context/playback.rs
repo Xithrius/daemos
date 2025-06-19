@@ -18,10 +18,25 @@ struct TrackPlayingState {
     pub playing: bool,
 }
 
-// TODO: separate into control context and track context
 #[derive(Debug, Clone)]
 struct TrackContext {
     pub track: Option<TrackPlayingState>,
+}
+
+impl Default for TrackContext {
+    fn default() -> Self {
+        Self { track: None }
+    }
+}
+
+impl TrackContext {
+    pub fn track(&self) -> Option<&TrackPlayingState> {
+        self.track.as_ref()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ControlContext {
     pub volume: f32,
     pub last_volume_sent: f32,
 
@@ -30,10 +45,9 @@ struct TrackContext {
     pub changing_track: bool,
 }
 
-impl Default for TrackContext {
+impl Default for ControlContext {
     fn default() -> Self {
         Self {
-            track: None,
             volume: 0.5,
             last_volume_sent: 0.5,
             progress_base: None,
@@ -43,20 +57,7 @@ impl Default for TrackContext {
     }
 }
 
-impl TrackContext {
-    pub fn new(volume: f32) -> Self {
-        Self {
-            track: None,
-            volume,
-            last_volume_sent: volume,
-            ..Default::default()
-        }
-    }
-
-    pub fn track(&self) -> Option<&TrackPlayingState> {
-        self.track.as_ref()
-    }
-
+impl ControlContext {
     pub fn volume(&self) -> f32 {
         self.volume
     }
@@ -89,7 +90,7 @@ impl TrackContext {
 }
 
 #[derive(Debug, Clone)]
-struct PlaylistState {
+pub struct PlaylistState {
     _playlist: Playlist,
     tracks: Vec<Track>,
 }
@@ -138,6 +139,7 @@ pub struct AutoplayContext {
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
     pub track: TrackContext,
+    pub control: ControlContext,
     pub playlist: PlaylistContext,
     pub autoplay: AutoplayContext,
 }
@@ -193,9 +195,9 @@ impl PlaybackContext {
                         track_state.track = track;
                         track_state.playing = true;
                     }
-                    self.track.progress_base = Some(Duration::ZERO);
-                    self.track.progress_timestamp = Some(Instant::now());
-                    self.track.changing_track = false;
+                    self.control.progress_base = Some(Duration::ZERO);
+                    self.control.progress_timestamp = Some(Instant::now());
+                    self.control.changing_track = false;
                 }
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
@@ -203,17 +205,17 @@ impl PlaybackContext {
                 if !playing && self.track.track.as_ref().is_some_and(|track| track.playing) {
                     // Capture how much time has passed
                     if let (Some(base), Some(ts)) =
-                        (self.track.progress_base, self.track.progress_timestamp)
+                        (self.control.progress_base, self.control.progress_timestamp)
                     {
                         let elapsed = Instant::now().duration_since(ts);
-                        self.track.progress_base = Some(base + elapsed);
-                        self.track.progress_timestamp = None;
+                        self.control.progress_base = Some(base + elapsed);
+                        self.control.progress_timestamp = None;
                     }
                 }
 
                 // If we are resuming, set the timestamp so progress resumes from base
                 if playing && !self.track.track.as_ref().is_some_and(|track| track.playing) {
-                    self.track.progress_timestamp = Some(Instant::now());
+                    self.control.progress_timestamp = Some(Instant::now());
                 }
 
                 // self.track.playing = playing;
@@ -224,24 +226,24 @@ impl PlaybackContext {
             PlayerEvent::TrackProgress(duration) => {
                 // If duration is not synced properly, do it here
                 if self
-                    .track
+                    .control
                     .progress_base
                     .is_some_and(|progress_base| progress_base < duration)
                 {
                     warn!(
                         "Track progress desync detected, setting progress base to received player position"
                     );
-                    self.track.progress_base = Some(duration);
-                    self.track.progress_timestamp = Some(Instant::now());
+                    self.control.progress_base = Some(duration);
+                    self.control.progress_timestamp = Some(Instant::now());
                 }
             }
             PlayerEvent::CurrentVolume(volume) => {
-                if self.track.volume != volume {
+                if self.control.volume != volume {
                     warn!(
                         "Volume desync detected, UI track state does not equal player volume ({} != {})",
-                        self.track.volume, volume
+                        self.control.volume, volume
                     );
-                    self.track.volume = volume;
+                    self.control.volume = volume;
                 }
             }
         }
