@@ -189,20 +189,13 @@ impl PlaybackContext {
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
-                // Only if the track hash is different or track doesn't exist, then we should restart the state
-                if self
-                    .track
-                    .as_ref()
-                    .is_none_or(|prev| prev.track.hash != track.hash)
-                {
-                    if let Some(track_state) = self.track.as_mut() {
-                        track_state.track = track;
-                        track_state.playing = true;
-                    }
-                    self.control.progress_base = Some(Duration::ZERO);
-                    self.control.progress_timestamp = Some(Instant::now());
-                    self.control.changing_track = false;
+                if let Some(track_state) = self.track.as_mut() {
+                    track_state.track = track;
+                    track_state.playing = true;
                 }
+                self.control.progress_base = Some(Duration::ZERO);
+                self.control.progress_timestamp = Some(Instant::now());
+                self.control.changing_track = false;
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
                 // If we are pausing, freeze current progress

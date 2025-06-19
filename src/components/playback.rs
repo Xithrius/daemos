@@ -159,59 +159,71 @@ impl PlaybackBar {
 
         let mut context = self.context.borrow_mut();
 
+        let (mut playback_secs, total_duration_secs, has_hours, needs_new_track) = {
+            let playback = &mut context.playback;
+
+            if let (Some(progress), Some(track_context)) =
+                (playback.control.current_progress(), &playback.track)
+            {
+                let playback_secs = progress.as_secs_f64();
+                let total_duration_secs = track_context.track.duration_secs;
+                let control = &mut playback.control;
+
+                let needs_new_track =
+                    playback_secs >= total_duration_secs && !control.changing_track;
+
+                let has_hours =
+                    (Duration::from_secs_f64(total_duration_secs.floor()).as_secs() / 3600) > 0;
+
+                (
+                    playback_secs,
+                    total_duration_secs,
+                    has_hours,
+                    needs_new_track,
+                )
+            } else {
+                let mut dummy = 0.0;
+                let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).show_value(false);
+
+                ui.label("--:--");
+                ui.add_enabled(false, slider);
+                ui.label("--:--");
+                return;
+            }
+        };
+
+        if needs_new_track {
+            let playback = &mut context.playback;
+            playback.control.changing_track = true;
+            playback.set_select_new_track(true);
+        }
+
+        let current_time = Duration::from_secs_f64(playback_secs.floor());
+        let total_time = Duration::from_secs_f64(total_duration_secs.floor());
+
+        let slider =
+            egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).show_value(false);
+
+        let human_current_time = human_duration(current_time, has_hours).to_string();
+        let human_total_time = human_duration(total_time, has_hours).to_string();
+
+        ui.label(human_current_time);
+        let response = ui.add(slider);
+        ui.label(human_total_time);
+
         let playback = &mut context.playback;
+        let control = &mut playback.control;
 
-        if let (Some(progress), Some(track_context)) =
-            (playback.control.current_progress(), &playback.track)
-        {
-            let mut playback_secs = progress.as_secs_f64();
-            let total_duration_secs = track_context.track.duration_secs;
+        if !control.changing_track && response.drag_stopped() {
+            control.progress_base = Some(Duration::from_secs_f64(playback_secs));
+            control.progress_timestamp = Some(Instant::now());
 
-            let control = &mut playback.control;
-
-            if playback_secs >= total_duration_secs && !control.changing_track {
-                control.changing_track = true;
-                self.context
-                    .borrow_mut()
-                    .playback
-                    .set_select_new_track(true);
-            }
-
-            let current_time = Duration::from_secs_f64(playback_secs.floor());
-            let total_time = Duration::from_secs_f64(total_duration_secs.floor());
-
-            let has_hours = (total_time.as_secs() / 3600) > 0;
-
-            let slider =
-                egui::Slider::new(&mut playback_secs, 0.0..=total_duration_secs).show_value(false);
-
-            let human_current_time = human_duration(current_time, has_hours).to_string();
-            let human_total_time = human_duration(total_time, has_hours).to_string();
-
-            ui.label(human_current_time);
-            let response = ui.add(slider);
-            ui.label(human_total_time);
-
-            if !control.changing_track && response.drag_stopped() {
-                control.progress_base = Some(Duration::from_secs_f64(playback_secs));
-                control.progress_timestamp = Some(Instant::now());
-
-                let _ = self
-                    .channels
-                    .player_command_tx
-                    .send(PlayerCommand::SetPosition(Duration::from_secs_f64(
-                        playback_secs,
-                    )));
-            }
-        } else {
-            // This state should only be reached when there is no track playing,
-            // and we're not currently selecting a new track
-            let mut dummy = 0.0;
-            let slider = egui::Slider::new(&mut dummy, 0.0..=1.0).show_value(false);
-
-            ui.label("--:--");
-            ui.add_enabled(false, slider);
-            ui.label("--:--");
+            let _ = self
+                .channels
+                .player_command_tx
+                .send(PlayerCommand::SetPosition(Duration::from_secs_f64(
+                    playback_secs,
+                )));
         }
     }
 
