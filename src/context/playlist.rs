@@ -1,12 +1,12 @@
 use crate::database::models::playlists::playlist::Playlist;
 
 #[derive(Debug, Clone, Default)]
-pub struct PlaylistContext {
+pub struct UIPlaylistContext {
     selected: Option<Playlist>,
     autoplay: Option<Playlist>,
 }
 
-impl PlaylistContext {
+impl UIPlaylistContext {
     pub fn selected(&self) -> Option<Playlist> {
         self.selected.clone()
     }

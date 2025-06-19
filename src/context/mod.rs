@@ -10,7 +10,7 @@ pub mod ui;
 pub use ui::UIContext;
 
 pub mod playlist;
-pub use playlist::PlaylistContext;
+pub use playlist::UIPlaylistContext;
 
 pub mod processing;
 pub use processing::ProcessingContext;
@@ -19,7 +19,8 @@ pub use processing::ProcessingContext;
 pub struct Context {
     pub playback: PlaybackContext,
     pub ui: UIContext,
-    pub playlist: PlaylistContext,
+    // TODO: Combine into UIContext
+    pub ui_playlist: UIPlaylistContext,
     pub processing: ProcessingContext,
 }
 

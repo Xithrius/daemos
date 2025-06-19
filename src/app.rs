@@ -220,7 +220,7 @@ impl eframe::App for App {
         let mut context = self.context.borrow_mut();
 
         // TODO: Are these repaints necessary?
-        if let Some(player_event) = self.channels.player_event_rx.try_recv().ok() {
+        if let Ok(player_event) = self.channels.player_event_rx.try_recv() {
             context.playback.handle_player_event(player_event.clone());
             ctx.request_repaint();
         } else if context

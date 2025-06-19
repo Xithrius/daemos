@@ -10,7 +10,7 @@ use super::ComponentChannels;
 use crate::{
     config::core::SharedConfig,
     context::{AutoplayType, PlayDirection, SharedContext},
-    playback::state::{PlayerCommand, PlayerEvent},
+    playback::state::PlayerCommand,
     utils::formatting::human_duration,
 };
 
@@ -39,7 +39,6 @@ const MINUTES_SECONDS_PROGRESS_TEXT_WIDTH: f32 = 42.7;
 
 #[derive(Debug, Clone)]
 pub struct PlaybackBar {
-    config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 }
@@ -57,11 +56,7 @@ impl PlaybackBar {
             .control
             .set_volume(config_volume);
 
-        Self {
-            config,
-            context,
-            channels,
-        }
+        Self { context, channels }
     }
 
     pub fn ui_playback_controls(&mut self, ui: &mut egui::Ui) {
@@ -227,7 +222,7 @@ impl PlaybackBar {
 
         let context = self.context.borrow();
 
-        let autoplay_playlist_context = if let Some(playlist) = context.playlist.autoplay() {
+        let autoplay_playlist_context = if let Some(playlist) = context.ui_playlist.autoplay() {
             playlist.name
         } else {
             "All tracks".to_string()

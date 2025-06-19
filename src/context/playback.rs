@@ -12,10 +12,20 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-struct TrackContext {
+pub struct TrackContext {
     pub track: Track,
     pub index: usize,
     pub playing: bool,
+}
+
+impl TrackContext {
+    pub fn new(track: Track, index: usize, playing: bool) -> Self {
+        Self {
+            track,
+            index,
+            playing,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -79,11 +89,15 @@ pub struct PlaylistState {
 }
 
 impl PlaylistState {
-    fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
+    pub fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
         Self {
             _playlist: playlist,
             tracks,
         }
+    }
+
+    pub fn tracks(&self) -> Vec<Track> {
+        self.tracks.clone()
     }
 }
 
@@ -97,6 +111,10 @@ pub struct PlaylistContext {
 impl PlaylistContext {
     pub fn playlist(&self) -> Option<PlaylistState> {
         self.playlist.clone()
+    }
+
+    pub fn set_playlist(&mut self, playlist: Option<PlaylistState>) {
+        self.playlist = playlist;
     }
 
     pub fn played_tracks(&self) -> BTreeSet<usize> {
@@ -128,6 +146,10 @@ pub struct PlaybackContext {
 }
 
 impl PlaybackContext {
+    pub fn set_track(&mut self, track: Option<TrackContext>) {
+        self.track = track;
+    }
+
     pub fn select_new_track(&self) -> bool {
         self.autoplay.select_new_track
     }
