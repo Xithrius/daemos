@@ -82,7 +82,7 @@ impl PlaybackBar {
                 // TODO: Configure based on autoplay direction
                 // Skip back a track
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
-                    if context.playback.is_autoplay_shuffle() {
+                    if context.playback.autoplay.is_shuffle() {
                         // TODO: Save the previous track and go there instead of selecting another random one
                         context.playback.set_select_new_track(true);
                     } else {
@@ -110,7 +110,7 @@ impl PlaybackBar {
 
             // Skip to the next track
             if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
-                if context.playback.is_autoplay_shuffle() {
+                if context.playback.autoplay.is_shuffle() {
                     context.playback.set_select_new_track(true);
                 } else {
                     context.playback.set_incoming_track(
@@ -228,7 +228,7 @@ impl PlaybackBar {
     }
 
     fn ui_currently_playing(&mut self, ui: &mut egui::Ui) {
-        let Some(track) = &self.context.borrow().playback.track else {
+        let Some(track_context) = &self.context.borrow().playback.track else {
             return;
         };
 
@@ -240,7 +240,7 @@ impl PlaybackBar {
             "All tracks".to_string()
         };
 
-        let autoplay_type = context.playback.autoplay();
+        let autoplay_type = context.playback.autoplay.autoplay();
 
         let autoplay_text = if matches!(
             autoplay_type,
@@ -254,7 +254,7 @@ impl PlaybackBar {
             ))
         };
 
-        let track_text = RichText::new(&track.track.name).strong();
+        let track_text = RichText::new(&track_context.track.name).strong();
 
         ui.vertical(|ui| {
             ui.add_space(NOW_PLAYING_SPACE);
@@ -273,18 +273,21 @@ impl PlaybackBar {
             .resizable(true)
             .default_size([400.0, 250.0])
             .show(ui.ctx(), |ui| {
-                let track = &playback_context.track;
+                let track_context = &playback_context.track;
                 let control = &playback_context.control;
 
                 ui.group(|ui| {
                     ui.label(RichText::new("Track Info").underline().heading());
                     ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
 
-                    ui.label(format!("Loaded: {}", track.is_some()));
+                    ui.label(format!("Loaded: {}", track_context.is_some()));
 
-                    if let Some(track) = &track {
-                        ui.label(format!("Path: {:?}", track.track.path));
-                        ui.label(format!("Duration: {} seconds", track.track.duration_secs));
+                    if let Some(track_context) = &track_context {
+                        ui.label(format!("Path: {:?}", track_context.track.path));
+                        ui.label(format!(
+                            "Duration: {} seconds",
+                            track_context.track.duration_secs
+                        ));
                     }
                 });
 
@@ -296,7 +299,7 @@ impl PlaybackBar {
 
                     ui.label(format!(
                         "Playing: {:?}",
-                        track.as_ref().map(|track| track.playing)
+                        track_context.as_ref().map(|track| track.playing)
                     ));
 
                     if let Some(base) = control.progress_base {

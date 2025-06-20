@@ -137,6 +137,20 @@ pub struct AutoplayContext {
     controlled_autoplay: Option<AutoplayType>,
 }
 
+impl AutoplayContext {
+    pub fn autoplay(&self) -> &AutoplayType {
+        &self.autoplay
+    }
+
+    pub fn set_autoplay(&mut self, autoplay: AutoplayType) {
+        self.autoplay = autoplay;
+    }
+
+    pub fn is_shuffle(&self) -> bool {
+        matches!(self.autoplay, AutoplayType::Shuffle(_))
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
     pub track: Option<TrackContext>,
@@ -166,18 +180,6 @@ impl PlaybackContext {
     pub fn consume_incoming_track(&mut self) -> Option<AutoplayType> {
         self.autoplay.select_new_track = false;
         self.autoplay.controlled_autoplay.take()
-    }
-
-    pub fn autoplay(&self) -> &AutoplayType {
-        &self.autoplay.autoplay
-    }
-
-    pub fn set_autoplay(&mut self, autoplay: AutoplayType) {
-        self.autoplay.autoplay = autoplay;
-    }
-
-    pub fn is_autoplay_shuffle(&self) -> bool {
-        matches!(self.autoplay.autoplay, AutoplayType::Shuffle(_))
     }
 
     pub fn consume_controlled_autoplay(&mut self) -> Option<AutoplayType> {

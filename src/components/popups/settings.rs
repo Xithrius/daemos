@@ -131,7 +131,11 @@ impl Settings {
             });
 
         if let Some(autoplay) = new_autoplay {
-            self.context.borrow_mut().playback.set_autoplay(autoplay);
+            self.context
+                .borrow_mut()
+                .playback
+                .autoplay
+                .set_autoplay(autoplay);
         }
     }
 }

@@ -212,7 +212,7 @@ impl TrackTable {
             if let Some(controlled_autoplay) = context.playback.consume_controlled_autoplay() {
                 controlled_autoplay
             } else {
-                context.playback.autoplay().to_owned()
+                context.playback.autoplay.autoplay().to_owned()
             };
 
         context.playback.set_select_new_track(false);
