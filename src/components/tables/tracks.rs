@@ -193,7 +193,7 @@ impl TrackTable {
         self.context
             .borrow_mut()
             .playback
-            .set_selected_track(Some(new_track_context));
+            .select_track(Some(new_track_context));
     }
 
     /// Selects the next track from the track table tracks attribute
@@ -205,7 +205,7 @@ impl TrackTable {
                 return;
             };
 
-            if !context.playback.select_new_track() {
+            if !context.playback.autoplay.select_new_track() {
                 return;
             }
 
@@ -216,13 +216,13 @@ impl TrackTable {
 
         // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
         let autoplay_selector =
-            if let Some(controlled_autoplay) = context.playback.consume_controlled_autoplay() {
+            if let Some(controlled_autoplay) = context.playback.autoplay.consume_controlled() {
                 controlled_autoplay
             } else {
                 context.playback.autoplay.autoplay().to_owned()
             };
 
-        context.playback.set_select_new_track(false);
+        context.playback.autoplay.set_select_new_track(false);
 
         let tracks = if let Some(playlist_state) = &context.playback.selected_playlist.playlist() {
             &playlist_state.tracks()
@@ -237,7 +237,7 @@ impl TrackTable {
         }) else {
             // Could not find a new track to play, clearing sink
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            context.playback.set_selected_track(None);
+            context.playback.select_track(None);
 
             return;
         };
@@ -280,7 +280,7 @@ impl TrackTable {
         // TODO: Configurable value to autoplay from filtered tracks
         let Some(new_track) = tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            context.playback.set_selected_track(None);
+            context.playback.select_track(None);
 
             return;
         };
@@ -296,7 +296,7 @@ impl TrackTable {
 
         debug!("Selected new track with autoplay: {:?}", new_track_context);
 
-        context.playback.set_selected_track(Some(new_track_context));
+        context.playback.select_track(Some(new_track_context));
 
         self.scroll_to_selected = true;
     }

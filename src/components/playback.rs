@@ -84,9 +84,9 @@ impl PlaybackBar {
                 if button(ui, SKIP_BACK_IMAGE, MEDIUM_BUTTON_SIZE) {
                     if context.playback.autoplay.is_shuffle() {
                         // TODO: Save the previous track and go there instead of selecting another random one
-                        context.playback.set_select_new_track(true);
+                        context.playback.autoplay.set_select_new_track(true);
                     } else {
-                        context.playback.set_incoming_track(
+                        context.playback.autoplay.set_incoming_track(
                             true,
                             Some(AutoplayType::Iterative(PlayDirection::Backward)),
                         );
@@ -111,9 +111,9 @@ impl PlaybackBar {
             // Skip to the next track
             if button(ui, SKIP_NEXT_IMAGE, MEDIUM_BUTTON_SIZE) {
                 if context.playback.autoplay.is_shuffle() {
-                    context.playback.set_select_new_track(true);
+                    context.playback.autoplay.set_select_new_track(true);
                 } else {
-                    context.playback.set_incoming_track(
+                    context.playback.autoplay.set_incoming_track(
                         true,
                         Some(AutoplayType::Iterative(PlayDirection::Forward)),
                     );
@@ -195,7 +195,7 @@ impl PlaybackBar {
         if needs_new_track {
             let playback = &mut context.playback;
             playback.control.changing_track = true;
-            playback.set_select_new_track(true);
+            playback.autoplay.set_select_new_track(true);
         }
 
         let current_time = Duration::from_secs_f64(playback_secs.floor());
