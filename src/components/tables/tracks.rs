@@ -16,7 +16,7 @@ use crate::{
     config::core::SharedConfig,
     context::{
         AutoplayType, PlayDirection, SharedContext, ShuffleType,
-        playback::{PlaylistState, TrackContext},
+        playback::{PlaylistState, SelectedTrackContext},
     },
     database::{connection::DatabaseCommand, models::tracks::Track},
     playback::state::PlayerCommand,
@@ -130,13 +130,20 @@ impl TrackTable {
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
         // if the selected track is one that is playing, pause it.
-        if self.context.borrow().playback.track.as_ref().is_some_and(
-            |TrackContext {
-                 index: playing_index,
-                 track: playing_track,
-                 playing: _,
-             }| { (*playing_index == row_index) && (*playing_track == *track) },
-        ) {
+        if self
+            .context
+            .borrow()
+            .playback
+            .selected_track
+            .as_ref()
+            .is_some_and(
+                |SelectedTrackContext {
+                     index: playing_index,
+                     track: playing_track,
+                     playing: _,
+                 }| { (*playing_index == row_index) && (*playing_track == *track) },
+            )
+        {
             if let Err(err) = self.channels.player_command_tx.send(PlayerCommand::Toggle) {
                 error!(
                     "Failed to toggle track state on path {:?}: {}",
@@ -157,7 +164,7 @@ impl TrackTable {
             error!("Failed to start track on path {:?}: {}", track.path, err);
         }
 
-        let new_track_context = TrackContext::new(track.clone(), row_index, true);
+        let new_track_context = SelectedTrackContext::new(track.clone(), row_index, true);
 
         // If we're currently in the context of a playlist
         let selected_playlist = self.context.borrow().ui_playlist.selected();
@@ -173,20 +180,20 @@ impl TrackTable {
             self.context
                 .borrow_mut()
                 .playback
-                .playlist
+                .selected_playlist
                 .set_playlist(Some(playlist_state));
         } else {
             self.context
                 .borrow_mut()
                 .playback
-                .playlist
+                .selected_playlist
                 .set_playlist(None);
         }
 
         self.context
             .borrow_mut()
             .playback
-            .set_track(Some(new_track_context));
+            .set_selected_track(Some(new_track_context));
     }
 
     /// Selects the next track from the track table tracks attribute
@@ -194,7 +201,7 @@ impl TrackTable {
         let track_context = {
             let context = self.context.borrow();
 
-            let Some(track) = &context.playback.track else {
+            let Some(track) = &context.playback.selected_track else {
                 return;
             };
 
@@ -217,7 +224,7 @@ impl TrackTable {
 
         context.playback.set_select_new_track(false);
 
-        let tracks = if let Some(playlist_state) = &context.playback.playlist.playlist() {
+        let tracks = if let Some(playlist_state) = &context.playback.selected_playlist.playlist() {
             &playlist_state.tracks()
         } else {
             &self.tracks
@@ -230,13 +237,13 @@ impl TrackTable {
         }) else {
             // Could not find a new track to play, clearing sink
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            context.playback.set_track(None);
+            context.playback.set_selected_track(None);
 
             return;
         };
 
         // Only add a track once it's finished autoplaying, and we're selecting the next track to autoplay
-        context.playback.playlist.add_played_track(index);
+        context.playback.selected_playlist.add_played_track(index);
 
         let tracks_len = tracks.len();
 
@@ -249,7 +256,7 @@ impl TrackTable {
             AutoplayType::Shuffle(shuffle_type) => match shuffle_type {
                 // TODO: There's the possibility of indices being offset during tracks being added to playlist(s)
                 ShuffleType::PseudoRandom => {
-                    let played_tracks = context.playback.playlist.played_tracks();
+                    let played_tracks = context.playback.selected_playlist.played_tracks();
 
                     if let Some(filtered_index) = filtered_random_index(tracks_len, &played_tracks)
                     {
@@ -257,7 +264,7 @@ impl TrackTable {
                     } else {
                         debug!("All tracks have been in the Pseudo random shuffler -- resetting");
 
-                        context.playback.playlist.clear_played_tracks();
+                        context.playback.selected_playlist.clear_played_tracks();
 
                         let mut rng = rand::rng();
                         rng.random_range(0..tracks_len)
@@ -273,7 +280,7 @@ impl TrackTable {
         // TODO: Configurable value to autoplay from filtered tracks
         let Some(new_track) = tracks.get(new_index) else {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Clear);
-            context.playback.set_track(None);
+            context.playback.set_selected_track(None);
 
             return;
         };
@@ -285,11 +292,11 @@ impl TrackTable {
             .player_command_tx
             .send(PlayerCommand::Create(new_track.clone(), volume));
 
-        let new_track_context = TrackContext::new(new_track.clone(), new_index, true);
+        let new_track_context = SelectedTrackContext::new(new_track.clone(), new_index, true);
 
         debug!("Selected new track with autoplay: {:?}", new_track_context);
 
-        context.playback.set_track(Some(new_track_context));
+        context.playback.set_selected_track(Some(new_track_context));
 
         self.scroll_to_selected = true;
     }
@@ -298,11 +305,11 @@ impl TrackTable {
         let row_index = row.index();
 
         let track = self.filtered_tracks.get(row_index).cloned();
-        let playing = self.context.borrow().playback.track.clone();
+        let playing = self.context.borrow().playback.selected_track.clone();
 
         if let Some(track) = track {
             row.set_selected(playing.as_ref().is_some_and(
-                |TrackContext {
+                |SelectedTrackContext {
                      index: _,
                      track:
                          Track {
@@ -370,7 +377,7 @@ impl TrackTable {
             .sense(egui::Sense::click());
 
         if self.scroll_to_selected {
-            if let Some(playing_track) = &self.context.borrow().playback.track {
+            if let Some(playing_track) = &self.context.borrow().playback.selected_track {
                 // TODO: Auto-scroll alignment configuration
                 let autoplay_align = self.config.borrow().autoplay.align_scroll;
                 table = table.scroll_to_row(playing_track.index, autoplay_align);

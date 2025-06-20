@@ -12,13 +12,13 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct TrackContext {
+pub struct SelectedTrackContext {
     pub track: Track,
     pub index: usize,
     pub playing: bool,
 }
 
-impl TrackContext {
+impl SelectedTrackContext {
     pub fn new(track: Track, index: usize, playing: bool) -> Self {
         Self {
             track,
@@ -102,13 +102,13 @@ impl PlaylistState {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct PlaylistContext {
+pub struct SelectedPlaylistContext {
     playlist: Option<PlaylistState>,
     // TODO: Change to UUIDs
     played_tracks: BTreeSet<usize>,
 }
 
-impl PlaylistContext {
+impl SelectedPlaylistContext {
     pub fn playlist(&self) -> Option<PlaylistState> {
         self.playlist.clone()
     }
@@ -129,6 +129,19 @@ impl PlaylistContext {
         self.played_tracks.clear();
     }
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct LoadedContext {
+    tracks: Vec<Track>,
+    // TODO: Convert to vector of indices
+    // filtered_tracks: Vec<Track>,
+    // track_ids: HashSet<Uuid>,
+
+    playlists: Vec<Playlist>,
+    // playlists: Vec<Playlist>,
+    // playlist_ids: HashSet<Uuid>,
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct AutoplayContext {
@@ -153,15 +166,17 @@ impl AutoplayContext {
 
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
-    pub track: Option<TrackContext>,
+    // TODO: Combine into single selected context?
+    pub selected_track: Option<SelectedTrackContext>,
+    pub selected_playlist: SelectedPlaylistContext,
+    pub loaded: LoadedContext,
     pub control: ControlContext,
-    pub playlist: PlaylistContext,
     pub autoplay: AutoplayContext,
 }
 
 impl PlaybackContext {
-    pub fn set_track(&mut self, track: Option<TrackContext>) {
-        self.track = track;
+    pub fn set_selected_track(&mut self, track: Option<SelectedTrackContext>) {
+        self.selected_track = track;
     }
 
     pub fn select_new_track(&self) -> bool {
@@ -191,7 +206,7 @@ impl PlaybackContext {
 
         match player_event {
             PlayerEvent::TrackChanged(track) => {
-                if let Some(track_state) = self.track.as_mut() {
+                if let Some(track_state) = self.selected_track.as_mut() {
                     track_state.track = track;
                     track_state.playing = true;
                 }
@@ -201,7 +216,12 @@ impl PlaybackContext {
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
                 // If we are pausing, freeze current progress
-                if !playing && self.track.as_ref().is_some_and(|track| track.playing) {
+                if !playing
+                    && self
+                        .selected_track
+                        .as_ref()
+                        .is_some_and(|track| track.playing)
+                {
                     // Capture how much time has passed
                     if let (Some(base), Some(ts)) =
                         (self.control.progress_base, self.control.progress_timestamp)
@@ -213,11 +233,16 @@ impl PlaybackContext {
                 }
 
                 // If we are resuming, set the timestamp so progress resumes from base
-                if playing && !self.track.as_ref().is_some_and(|track| track.playing) {
+                if playing
+                    && !self
+                        .selected_track
+                        .as_ref()
+                        .is_some_and(|track| track.playing)
+                {
                     self.control.progress_timestamp = Some(Instant::now());
                 }
 
-                if let Some(track) = self.track.as_mut() {
+                if let Some(track) = self.selected_track.as_mut() {
                     track.playing = playing;
                 }
             }

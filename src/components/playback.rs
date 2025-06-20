@@ -94,7 +94,7 @@ impl PlaybackBar {
                 }
             });
 
-            let current_track = &context.playback.track;
+            let current_track = &context.playback.selected_track;
 
             // Toggle pause/play on a track
             let toggle_playing_button = if current_track.as_ref().is_some_and(|track| track.playing)
@@ -163,7 +163,7 @@ impl PlaybackBar {
             let playback = &mut context.playback;
 
             if let (Some(progress), Some(track_context)) =
-                (playback.control.current_progress(), &playback.track)
+                (playback.control.current_progress(), &playback.selected_track)
             {
                 let playback_secs = progress.as_secs_f64();
                 let total_duration_secs = track_context.track.duration_secs;
@@ -228,7 +228,7 @@ impl PlaybackBar {
     }
 
     fn ui_currently_playing(&mut self, ui: &mut egui::Ui) {
-        let Some(track_context) = &self.context.borrow().playback.track else {
+        let Some(track_context) = &self.context.borrow().playback.selected_track else {
             return;
         };
 
@@ -263,6 +263,7 @@ impl PlaybackBar {
         });
     }
 
+    // TODO: Put into separate widget
     fn debug_window(&mut self, ui: &mut egui::Ui) {
         let mut context = self.context.borrow_mut();
         let playback_context = context.playback.clone();
@@ -273,7 +274,7 @@ impl PlaybackBar {
             .resizable(true)
             .default_size([400.0, 250.0])
             .show(ui.ctx(), |ui| {
-                let track_context = &playback_context.track;
+                let track_context = &playback_context.selected_track;
                 let control = &playback_context.control;
 
                 ui.group(|ui| {

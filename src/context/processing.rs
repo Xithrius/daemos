@@ -1,18 +1,36 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone, Default)]
 pub struct ProcessingContext {
-    processing_tracks: usize,
+    /// A map of optional playlist names to the remaining amount of tracks to be processed
+    processing: HashMap<Option<String>, usize>,
 }
 
 impl ProcessingContext {
-    pub fn processing_tracks(&self) -> usize {
-        self.processing_tracks
+    /// Add a playlist name and track count to process to the processing map
+    pub fn add(&mut self, playlist: Option<String>, track_count: usize) {
+        self.processing.insert(playlist, track_count);
     }
 
-    pub fn set_processing_tracks(&mut self, processing: usize) {
-        self.processing_tracks = processing;
+    /// Saturating subtraction on the track count for a playlist
+    /// If there are no tracks left for a key, remove the entry from the map
+    pub fn decrement(&mut self, playlist: Option<String>) {
+        let mut remove = false;
+
+        if let Some(track_count) = self.processing.get_mut(&playlist) {
+            *track_count = track_count.saturating_sub(1);
+            if *track_count == 0 {
+                remove = true;
+            }
+        }
+
+        if remove {
+            self.processing.remove(&playlist);
+        }
     }
 
-    pub fn finished_processing_track(&mut self) {
-        self.processing_tracks = self.processing_tracks.saturating_sub(1);
+    /// How many tracks are left to process across all entries in the map
+    pub fn total(&self) -> usize {
+        self.processing.values().sum()
     }
 }

@@ -2,8 +2,7 @@ use std::rc::Rc;
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
 use egui_dock::{DockArea, DockState};
-use symphonia::core::formats::Track;
-use tracing::{debug, error, warn};
+use tracing::{debug, error};
 
 use crate::{
     channels::Channels,
@@ -57,11 +56,14 @@ impl App {
 
     fn handle_database_event_error(&mut self, err: DatabaseError) {
         match err {
-            DatabaseError::DuplicateTrack(track) => {
-                todo!();
+            DatabaseError::DuplicateTrack(_track) => {
+                self.context.borrow_mut().processing.decrement(None);
             }
-            DatabaseError::DuplicatePlaylistTrack(track, playlist) => {
-                todo!();
+            DatabaseError::DuplicatePlaylistTrack(_track, playlist) => {
+                self.context
+                    .borrow_mut()
+                    .processing
+                    .decrement(Some(playlist.name));
             }
             DatabaseError::DuplicatePlaylist => {
                 todo!();
@@ -93,16 +95,16 @@ impl App {
         // TODO: Migrate adding items on components to contexts
         match database_event {
             DatabaseEvent::InsertTrack(track, playlist) => {
-                if let Some(playlist) = playlist {
-                    self.components.playlist_table.add_playlist(&playlist);
+                if let Some(playlist) = playlist.as_ref() {
+                    self.components.playlist_table.add_playlist(playlist);
                 }
                 self.components.track_table.add_track(&track);
 
-                // TODO: This should be a map of optional playlists and tracks left
+                let playlist_name = playlist.map(|playlist| playlist.name);
                 self.context
                     .borrow_mut()
                     .processing
-                    .finished_processing_track();
+                    .decrement(playlist_name);
             }
             DatabaseEvent::QueryTracks(tracks) => {
                 self.components.track_table.set_tracks(tracks);
@@ -150,16 +152,16 @@ impl App {
                         folder_tracks.len()
                     );
 
-                    self.context
-                        .borrow_mut()
-                        .processing
-                        .set_processing_tracks(folder_tracks.len());
-
                     // TODO: Ask the user with a popup if a playlist should be created from this
                     let playlist_name = folder
                         .file_name()
                         .and_then(|file_name| file_name.to_str())
                         .map(|folder| folder.to_string());
+
+                    self.context
+                        .borrow_mut()
+                        .processing
+                        .add(playlist_name.clone(), folder_tracks.len());
 
                     let insert_tracks = DatabaseCommand::InsertTracks(folder_tracks, playlist_name);
 
@@ -179,10 +181,7 @@ impl App {
             debug!("`Ctrl + O` has been used to open OS file explorer for track file selection");
 
             if let Some(selected_file) = select_file_dialog() {
-                self.context
-                    .borrow_mut()
-                    .processing
-                    .set_processing_tracks(1);
+                self.context.borrow_mut().processing.add(None, 1);
 
                 let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None);
 
@@ -252,7 +251,7 @@ impl eframe::App for App {
                 ctx.request_repaint();
             } else if context
                 .playback
-                .track
+                .selected_track
                 .as_ref()
                 .is_some_and(|track| track.playing)
             {

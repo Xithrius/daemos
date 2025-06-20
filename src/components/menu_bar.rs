@@ -70,7 +70,7 @@ impl MenuBar {
     }
 
     fn processing_spinner(&mut self, ui: &mut egui::Ui) {
-        let processing_tracks = self.context.borrow().processing.processing_tracks();
+        let processing_tracks = self.context.borrow().processing.total();
 
         if processing_tracks > 0 {
             ui.label(format!("Processing {} track(s)", processing_tracks));

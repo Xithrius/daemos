@@ -15,7 +15,7 @@ pub fn select_file_dialog() -> Option<PathBuf> {
 }
 
 pub fn select_folders_dialog() -> Option<Vec<PathBuf>> {
-    // TODO: Windows
+    // TODO: Support for Windows through APPDATA
     let home = env::var("HOME").unwrap_or_default();
 
     FileDialog::new()

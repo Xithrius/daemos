@@ -90,10 +90,11 @@ impl CreatePlaylistModal {
             return;
         }
 
+        let playlist_name = self.state.name.clone();
         self.context
             .borrow_mut()
             .processing
-            .set_processing_tracks(tracks.len());
+            .add(Some(playlist_name), tracks.len());
 
         let playlist_name = self.playlist_name().to_owned();
         let insert_tracks = DatabaseCommand::InsertTracks(tracks.to_vec(), Some(playlist_name));
