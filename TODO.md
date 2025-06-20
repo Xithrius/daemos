@@ -2,46 +2,20 @@
 
 ## Now
 
-- [ ] Database
-
-  - [x] Sqlite connection
-  - [x] Table definitions
-    - [x] Tracks
-    - [x] Playlists
-    - [x] Tags
-  - [ ] CRUD
-    - [x] Tracks
-    - [x] Playlists
-    - [ ] Tags
-
 - [ ] Playback
 
   - [ ] Control
+
     - [ ] Playback
-      - [x] Play
-      - [x] Pause
-      - [x] Toggle
-      - [x] Next track
-      - [x] Previous track
+
       - [ ] Go back 10 seconds\*
       - [ ] Go forward 10 seconds\*
-    - [x] Volume bar
-      - [x] Click to set volume
-      - [x] Drag to set volume
-    - [x] Seek bar
-      - [x] See live elapsed and total duration updates
-      - [x] Click to set time
-      - [x] Drag to set time
-  - [x] Visualization
-    - [x] Seek bar elapsed and total track duration
-  - [x] Show currently selected track title
 
 - [ ] Settings
 
-  - [x] Popup widget (another window)
+  - [ ] Write to config path
   - [ ] Default volume on startup
   - [ ] Default ordering of tracks
-  - [ ] General config settings
   - [ ] Default folder to open when adding tracks
   - [ ] Toggle to hash tracks on insert
   - [ ] (re)calculation of all track hashes
@@ -54,11 +28,6 @@
         - [ ] Name
         - [ ] Hash recalculation
       - [ ] If invalid, mark with warning and ask user to either correct/remove entry
-
-- [ ] First time setup
-
-  - [ ] Offline stats to local storage
-    - [ ] Times a track has been played
 
 - [ ] Searching
 
@@ -106,3 +75,16 @@
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the original tracks vector
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
 - [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)
+
+## In the future
+
+- [ ] Tags
+
+  - [ ] Database CRUD
+  - [ ] Groups
+  - [ ] Adding to tracks/playlists
+
+- [ ] First time setup
+
+  - [ ] Offline stats to local storage
+    - [ ] Times a track has been played

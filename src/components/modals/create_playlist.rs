@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{path::PathBuf, rc::Rc};
 
 use egui::{Id, Modal};
 use tracing::error;
@@ -7,16 +7,25 @@ use crate::{
     components::{ComponentChannels, modals::UIModal},
     context::SharedContext,
     database::connection::DatabaseCommand,
+    files::open::{get_folder_tracks, select_folders_dialog},
 };
 
 const DEFAULT_PLAYLIST_MODAL_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 const PLAYLIST_MODAL_ID: &str = "create_playlist_modal";
 
+#[derive(Debug, Clone, Default)]
+
+pub struct CreatePlaylistState {
+    name: String,
+    track_paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone)]
 pub struct CreatePlaylistModal {
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 
-    playlist_name: String,
+    state: CreatePlaylistState,
 }
 
 impl UIModal for CreatePlaylistModal {
@@ -37,12 +46,61 @@ impl CreatePlaylistModal {
         Self {
             context,
             channels,
-            playlist_name: String::default(),
+            state: CreatePlaylistState::default(),
         }
     }
 
     pub fn playlist_name(&self) -> &String {
-        &self.playlist_name
+        &self.state.name
+    }
+
+    pub fn create_playlist(&mut self) {
+        let new_playlist_name = self.state.name.clone().trim().to_string();
+
+        if !new_playlist_name.is_empty() {
+            if let Err(err) = self
+                .channels
+                .database_command_tx
+                .send(DatabaseCommand::InsertPlaylist(new_playlist_name))
+            {
+                error!(
+                    "Failed to send playlist command for new playlist: {:?}",
+                    err
+                );
+            }
+        }
+
+        self.send_tracks();
+    }
+
+    pub fn select_files(&mut self) {
+        if let Some(selected_folders) = select_folders_dialog() {
+            for folder in selected_folders {
+                let folder_tracks = get_folder_tracks(&folder, false);
+
+                self.state.track_paths.extend(folder_tracks);
+            }
+        }
+    }
+
+    pub fn send_tracks(&self) {
+        let tracks = &self.state.track_paths;
+
+        if tracks.is_empty() {
+            return;
+        }
+
+        self.context
+            .borrow_mut()
+            .processing
+            .set_processing_tracks(tracks.len());
+
+        let playlist_name = self.playlist_name().to_owned();
+        let insert_tracks = DatabaseCommand::InsertTracks(tracks.to_vec(), Some(playlist_name));
+
+        if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
+            error!("Failed to send insert tracks command to database: {}", err);
+        }
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
@@ -66,7 +124,19 @@ impl CreatePlaylistModal {
 
             ui.horizontal(|ui| {
                 ui.label("Name:");
-                ui.text_edit_singleline(&mut self.playlist_name);
+                ui.text_edit_singleline(&mut self.state.name);
+            });
+
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+                let folder_button = ui.button("Open folder");
+                if folder_button.clicked() {
+                    self.select_files();
+                }
+
+                let selected_text = format!("{} track(s) selected", self.state.track_paths.len());
+                ui.label(selected_text);
             });
 
             ui.separator();
@@ -76,20 +146,8 @@ impl CreatePlaylistModal {
                 |_ui| {},
                 |ui| {
                     if ui.button("Create").clicked() {
-                        let new_playlist_name = self.playlist_name.clone().trim().to_string();
+                        self.create_playlist();
 
-                        if !new_playlist_name.is_empty() {
-                            if let Err(err) = self
-                                .channels
-                                .database_command_tx
-                                .send(DatabaseCommand::InsertPlaylist(new_playlist_name))
-                            {
-                                error!(
-                                    "Failed to send playlist command for new playlist: {:?}",
-                                    err
-                                );
-                            }
-                        }
                         should_close = true;
                     }
 
