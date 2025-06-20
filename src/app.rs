@@ -2,14 +2,15 @@ use std::rc::Rc;
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
 use egui_dock::{DockArea, DockState};
-use tracing::{debug, error};
+use symphonia::core::formats::Track;
+use tracing::{debug, error, warn};
 
 use crate::{
     channels::Channels,
     components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::SharedConfig,
     context::SharedContext,
-    database::connection::{DatabaseCommand, DatabaseEvent},
+    database::connection::{DatabaseCommand, DatabaseError, DatabaseEvent},
     files::open::{get_folder_tracks, select_file_dialog, select_folders_dialog},
     playback::state::PlayerCommand,
 };
@@ -54,39 +55,64 @@ impl App {
         }
     }
 
+    fn handle_database_event_error(&mut self, err: DatabaseError) {
+        match err {
+            DatabaseError::DuplicateTrack(track) => {
+                todo!();
+            }
+            DatabaseError::DuplicatePlaylistTrack(track, playlist) => {
+                todo!();
+            }
+            DatabaseError::DuplicatePlaylist => {
+                todo!();
+            }
+            DatabaseError::DatabaseUnavailable => {
+                todo!();
+            }
+            DatabaseError::Unknown => {
+                todo!();
+            }
+        }
+    }
+
     fn handle_database_events(&mut self) {
-        let Some(database_event) = self.channels.database_event_rx.try_recv().ok() else {
+        let Some(database_event_result) = self.channels.database_event_rx.try_recv().ok() else {
             return;
         };
 
         // debug!("UI received database event: {:?}", database_event);
 
+        let database_event = match database_event_result {
+            Ok(database_event) => database_event,
+            Err(err) => {
+                self.handle_database_event_error(err);
+                return;
+            }
+        };
+
+        // TODO: Migrate adding items on components to contexts
         match database_event {
             DatabaseEvent::InsertTrack(track, playlist) => {
                 if let Some(playlist) = playlist {
                     self.components.playlist_table.add_playlist(&playlist);
                 }
                 self.components.track_table.add_track(&track);
+
+                // TODO: This should be a map of optional playlists and tracks left
                 self.context
                     .borrow_mut()
                     .processing
                     .finished_processing_track();
             }
-            DatabaseEvent::QueryTracks(tracks) => match tracks {
-                Ok(tracks) => self.components.track_table.set_tracks(tracks),
-                Err(err) => {
-                    error!("Error when querying track table: {}", err);
-                }
-            },
+            DatabaseEvent::QueryTracks(tracks) => {
+                self.components.track_table.set_tracks(tracks);
+            }
             DatabaseEvent::InsertPlaylist(playlist) => {
                 self.components.playlist_table.add_playlist(&playlist);
             }
-            DatabaseEvent::QueryPlaylists(playlists) => match playlists {
-                Ok(playlists) => self.components.playlist_table.set_playlists(playlists),
-                Err(err) => {
-                    error!("Error when querying playlists table: {}", err);
-                }
-            },
+            DatabaseEvent::QueryPlaylists(playlists) => {
+                self.components.playlist_table.set_playlists(playlists);
+            }
         }
     }
 

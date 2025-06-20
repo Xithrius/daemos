@@ -1,14 +1,14 @@
 use crossbeam::channel::{Receiver, Sender};
 
 use crate::{
-    database::connection::{DatabaseCommand, DatabaseEvent},
+    database::connection::{DatabaseCommand, DatabaseError, DatabaseEvent},
     playback::state::{PlayerCommand, PlayerEvent},
 };
 
 #[derive(Debug, Clone)]
 pub struct Channels {
     pub database_command_tx: Sender<DatabaseCommand>,
-    pub database_event_rx: Receiver<DatabaseEvent>,
+    pub database_event_rx: Receiver<Result<DatabaseEvent, DatabaseError>>,
     pub player_command_tx: Sender<PlayerCommand>,
     pub player_event_rx: Receiver<PlayerEvent>,
 }
@@ -16,7 +16,7 @@ pub struct Channels {
 impl Channels {
     pub fn new(
         database_command_tx: Sender<DatabaseCommand>,
-        database_event_rx: Receiver<DatabaseEvent>,
+        database_event_rx: Receiver<Result<DatabaseEvent, DatabaseError>>,
         player_command_tx: Sender<PlayerCommand>,
         player_event_rx: Receiver<PlayerEvent>,
     ) -> Self {

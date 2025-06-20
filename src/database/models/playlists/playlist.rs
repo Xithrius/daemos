@@ -1,3 +1,5 @@
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use color_eyre::{Result, eyre::Context};
 use rusqlite::{Connection, Row, params};
@@ -26,6 +28,12 @@ impl Default for Playlist {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }
+    }
+}
+
+impl fmt::Display for Playlist {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 

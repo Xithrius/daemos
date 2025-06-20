@@ -88,3 +88,16 @@
 
   - [ ] Offline stats to local storage
     - [ ] Times a track has been played
+
+- [ ] Timing stats
+  - [ ] Time all UI rendering functions and insert data into context (through procedural macro?)
+  - [ ] [Plots](https://github.com/emilk/egui_plot) to see render times of different components
+
+- [ ] [Notifications](https://github.com/ItsEthra/egui-notify)
+  - [ ] User actions (creating playlists)
+  - [ ] Background task completions (finished inserting tracks)
+
+## Useful links
+
+- [egui demo](https://www.egui.rs/#demo)
+- [3rd party egui crates](https://github.com/emilk/egui/wiki/3rd-party-egui-crates)
