@@ -18,8 +18,12 @@ use crate::playback::state::PlayerEvent;
 #[derive(Debug, Clone, Default)]
 pub struct PlaybackContext {
     // TODO: Combine into single selected context?
+    /// Which track is currently selected for playback
     pub selected_track: Option<SelectedTrackContext>,
+    /// What playlist currently is selected for tracks to be autoplayed in
     pub selected_playlist: SelectedPlaylistContext,
+    /// All the tracks and playlists that have been loaded into memory from the database
+    /// It is also possible to modify this loaded data in order to be up to date with database entries
     pub loaded: LoadedContext,
     pub control: ControlContext,
     pub autoplay: AutoplayContext,

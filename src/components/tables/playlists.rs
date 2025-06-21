@@ -1,8 +1,7 @@
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
-use uuid::Uuid;
 
 use super::TABLE_ROW_HEIGHT;
 use crate::{
@@ -17,9 +16,6 @@ const PLAYLIST_TABLE_WIDTH: f32 = 200.0;
 pub struct PlaylistTable {
     context: SharedContext,
     channels: Rc<ComponentChannels>,
-
-    playlists: Vec<Playlist>,
-    playlist_ids: HashSet<Uuid>,
 }
 
 impl PlaylistTable {
@@ -28,27 +24,7 @@ impl PlaylistTable {
             .database_command_tx
             .send(DatabaseCommand::QueryPlaylists);
 
-        Self {
-            context,
-            channels,
-            playlists: Vec::default(),
-            playlist_ids: HashSet::default(),
-        }
-    }
-
-    pub fn set_playlists(&mut self, mut playlists: Vec<Playlist>) {
-        self.playlist_ids = playlists.iter().map(|playlist| playlist.id).collect();
-
-        playlists.sort_by(|playlist_a, playlist_b| playlist_a.name.cmp(&playlist_b.name));
-        self.playlists = playlists;
-    }
-
-    pub fn add_playlist(&mut self, playlist: &Playlist) {
-        if self.playlist_ids.insert(playlist.id) {
-            self.playlists.push(playlist.clone());
-            self.playlists
-                .sort_by(|playlist_a, playlist_b| playlist_a.name.cmp(&playlist_b.name));
-        }
+        Self { context, channels }
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
@@ -69,17 +45,18 @@ impl PlaylistTable {
             //     // });
             // })
             .body(|body| {
-                let num_rows = self.playlists.len();
+
+                let num_rows ={ let context = self.context.borrow(); context.playback.loaded.playlists().len()};
+
 
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
+                    let playlists = self.context.borrow().playback.loaded.playlists();
                     let row_index = row.index();
-                    let Some(playlist) = self.playlists.get(row_index).cloned() else {
+                    let Some(playlist) = playlists.get(row_index).cloned() else {
                         return;
                     };
 
-                    let selected = self
-                        .context
-                        .borrow().ui_playlist
+                    let selected = self.context.borrow().ui_playlist
                         .selected()
                         .is_some_and(|selected_playlist| selected_playlist.id == playlist.id);
                     row.set_selected(selected);

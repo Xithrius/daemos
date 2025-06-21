@@ -92,28 +92,29 @@ impl App {
             }
         };
 
-        // TODO: Migrate adding items on components to contexts
+        let mut context = self.context.borrow_mut();
+
         match database_event {
             DatabaseEvent::InsertTrack(track, playlist) => {
                 if let Some(playlist) = playlist.as_ref() {
-                    self.components.playlist_table.add_playlist(playlist);
+                    context.playback.loaded.playlists.add(playlist);
                 }
-                self.components.track_table.add_track(&track);
+                context.playback.loaded.tracks.add(&track);
 
                 let playlist_name = playlist.map(|playlist| playlist.name);
-                self.context
-                    .borrow_mut()
-                    .processing
-                    .decrement(playlist_name);
+                context.processing.decrement(playlist_name);
             }
             DatabaseEvent::QueryTracks(tracks) => {
-                self.components.track_table.set_tracks(tracks);
+                let loaded_context = &mut context.playback.loaded;
+                loaded_context.tracks.set(tracks);
             }
             DatabaseEvent::InsertPlaylist(playlist) => {
-                self.components.playlist_table.add_playlist(&playlist);
+                let loaded_context = &mut context.playback.loaded;
+                loaded_context.playlists.add(&playlist);
             }
             DatabaseEvent::QueryPlaylists(playlists) => {
-                self.components.playlist_table.set_playlists(playlists);
+                let loaded_context = &mut context.playback.loaded;
+                loaded_context.playlists.set(playlists);
             }
         }
     }
@@ -199,6 +200,7 @@ impl App {
         }) {
             debug!("`Ctrl + E` has been used to focus currently playing track in playlist");
 
+            // TODO: Change to UI context
             self.components.track_table.set_scroll_to_selected(true);
         }
         // Focus search input box
@@ -210,6 +212,7 @@ impl App {
         }) {
             debug!("`Ctrl + F` has been used to focus user input for searching");
 
+            // TODO: Change to UI context
             self.components.track_table.request_search_focus();
         }
         // Toggle settings popup window
@@ -261,6 +264,7 @@ impl eframe::App for App {
 
         // TODO: If I have a bunch of input boxes, then this is going to get bad
         if ctx.input(|i| i.key_pressed(Key::Space))
+            // TODO: Change to UI context
             && !self.components.track_table.search_focused()
             && !self.context.borrow().ui.visible_playlist_modal()
         {

@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     rc::Rc,
     time::{Duration, Instant},
 };
@@ -8,7 +7,6 @@ use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
 use rand::Rng;
 use tracing::{debug, error};
-use uuid::Uuid;
 
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
@@ -42,11 +40,6 @@ pub struct TrackTable {
     context: SharedContext,
     channels: Rc<ComponentChannels>,
 
-    tracks: Vec<Track>,
-    // TODO: Convert to vector of indices
-    filtered_tracks: Vec<Track>,
-    track_ids: HashSet<Uuid>,
-
     // selection: HashSet<usize>,
     scroll_to_selected: bool,
 
@@ -69,9 +62,6 @@ impl TrackTable {
             context,
             channels,
 
-            tracks: Vec::default(),
-            filtered_tracks: Vec::default(),
-            track_ids: HashSet::default(),
             // selection: HashSet::default(),
             scroll_to_selected: false,
             search: TrackSearch::default(),
@@ -88,34 +78,6 @@ impl TrackTable {
 
     pub fn request_search_focus(&mut self) {
         self.search.focus_requested = true;
-    }
-
-    pub fn set_tracks(&mut self, mut tracks: Vec<Track>) {
-        self.track_ids = tracks.iter().map(|track| track.id).collect();
-
-        tracks.sort_by(|track_a, track_b| track_a.name.cmp(&track_b.name));
-        self.tracks = tracks;
-    }
-
-    pub fn add_track(&mut self, track: &Track) {
-        if self.track_ids.insert(track.id) {
-            // TODO: Insert as sorted
-            self.tracks.push(track.clone());
-            self.tracks
-                .sort_by(|track_a, track_b| track_a.name.cmp(&track_b.name));
-        }
-    }
-
-    pub fn remove(&mut self, id: &Uuid) -> bool {
-        if self.track_ids.remove(id) {
-            if let Some(pos) = self.tracks.iter().position(|t| &t.id == id) {
-                self.tracks.remove(pos);
-            }
-
-            true
-        } else {
-            false
-        }
     }
 
     // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
@@ -175,7 +137,8 @@ impl TrackTable {
             .set_autoplay(selected_playlist.clone());
 
         if let Some(playlist) = selected_playlist {
-            let playlist_state = PlaylistState::new(playlist, self.tracks.clone());
+            let tracks = self.context.borrow().playback.loaded.tracks();
+            let playlist_state = PlaylistState::new(playlist, tracks);
 
             self.context
                 .borrow_mut()
@@ -227,7 +190,7 @@ impl TrackTable {
         let tracks = if let Some(playlist_state) = &context.playback.selected_playlist.playlist() {
             &playlist_state.tracks()
         } else {
-            &self.tracks
+            &context.playback.loaded.tracks()
         };
 
         let Some(index) = track_context.and_then(|track_context| {
@@ -304,8 +267,17 @@ impl TrackTable {
     fn table_body_row(&mut self, mut row: TableRow<'_, '_>) {
         let row_index = row.index();
 
-        let track = self.filtered_tracks.get(row_index).cloned();
-        let playing = self.context.borrow().playback.selected_track.clone();
+        let track = {
+            let context = self.context.borrow();
+            let filtered = context.playback.loaded.tracks.filtered();
+
+            filtered.get(row_index).cloned()
+        };
+
+        let playing = {
+            let context = self.context.borrow();
+            context.playback.selected_track.clone()
+        };
 
         if let Some(track) = track {
             row.set_selected(playing.as_ref().is_some_and(
@@ -376,14 +348,22 @@ impl TrackTable {
             .column(Column::auto().at_least(DURATION_COLUMN_WIDTH))
             .sense(egui::Sense::click());
 
+        let (filtered_tracks, selected_track, align_scroll) = {
+            let context = self.context.borrow();
+            let filtered = context.playback.loaded.tracks.filtered().to_owned();
+            let selected = context.playback.selected_track.clone();
+            let align = self.config.borrow().autoplay.align_scroll;
+            (filtered, selected, align)
+        };
+
         if self.scroll_to_selected {
-            if let Some(playing_track) = &self.context.borrow().playback.selected_track {
-                // TODO: Auto-scroll alignment configuration
-                let autoplay_align = self.config.borrow().autoplay.align_scroll;
-                table = table.scroll_to_row(playing_track.index, autoplay_align);
+            if let Some(playing_track) = selected_track {
+                table = table.scroll_to_row(playing_track.index, align_scroll);
                 self.scroll_to_selected = false;
             }
         }
+
+        let num_rows = filtered_tracks.len();
 
         table
             .header(TABLE_HEADER_HEIGHT, |mut header| {
@@ -398,8 +378,6 @@ impl TrackTable {
                 });
             })
             .body(|body| {
-                let num_rows = self.filtered_tracks.len();
-
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |row| {
                     self.table_body_row(row);
                 });
@@ -407,8 +385,11 @@ impl TrackTable {
     }
 
     fn ui_search(&mut self, ui: &mut egui::Ui) {
+        let mut context = self.context.borrow_mut();
+        let loaded_context = &mut context.playback.loaded;
+
         if self.search.text.is_empty() {
-            self.filtered_tracks = self.tracks.clone();
+            loaded_context.tracks.set_filtered(loaded_context.tracks());
         }
         // Only recalculate the filtered tracks if the search input has changed
         // and the previous search yielded some results
@@ -417,32 +398,36 @@ impl TrackTable {
         // Keep track of previous search that yielded result such that if we
         // delete characters to go back to that same search length, then add more characters,
         // calculation of filtered tracks will begin again
-        else if self.search.changed && !self.filtered_tracks.is_empty() {
-            let search_lower = self.search.text.to_lowercase();
+        if self.search.changed && !loaded_context.tracks.filtered().is_empty() {
+            if self.search.text.is_empty() {
+                loaded_context.tracks.set_filtered(loaded_context.tracks());
+            } else {
+                let search_lower = self.search.text.to_lowercase();
 
-            let start = Instant::now();
+                let start = Instant::now();
 
-            let filtered_tracks: Vec<Track> = self
-                .tracks
-                .iter()
-                .filter_map(|track| {
-                    if track.name.to_lowercase().contains(&search_lower) {
-                        Some(track.clone())
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+                let filtered_tracks: Vec<Track> = loaded_context
+                    .tracks()
+                    .iter()
+                    .filter_map(|track| {
+                        if track.name.to_lowercase().contains(&search_lower) {
+                            Some(track.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
 
-            let duration = start.elapsed();
-            self.search.duration = Some(duration);
-            debug!(
-                "Filtered into {} tracks in {:?}",
-                filtered_tracks.len(),
-                duration
-            );
+                let duration = start.elapsed();
+                self.search.duration = Some(duration);
+                debug!(
+                    "Filtered into {} tracks in {:?}",
+                    filtered_tracks.len(),
+                    duration
+                );
 
-            self.filtered_tracks = filtered_tracks;
+                loaded_context.tracks.set_filtered(filtered_tracks);
+            }
         }
 
         let search_text_edit =
@@ -462,16 +447,23 @@ impl TrackTable {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
+        let (filtered_tracks_len, tracks_len) = {
+            let loaded_context = &self.context.borrow().playback.loaded;
+            (
+                loaded_context.tracks.filtered().len(),
+                loaded_context.tracks().len(),
+            )
+        };
+
         ui.vertical(|ui: &mut egui::Ui| {
             ui.horizontal(|ui| {
                 self.ui_search(ui);
 
                 if let Some(search_duration) = self.search.duration {
-                    if self.filtered_tracks.len() != self.tracks.len() {
+                    if filtered_tracks_len != tracks_len {
                         ui.label(format!(
                             "{} results in {:?}",
-                            self.filtered_tracks.len(),
-                            search_duration
+                            filtered_tracks_len, search_duration
                         ));
                     }
                 }
