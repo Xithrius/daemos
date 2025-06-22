@@ -239,7 +239,11 @@ impl eframe::App for App {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let start = Instant::now();
+        let start = if self.context.borrow().ui.visible_debug() {
+            Some(Instant::now())
+        } else {
+            None
+        };
 
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
@@ -306,7 +310,9 @@ impl eframe::App for App {
         self.components.debug.ui(ctx);
         self.components.create_playlist.ui(ctx);
 
-        let duration = start.elapsed();
-        self.context.borrow_mut().latency.add(duration);
+        if let Some(start) = start {
+            let duration = start.elapsed();
+            self.context.borrow_mut().latency.add(duration);
+        }
     }
 }
