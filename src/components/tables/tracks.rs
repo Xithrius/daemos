@@ -33,7 +33,6 @@ pub struct TrackSearch {
     pub duration: Option<Duration>,
 }
 
-// TODO: Move all items here that are or could be set in other components to a higher context
 #[derive(Debug, Clone)]
 pub struct TrackTable {
     config: SharedConfig,
@@ -160,6 +159,7 @@ impl TrackTable {
     }
 
     /// Selects the next track from the track table tracks attribute
+    // TODO: Move handling selection of the new track into the playback context
     fn select_new_track(&mut self) {
         let track_context = {
             let context = self.context.borrow();
@@ -388,6 +388,7 @@ impl TrackTable {
         let mut context = self.context.borrow_mut();
         let loaded_context = &mut context.playback.loaded;
 
+        // TODO: This is inefficient, as if there is no search then this is ran every frame
         if self.search.text.is_empty() {
             loaded_context.tracks.set_filtered(loaded_context.tracks());
         }
@@ -398,36 +399,32 @@ impl TrackTable {
         // Keep track of previous search that yielded result such that if we
         // delete characters to go back to that same search length, then add more characters,
         // calculation of filtered tracks will begin again
-        if self.search.changed && !loaded_context.tracks.filtered().is_empty() {
-            if self.search.text.is_empty() {
-                loaded_context.tracks.set_filtered(loaded_context.tracks());
-            } else {
-                let search_lower = self.search.text.to_lowercase();
+        else if self.search.changed && !loaded_context.tracks.filtered().is_empty() {
+            let search_lower = self.search.text.to_lowercase();
 
-                let start = Instant::now();
+            let start = Instant::now();
 
-                let filtered_tracks: Vec<Track> = loaded_context
-                    .tracks()
-                    .iter()
-                    .filter_map(|track| {
-                        if track.name.to_lowercase().contains(&search_lower) {
-                            Some(track.clone())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
+            let filtered_tracks: Vec<Track> = loaded_context
+                .tracks()
+                .iter()
+                .filter_map(|track| {
+                    if track.name.to_lowercase().contains(&search_lower) {
+                        Some(track.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
 
-                let duration = start.elapsed();
-                self.search.duration = Some(duration);
-                debug!(
-                    "Filtered into {} tracks in {:?}",
-                    filtered_tracks.len(),
-                    duration
-                );
+            let duration = start.elapsed();
+            self.search.duration = Some(duration);
+            debug!(
+                "Filtered into {} tracks in {:?}",
+                filtered_tracks.len(),
+                duration
+            );
 
-                loaded_context.tracks.set_filtered(filtered_tracks);
-            }
+            loaded_context.tracks.set_filtered(filtered_tracks);
         }
 
         let search_text_edit =
