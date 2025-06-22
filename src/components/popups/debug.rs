@@ -65,18 +65,10 @@ impl LatencyLineGraph {
                 .placement(HPlacement::Left),
         ];
 
-        let plot = Plot::new(Self::NAME)
-            .legend(Legend::default())
-            .custom_x_axes(vec![])
-            .custom_y_axes(y_axes)
-            .label_formatter(format_latency_label);
-
         let (min_latency_ms, max_latency_ms) = latencies
             .iter()
             .map(|d| d.as_secs_f64() * 1000.0)
-            .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), v| {
-                (min.min(v), max.max(v))
-            });
+            .fold((0.0f64, 0.0f64), |(min, max), v| (min.min(v), max.max(v)));
 
         // Ensure we have a sane default when empty
         let (min_y, max_y) = if latencies.is_empty() {
@@ -90,10 +82,19 @@ impl LatencyLineGraph {
 
         let min_y_points = MAX_LATENCY_RECORD_COUNT as f64;
 
+        let padding = (max_y - min_y).max(1.0) * 0.05;
+        let padded_max = max_y + padding;
+
+        let plot = Plot::new(Self::NAME)
+            .legend(Legend::default())
+            .custom_x_axes(vec![])
+            .custom_y_axes(y_axes)
+            .label_formatter(format_latency_label);
+
         plot.show(ui, |plot_ui| {
             plot_ui.set_plot_bounds(PlotBounds::from_min_max(
-                [0.0, min_y],
-                [min_y_points - 1.0, max_y],
+                [0.0, 0.0],
+                [min_y_points - 1.0, padded_max],
             ));
             plot_ui.line(self.latency(latencies));
             // plot_ui.line(self.circle());
