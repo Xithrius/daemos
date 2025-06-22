@@ -1,5 +1,7 @@
 use std::{collections::VecDeque, time::Duration};
 
+pub const MAX_LATENCY_RECORD_COUNT: usize = 1000;
+
 #[derive(Debug, Clone)]
 pub struct LatencyContext {
     timings: VecDeque<Duration>,
@@ -10,7 +12,7 @@ impl Default for LatencyContext {
     fn default() -> Self {
         Self {
             timings: VecDeque::default(),
-            max_length: 1000,
+            max_length: MAX_LATENCY_RECORD_COUNT,
         }
     }
 }

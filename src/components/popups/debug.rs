@@ -5,7 +5,10 @@ use egui_plot::{
     AxisHints, GridMark, HPlacement, Legend, Line, Plot, PlotBounds, PlotPoint, PlotPoints,
 };
 
-use crate::{config::core::SharedConfig, context::SharedContext};
+use crate::{
+    config::core::SharedConfig,
+    context::{SharedContext, latency::MAX_LATENCY_RECORD_COUNT},
+};
 
 const DEFAULT_DEBUG_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
 
@@ -33,6 +36,10 @@ struct LatencyLineGraph {
 }
 
 impl LatencyLineGraph {
+    const NAME: &str = "Main Thread UI Render Latency";
+    const Y_AXIS_LABEL: &str = "Latency";
+    const LINE_COLOR: Color32 = Color32::from_rgb(100, 200, 100);
+
     fn latency<'a>(&self, y: &VecDeque<Duration>) -> Line<'a> {
         let line_points: PlotPoints = y
             .iter()
@@ -44,9 +51,7 @@ impl LatencyLineGraph {
             })
             .collect();
 
-        Line::new("latency", line_points)
-            .name("latency")
-            .color(Color32::from_rgb(100, 200, 100))
+        Line::new(Self::NAME, line_points).color(Self::LINE_COLOR)
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, latencies: &VecDeque<Duration>) {
@@ -55,17 +60,16 @@ impl LatencyLineGraph {
 
         let y_axes = vec![
             AxisHints::new_y()
-                .label("Latency")
+                .label(Self::Y_AXIS_LABEL)
                 .formatter(format_latency_mark)
                 .placement(HPlacement::Left),
         ];
 
-        let plot = Plot::new("lines_demo")
+        let plot = Plot::new(Self::NAME)
             .legend(Legend::default())
             .custom_x_axes(vec![])
             .custom_y_axes(y_axes)
-            .label_formatter(format_latency_label)
-            .set_margin_fraction(egui::vec2(20.0, 0.0));
+            .label_formatter(format_latency_label);
 
         let (min_latency_ms, max_latency_ms) = latencies
             .iter()
@@ -84,10 +88,12 @@ impl LatencyLineGraph {
             (min_latency_ms, max_latency_ms)
         };
 
+        let min_y_points = MAX_LATENCY_RECORD_COUNT as f64;
+
         plot.show(ui, |plot_ui| {
             plot_ui.set_plot_bounds(PlotBounds::from_min_max(
                 [0.0, min_y],
-                [1000.0_f64 - 1.0, max_y],
+                [min_y_points - 1.0, max_y],
             ));
             plot_ui.line(self.latency(latencies));
             // plot_ui.line(self.circle());
