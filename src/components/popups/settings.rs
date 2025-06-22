@@ -14,14 +14,14 @@ const AUTOPLAY_OPTIONS: [AutoplayType; 4] = [
 ];
 
 #[derive(Debug, Clone)]
-pub struct Settings {
+pub struct SettingsPopup {
     // config: CoreConfig,
     context: SharedContext,
     selected_theme: AppTheme,
     selected_autoplay: AutoplayType,
 }
 
-impl Settings {
+impl SettingsPopup {
     pub fn new(config: SharedConfig, context: SharedContext) -> Self {
         let c = config.borrow();
 

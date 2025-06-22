@@ -5,7 +5,7 @@ use crossbeam::channel::{Receiver, Sender, unbounded};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
 use crate::database::models::playlists::{playlist::Playlist, playlist_tracks::PlaylistTrack};
@@ -135,6 +135,7 @@ impl Database {
                         }
                     }
                     DatabaseCommand::InsertPlaylist(playlist_name) => {
+                        debug!("INSERT PLAYLIST CALLED");
                         let playlist_result = Playlist::create(&conn, playlist_name);
 
                         match playlist_result {

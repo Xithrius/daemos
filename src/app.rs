@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, time::Instant};
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
 use egui_dock::{DockArea, DockState};
@@ -92,10 +92,10 @@ impl App {
             }
         };
 
-        let mut context = self.context.borrow_mut();
-
         match database_event {
             DatabaseEvent::InsertTrack(track, playlist) => {
+                let mut context = self.context.borrow_mut();
+
                 if let Some(playlist) = playlist.as_ref() {
                     context.playback.loaded.playlists.add(playlist);
                 }
@@ -105,14 +105,17 @@ impl App {
                 context.processing.decrement(playlist_name);
             }
             DatabaseEvent::QueryTracks(tracks) => {
+                let mut context = self.context.borrow_mut();
                 let loaded_context = &mut context.playback.loaded;
                 loaded_context.tracks.set(tracks);
             }
             DatabaseEvent::InsertPlaylist(playlist) => {
+                let mut context = self.context.borrow_mut();
                 let loaded_context = &mut context.playback.loaded;
                 loaded_context.playlists.add(&playlist);
             }
             DatabaseEvent::QueryPlaylists(playlists) => {
+                let mut context = self.context.borrow_mut();
                 let loaded_context = &mut context.playback.loaded;
                 loaded_context.playlists.set(playlists);
             }
@@ -236,6 +239,8 @@ impl eframe::App for App {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let start = Instant::now();
+
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -298,6 +303,10 @@ impl eframe::App for App {
             });
 
         self.components.settings.ui(ctx);
+        self.components.debug.ui(ctx);
         self.components.create_playlist.ui(ctx);
+
+        let duration = start.elapsed();
+        self.context.borrow_mut().latency.add(duration);
     }
 }

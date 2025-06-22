@@ -38,6 +38,11 @@ impl UIModal for CreatePlaylistModal {
             .borrow_mut()
             .ui
             .set_visible_playlist_modal(visibility);
+
+        // TODO: Config to save state of modal
+        if !visibility {
+            self.state = CreatePlaylistState::default();
+        }
     }
 }
 
@@ -57,7 +62,13 @@ impl CreatePlaylistModal {
     pub fn create_playlist(&mut self) {
         let new_playlist_name = self.state.name.clone().trim().to_string();
 
-        if !new_playlist_name.is_empty() {
+        if new_playlist_name.is_empty() {
+            error!("Cannot create playlist with empty name");
+
+            return;
+        }
+
+        if self.state.track_paths.is_empty() {
             if let Err(err) = self
                 .channels
                 .database_command_tx
@@ -68,6 +79,8 @@ impl CreatePlaylistModal {
                     err
                 );
             }
+
+            return;
         }
 
         self.send_tracks();

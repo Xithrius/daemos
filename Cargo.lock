@@ -994,6 +994,7 @@ dependencies = [
  "egui",
  "egui_dock",
  "egui_extras",
+ "egui_plot",
  "image",
  "notify-rust",
  "rand 0.9.1",
@@ -1256,6 +1257,17 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "winit",
+]
+
+[[package]]
+name = "egui_plot"
+version = "0.32.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14ae092b46ea532f6c69d3e71036fb3b688fd00fd09c2a1e43d17051a8ae43e6"
+dependencies = [
+ "ahash",
+ "egui",
+ "emath",
 ]
 
 [[package]]

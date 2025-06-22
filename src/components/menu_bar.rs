@@ -55,7 +55,10 @@ impl MenuBar {
     fn ui_window(&mut self, ui: &mut egui::Ui) {
         ui.menu_button("Window", |ui| {
             ui.menu_button("Debug", |ui| {
-                if ui.button("Playback").clicked() {
+                if ui.button("General").clicked() {
+                    self.context.borrow_mut().ui.set_visible_debug(true);
+                    ui.close_menu();
+                } else if ui.button("Playback").clicked() {
                     self.context.borrow_mut().ui.set_debug_playback(true);
                     ui.close_menu();
                 }

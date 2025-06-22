@@ -9,12 +9,13 @@ use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
 use egui_dock::{DockState, NodeIndex, TabViewer};
-use popups::settings::Settings;
+use popups::settings::SettingsPopup;
 use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks::TrackTable};
 
 use crate::{
     components::{
         menu_bar::MenuBar, modals::create_playlist::CreatePlaylistModal, playback::PlaybackBar,
+        popups::debug::DebugPopup,
     },
     config::core::SharedConfig,
     context::SharedContext,
@@ -70,7 +71,8 @@ pub struct Components {
     pub tag_table: TagTable,
     pub task_table: TaskTable,
 
-    pub settings: Settings,
+    pub settings: SettingsPopup,
+    pub debug: DebugPopup,
     pub create_playlist: CreatePlaylistModal,
 }
 
@@ -89,8 +91,9 @@ impl Components {
             tag_table: TagTable::default(),
             task_table: TaskTable::default(),
 
+            settings: SettingsPopup::new(config.clone(), context.clone()),
+            debug: DebugPopup::new(config.clone(), context.clone()),
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),
-            settings: Settings::new(config.clone(), context.clone()),
         }
     }
 

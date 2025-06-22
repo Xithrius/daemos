@@ -71,7 +71,6 @@
 
 ## Issues
 
-- [ ] If a new track is skipped on insert due to being a duplicate, the spinner will spin forever
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the original tracks vector
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
 - [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)
@@ -88,10 +87,6 @@
 
   - [ ] Offline stats to local storage
     - [ ] Times a track has been played
-
-- [ ] Timing stats
-  - [ ] Time all UI rendering functions and insert data into context (through procedural macro?)
-  - [ ] [Plots](https://github.com/emilk/egui_plot) to see render times of different components
 
 - [ ] [Notifications](https://github.com/ItsEthra/egui-notify)
   - [ ] User actions (creating playlists)

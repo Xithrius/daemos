@@ -73,11 +73,17 @@ impl TryFrom<&Row<'_>> for Track {
 }
 
 impl Track {
+    /// Creates a track, or returns the one it conflicts with on hash and path.
+    /// When creating a new track, the hash of the file is generated, along with a new UUID.
+    /// All other attributes of the track are generated with defaults.
+    // TODO: Return an enum to tell if a new track has been created, or the old one was returned
     pub fn create(conn: &Connection, path: PathBuf) -> Result<Option<Track>> {
         let sql = "
             INSERT INTO Tracks
-            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-            ON CONFLICT DO NOTHING
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            ON CONFLICT (hash, path) DO UPDATE SET
+                hash = excluded.hash
+            RETURNING *
         ";
 
         let hash = hash_file(&path)?.to_string();
@@ -98,31 +104,30 @@ impl Track {
             ..Default::default()
         };
 
-        let inserted = conn
-            .execute(
-                sql,
-                params![
-                    track.id.to_string(),
-                    track.path.to_str(),
-                    track.name,
-                    track.hash,
-                    track.duration_secs,
-                    track.valid,
-                    track.created_at,
-                    track.updated_at,
-                ],
-            )
-            .context("Failed to execute insert on tracks table")?;
+        let mut stmt = conn.prepare(sql)?;
 
-        if inserted == 0 {
-            debug!("Skipped duplicate track: {:?}", path);
+        let mut rows = stmt.query(params![
+            track.id.to_string(),
+            track.path.to_str(),
+            track.name,
+            track.hash,
+            track.duration_secs,
+            track.valid,
+            track.created_at,
+            track.updated_at,
+        ])?;
 
-            return Ok(None);
+        if let Some(row) = rows.next()? {
+            let returned_track = Track::try_from(row)?;
+            debug!(
+                "Inserted or found track in database: {:?}",
+                returned_track.path
+            );
+            Ok(Some(returned_track))
+        } else {
+            debug!("No track returned for path: {:?}", path);
+            Ok(None)
         }
-
-        debug!("Inserted track into database: {:?}", path);
-
-        Ok(Some(track))
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Track>> {

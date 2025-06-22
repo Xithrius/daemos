@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Default)]
 pub struct UIContext {
     visible_settings: bool,
+    visible_debug: bool,
     debug_playback: bool,
     visible_playlist_modal: bool,
 }
@@ -16,6 +17,18 @@ impl UIContext {
 
     pub fn set_visible_settings(&mut self, visibility: bool) {
         self.visible_settings = visibility;
+    }
+
+    pub fn visible_debug(&self) -> bool {
+        self.visible_debug
+    }
+
+    pub fn visible_debug_mut(&mut self) -> &mut bool {
+        &mut self.visible_debug
+    }
+
+    pub fn set_visible_debug(&mut self, visibility: bool) {
+        self.visible_debug = visibility;
     }
 
     pub fn toggle_settings(&mut self) {

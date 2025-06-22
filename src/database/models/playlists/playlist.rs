@@ -58,10 +58,15 @@ impl TryFrom<&Row<'_>> for Playlist {
 }
 
 impl Playlist {
+    /// Creates a new playlist, or returns the one it conflicts with on the name attribute.
+    // TODO: Return an enum that says if the playlist already exists or not
     pub fn create(conn: &Connection, name: String) -> Result<Option<Playlist>> {
         let sql = "
-            INSERT INTO playlists (id, name, created_at, updated_at)
+            INSERT INTO playlists
             VALUES (?1, ?2, ?3, ?4)
+            ON CONFLICT(name) DO UPDATE SET
+                name = excluded.name
+            RETURNING *
         ";
 
         let playlist = Playlist {
@@ -69,28 +74,25 @@ impl Playlist {
             ..Default::default()
         };
 
-        let inserted = conn.execute(
-            sql,
-            params![
-                playlist.id.to_string(),
-                playlist.name,
-                playlist.created_at,
-                playlist.updated_at,
-            ],
-        )?;
+        let mut stmt = conn.prepare(sql)?;
+        let mut rows = stmt.query(params![
+            playlist.id.to_string(),
+            playlist.name,
+            playlist.created_at,
+            playlist.updated_at,
+        ])?;
 
-        if inserted == 0 {
-            error!(
-                "Something went wrong while creating the new playlist {}",
-                name
-            );
+        let Some(row) = rows.next()? else {
+            error!("Failed to insert or retrieve playlist: {}", name);
 
             return Ok(None);
-        }
+        };
 
-        debug!("Inserted playlist into database: {}", name);
+        let returned = Playlist::try_from(row)?;
 
-        Ok(Some(playlist))
+        debug!("Inserted or found playlist in database: {}", returned.name);
+
+        Ok(Some(returned))
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Self>> {

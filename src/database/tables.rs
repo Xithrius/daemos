@@ -8,12 +8,14 @@ CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
     path TEXT NOT NULL,
     name TEXT NOT NULL,
-    hash TEXT UNIQUE,
+    hash TEXT,
     duration_secs REAL NOT NULL,
     valid BOOLEAN NOT NULL,
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE(hash, path)
 );
 ";
 
