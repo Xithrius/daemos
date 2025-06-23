@@ -1,4 +1,7 @@
-use std::{rc::Rc, time::Duration};
+use std::{
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
@@ -24,11 +27,12 @@ const DURATION_COLUMN_WIDTH: f32 = 100.0;
 #[derive(Debug, Clone, Default)]
 pub struct TrackSearch {
     pub text: String,
+    pub previous_text: Option<String>,
     pub changed: bool,
     pub focused: bool,
     pub focus_requested: bool,
     pub duration: Option<Duration>,
-    pub yielded_results: bool,
+    pub yielded_results: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -376,83 +380,67 @@ impl TrackTable {
             });
     }
 
-    // fn ui_search(&mut self, ui: &mut egui::Ui) {
-    //     let mut context = self.context.borrow_mut();
-    //     let cache_context = &mut context.cache;
+    // TODO
+    // Keep track of previous search that yielded result such that if we
+    // delete characters to go back to that same search length, then add more characters,
+    // calculation of filtered tracks will begin again
+    fn ui_search(&mut self, ui: &mut egui::Ui) {
+        let selected_playlist = { self.context.borrow().ui_playlist.selected() };
 
-    //     // TODO: This is inefficient, as if there is no search then this is ran every frame
-    //     if self.search.text.is_empty() {
-    //         cache_context.tracks.set_filtered(cache_context.tracks());
-    //         self.search.yielded_results = false;
-    //     }
-    //     // Only recalculate the filtered tracks if the search input has changed
-    //     // and the previous search yielded some results
+        let mut context = self.context.borrow_mut();
+        let cache_context = &mut context.cache;
 
-    //     // TODO
-    //     // Keep track of previous search that yielded result such that if we
-    //     // delete characters to go back to that same search length, then add more characters,
-    //     // calculation of filtered tracks will begin again
-    //     else if self.search.changed && !cache_context.tracks.filtered().is_empty() {
-    //         let search_lower = self.search.text.to_lowercase();
+        let previous_text = self.search.text.clone();
 
-    //         let start = Instant::now();
+        let search_text_edit =
+            egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
 
-    //         let filtered_tracks: Vec<Track> = cache_context
-    //             .tracks()
-    //             .iter()
-    //             .filter_map(|track| {
-    //                 if track.name.to_lowercase().contains(&search_lower) {
-    //                     Some(track.clone())
-    //                 } else {
-    //                     None
-    //                 }
-    //             })
-    //             .collect();
+        let response = ui.add(search_text_edit);
 
-    //         let duration = start.elapsed();
-    //         self.search.duration = Some(duration);
-    //         debug!(
-    //             "Filtered into {} tracks in {:?}",
-    //             filtered_tracks.len(),
-    //             duration
-    //         );
+        if self.search.focus_requested {
+            response.request_focus();
+            self.search.focus_requested = false;
+        }
 
-    //         cache_context.tracks.set_filtered(filtered_tracks);
-    //         self.search.yielded_results = true;
-    //     }
+        self.search.changed = response.changed();
+        self.search.focused = response.has_focus();
 
-    //     let search_text_edit =
-    //         egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
+        if self.search.text != previous_text {
+            let search_text = self.search.text.to_ascii_lowercase();
 
-    //     ui.horizontal(|ui| {
-    //         let response = ui.add(search_text_edit);
+            let predicate = |track: &Track| {
+                search_text.is_empty() || track.name.to_ascii_lowercase().contains(&search_text)
+            };
 
-    //         if self.search.focus_requested {
-    //             response.request_focus();
-    //             self.search.focus_requested = false;
-    //         }
+            let start = Instant::now();
 
-    //         self.search.changed = response.changed();
-    //         self.search.focused = response.has_focus();
+            if let Some(filtered) = cache_context.filter_with(&selected_playlist, predicate) {
+                self.search.yielded_results = filtered.len();
+            }
 
-    //         if let Some(search_duration) = self.search.duration {
-    //             if self.search.yielded_results {
-    //                 let filtered_tracks_len = cache_context.tracks.filtered().len();
+            let duration = start.elapsed();
+            self.search.duration = Some(duration);
+        }
 
-    //                 ui.label(format!(
-    //                     "{} results in {:?}",
-    //                     filtered_tracks_len, search_duration
-    //                 ));
-    //             }
-    //         }
-    //     });
-    // }
+        self.search.previous_text = Some(previous_text);
+
+        if !self.search.text.is_empty() {
+            if let Some(search_duration) = self.search.duration {
+                ui.label(format!(
+                    "{} results in {:?}",
+                    self.search.yielded_results, search_duration
+                ));
+            }
+        }
+    }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
         ui.vertical(|ui: &mut egui::Ui| {
-            // self.ui_search(ui);
+            ui.horizontal(|ui| {
+                self.ui_search(ui);
+            });
 
             ui.separator();
 
