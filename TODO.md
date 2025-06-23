@@ -52,29 +52,18 @@
 - [ ] Autoplay
 
   - [ ] Iterative
-    - [x] Play next track in the table once the current one is done
-    - [x] Once last track is done, go to the start
     - [ ] Reverse button on playback bar\*
   - [ ] Shuffle
-    - [x] Pseudo Random (don't play the same thing twice until everything is played)
-    - [x] True Random (Pick any other track)
     - [ ] Similar tracks (Hash distance?)
     - [ ] [Fisher–Yates shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle)
   - [ ] When shuffle is selected, going back a track should go to the one previously played
-
-- [ ] Fonts
-
-  - [x] Change font to Space mono font
-  - [ ] font size\*
 
 \* Should be configurable
 
 ## Issues
 
-- [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the original tracks vector
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
 - [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)
-- [ ] Adding tracks to another playlist will add them to the UI-selected playlist (reselecting playlist will get rid of render issue)
 
 ## In the future
 
@@ -90,8 +79,11 @@
     - [ ] Times a track has been played
 
 - [ ] [Notifications](https://github.com/ItsEthra/egui-notify)
+
   - [ ] User actions (creating playlists)
   - [ ] Background task completions (finished inserting tracks)
+
+- [ ] Configurable font size
 
 ## Useful links
 

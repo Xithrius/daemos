@@ -106,6 +106,11 @@ impl Playlist {
             .query_map([], |row| Playlist::try_from(row))?
             .collect::<Result<_, _>>()?;
 
+        debug!(
+            "Found {} playlist(s) from playlists table query",
+            playlists.len()
+        );
+
         Ok(playlists)
     }
 
