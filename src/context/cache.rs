@@ -29,14 +29,12 @@ impl CacheContext {
         }
     }
 
-    fn insert_sorted_to_all_tracks(&mut self, tracks: Vec<Track>) {
-        for track in tracks {
-            let pos = self
-                .all_tracks
-                .binary_search_by(|other_track| other_track.name.cmp(&track.name))
-                .unwrap_or_else(|e| e);
-            self.all_tracks.insert(pos, track);
-        }
+    fn insert_sorted_to_all_tracks(&mut self, track: Track) {
+        let pos = self
+            .all_tracks
+            .binary_search_by(|other_track| other_track.name.cmp(&track.name))
+            .unwrap_or_else(|e| e);
+        self.all_tracks.insert(pos, track);
     }
 
     fn insert_sorted_to_playlist(playlist_tracks: &mut Vec<Track>, track: Track) {
@@ -47,16 +45,13 @@ impl CacheContext {
     }
 
     pub fn add_tracks_to_playlist(&mut self, playlist: Option<&Playlist>, tracks: Vec<Track>) {
-        // TODO: Make this more efficient, don't loop twice
-        if let Some(playlist) = playlist {
-            let playlist_tracks = self.playlist_tracks.entry(playlist.clone()).or_default();
-
-            for track in &tracks {
+        for track in tracks {
+            if let Some(playlist) = playlist {
+                let playlist_tracks = self.playlist_tracks.entry(playlist.clone()).or_default();
                 Self::insert_sorted_to_playlist(playlist_tracks, track.clone());
             }
+            self.insert_sorted_to_all_tracks(track);
         }
-
-        self.insert_sorted_to_all_tracks(tracks);
     }
 
     pub fn add_empty_playlist(&mut self, playlist: &Playlist) {
