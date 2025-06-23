@@ -162,9 +162,10 @@ impl PlaybackBar {
         let (mut playback_secs, total_duration_secs, has_hours, needs_new_track) = {
             let playback = &mut context.playback;
 
-            if let (Some(progress), Some(track_context)) =
-                (playback.control.current_progress(), &playback.selected_track)
-            {
+            if let (Some(progress), Some(track_context)) = (
+                playback.control.current_progress(),
+                &playback.selected_track,
+            ) {
                 let playback_secs = progress.as_secs_f64();
                 let total_duration_secs = track_context.track.duration_secs;
                 let control = &mut playback.control;
