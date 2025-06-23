@@ -15,6 +15,9 @@ pub use processing::ProcessingContext;
 pub mod latency;
 pub use latency::LatencyContext;
 
+pub mod cache;
+pub use cache::CacheContext;
+
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     /// All the tracks and playlists that have been loaded into memory from the database

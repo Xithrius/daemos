@@ -96,28 +96,29 @@ impl App {
             DatabaseEvent::InsertTrack(track, playlist) => {
                 let mut context = self.context.borrow_mut();
 
-                if let Some(playlist) = playlist.as_ref() {
-                    context.cache.playlists.add(playlist);
-                }
-                context.cache.tracks.add(&track);
+                context
+                    .cache
+                    .add_tracks_to_playlist(playlist.as_ref(), vec![track]);
 
                 let playlist_name = playlist.map(|playlist| playlist.name);
                 context.processing.decrement(playlist_name);
             }
-            DatabaseEvent::QueryTracks(tracks) => {
+            DatabaseEvent::QueryTracks(tracks, playlist) => {
                 let mut context = self.context.borrow_mut();
                 let cache_context = &mut context.cache;
-                cache_context.tracks.set(tracks);
+                cache_context.set_playlist_tracks(playlist, tracks);
             }
             DatabaseEvent::InsertPlaylist(playlist) => {
                 let mut context = self.context.borrow_mut();
                 let cache_context = &mut context.cache;
-                cache_context.playlists.add(&playlist);
+                cache_context.add_empty_playlist(&playlist);
             }
             DatabaseEvent::QueryPlaylists(playlists) => {
                 let mut context = self.context.borrow_mut();
                 let cache_context = &mut context.cache;
-                cache_context.playlists.set(playlists);
+                for playlist in playlists {
+                    cache_context.add_empty_playlist(&playlist);
+                }
             }
         }
     }

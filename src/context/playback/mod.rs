@@ -4,9 +4,6 @@ pub use autoplay::{AutoplayContext, AutoplayType, PlayDirection, ShuffleType};
 pub mod control;
 pub use control::ControlContext;
 
-pub mod loaded;
-pub use loaded::CacheContext;
-
 pub mod selected;
 use std::time::{Duration, Instant};
 

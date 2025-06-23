@@ -35,45 +35,42 @@ impl PlaylistTable {
             .column(Column::auto().at_least(width).at_most(width))
             .sense(egui::Sense::click());
 
-        table
-            // .header(TABLE_HEADER_HEIGHT, |mut header| {
-            //     header.col(|ui| {
-            //         ui.heading("Playlist");
-            //     });
-            //     // header.col(|ui| {
-            //     //     ui.heading("Tracks");
-            //     // });
-            // })
-            .body(|body| {
+        table.body(|body| {
+            let playlist_keys: Vec<_> = {
+                let context = self.context.borrow();
+                context.cache.playlists().cloned().collect()
+            };
 
-                let num_rows ={ let context = self.context.borrow(); context.cache.playlists().len()};
+            let num_rows = playlist_keys.len();
 
-                body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
-                    let playlists = self.context.borrow().cache.playlists();
-                    let row_index = row.index();
-                    let Some(playlist) = playlists.get(row_index).cloned() else {
-                        return;
-                    };
+            body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
+                let row_index = row.index();
+                let Some(playlist) = playlist_keys.get(row_index) else {
+                    return;
+                };
 
-                    let selected = self.context.borrow().ui_playlist
-                        .selected()
-                        .is_some_and(|selected_playlist| selected_playlist.id == playlist.id);
-                    row.set_selected(selected);
+                let selected = self
+                    .context
+                    .borrow()
+                    .ui_playlist
+                    .selected()
+                    .is_some_and(|selected_playlist| selected_playlist.id == playlist.id);
+                row.set_selected(selected);
 
-                    row.col(|ui| {
-                        let label = ui
-                            .label(playlist.name.clone())
-                            .on_hover_cursor(egui::CursorIcon::Default);
-                        if label.clicked() {
-                            self.toggle_playlist_selection(&playlist);
-                        }
-                    });
-
-                    if row.response().clicked() {
-                        self.toggle_playlist_selection(&playlist);
+                row.col(|ui| {
+                    let label = ui
+                        .label(playlist.name.clone())
+                        .on_hover_cursor(egui::CursorIcon::Default);
+                    if label.clicked() {
+                        self.toggle_playlist_selection(playlist);
                     }
                 });
+
+                if row.response().clicked() {
+                    self.toggle_playlist_selection(playlist);
+                }
             });
+        });
     }
 
     fn toggle_playlist_selection(&mut self, playlist: &Playlist) {

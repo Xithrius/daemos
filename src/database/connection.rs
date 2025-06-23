@@ -43,7 +43,7 @@ pub enum DatabaseError {
 #[derive(Debug)]
 pub enum DatabaseEvent {
     InsertTrack(Track, Option<Playlist>),
-    QueryTracks(Vec<Track>),
+    QueryTracks(Vec<Track>, Option<Playlist>),
     InsertPlaylist(Playlist),
     QueryPlaylists(Vec<Playlist>),
 }
@@ -123,14 +123,14 @@ impl Database {
                         }
                     }
                     DatabaseCommand::QueryTracks(playlist) => {
-                        let result = if let Some(playlist) = playlist {
+                        let result = if let Some(playlist) = playlist.as_ref() {
                             Playlist::get_tracks(&conn, playlist.id)
                         } else {
                             Track::get_all(&conn)
                         };
 
                         if let Ok(tracks) = result {
-                            let query_tracks_event = DatabaseEvent::QueryTracks(tracks);
+                            let query_tracks_event = DatabaseEvent::QueryTracks(tracks, playlist);
                             let _ = event_tx.send(Ok(query_tracks_event));
                         }
                     }

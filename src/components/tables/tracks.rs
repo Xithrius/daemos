@@ -1,7 +1,4 @@
-use std::{
-    rc::Rc,
-    time::{Duration, Instant},
-};
+use std::{rc::Rc, time::Duration};
 
 use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
@@ -39,11 +36,8 @@ pub struct TrackTable {
     config: SharedConfig,
     context: SharedContext,
     channels: Rc<ComponentChannels>,
-
-    // selection: HashSet<usize>,
-    scroll_to_selected: bool,
-
     search: TrackSearch,
+    scroll_to_selected: bool,
 }
 
 impl TrackTable {
@@ -61,10 +55,8 @@ impl TrackTable {
             config,
             context,
             channels,
-
-            // selection: HashSet::default(),
-            scroll_to_selected: false,
             search: TrackSearch::default(),
+            scroll_to_selected: false,
         }
     }
 
@@ -79,16 +71,6 @@ impl TrackTable {
     pub fn request_search_focus(&mut self) {
         self.search.focus_requested = true;
     }
-
-    // fn toggle_row_selection(&mut self, row_index: usize, row_response: &egui::Response) {
-    //     if row_response.clicked() {
-    //         if self.selection.contains(&row_index) {
-    //             self.selection.remove(&row_index);
-    //         } else {
-    //             self.selection.insert(row_index);
-    //         }
-    //     }
-    // }
 
     fn toggle_row_play(&mut self, row_index: usize, track: &Track) {
         // if the selected track is one that is playing, pause it.
@@ -137,7 +119,13 @@ impl TrackTable {
             .set_autoplay(selected_playlist.clone());
 
         if let Some(playlist) = selected_playlist {
-            let tracks = self.context.borrow().cache.tracks();
+            let tracks = self
+                .context
+                .borrow()
+                .cache
+                .playlist_tracks(Some(&playlist))
+                .map(|tracks| tracks.to_owned())
+                .unwrap_or_default();
             let playlist_state = PlaylistState::new(playlist, tracks);
 
             self.context
@@ -191,7 +179,11 @@ impl TrackTable {
         let tracks = if let Some(playlist_state) = &context.playback.selected_playlist.playlist() {
             &playlist_state.tracks()
         } else {
-            &context.cache.tracks()
+            &context
+                .cache
+                .playlist_tracks(None)
+                .map(|tracks| tracks.to_owned())
+                .unwrap_or_default()
         };
 
         let Some(index) = track_context.and_then(|track_context| {
@@ -265,82 +257,70 @@ impl TrackTable {
         self.scroll_to_selected = true;
     }
 
-    fn table_body_row(&mut self, mut row: TableRow<'_, '_>) {
+    fn table_body_row(&mut self, mut row: TableRow<'_, '_>, track: &Track) {
         let row_index = row.index();
-
-        let track = {
-            let context = self.context.borrow();
-            let filtered = context.cache.tracks.filtered();
-
-            filtered.get(row_index).cloned()
-        };
 
         let playing = {
             let context = self.context.borrow();
             context.playback.selected_track.clone()
         };
 
-        if let Some(track) = track {
-            row.set_selected(playing.as_ref().is_some_and(
-                |SelectedTrackContext {
-                     index: _,
-                     track:
-                         Track {
-                             id: _,
-                             path: _,
-                             name: _,
-                             hash,
-                             duration_secs: _,
-                             valid: _,
-                             created_at: _,
-                             updated_at: _,
-                         },
-                     playing: _,
-                 }| { *hash == track.hash },
-            ));
+        row.set_selected(playing.as_ref().is_some_and(
+            |SelectedTrackContext {
+                 index: _,
+                 track:
+                     Track {
+                         id: _,
+                         path: _,
+                         name: _,
+                         hash,
+                         duration_secs: _,
+                         valid: _,
+                         created_at: _,
+                         updated_at: _,
+                     },
+                 playing: _,
+             }| { *hash == track.hash },
+        ));
 
-            row.col(|ui| {
-                let label = ui
-                    .label(row_index.to_string())
-                    .on_hover_cursor(CursorIcon::Default);
-                if label.double_clicked() {
-                    self.toggle_row_play(row_index, &track);
-                }
-            });
-
-            row.col(|ui| {
-                let label = ui.label(&track.name).on_hover_cursor(CursorIcon::Default);
-                if label.double_clicked() {
-                    self.toggle_row_play(row_index, &track);
-                }
-            });
-
-            row.col(|ui| {
-                let track_duration = Duration::from_secs_f64(track.duration_secs);
-                let readable_track_duration = human_duration(track_duration, false);
-
-                let label = ui
-                    .label(readable_track_duration)
-                    .on_hover_cursor(CursorIcon::Default);
-
-                if label.double_clicked() {
-                    self.toggle_row_play(row_index, &track);
-                }
-            });
-
-            let response = row.response();
-
-            if response.double_clicked() {
-                self.toggle_row_play(row_index, &track);
+        row.col(|ui| {
+            let label = ui
+                .label(row_index.to_string())
+                .on_hover_cursor(CursorIcon::Default);
+            if label.double_clicked() {
+                self.toggle_row_play(row_index, track);
             }
-            // else if row.response().clicked() && shift_hit {}
+        });
+
+        row.col(|ui| {
+            let label = ui.label(&track.name).on_hover_cursor(CursorIcon::Default);
+            if label.double_clicked() {
+                self.toggle_row_play(row_index, track);
+            }
+        });
+
+        row.col(|ui| {
+            let track_duration = Duration::from_secs_f64(track.duration_secs);
+            let readable_track_duration = human_duration(track_duration, false);
+
+            let label = ui
+                .label(readable_track_duration)
+                .on_hover_cursor(CursorIcon::Default);
+
+            if label.double_clicked() {
+                self.toggle_row_play(row_index, track);
+            }
+        });
+
+        let response = row.response();
+
+        if response.double_clicked() {
+            self.toggle_row_play(row_index, track);
         }
     }
 
     fn ui_table(&mut self, ui: &mut egui::Ui, height: f32) {
         self.select_new_track();
-
-        // let shift_hit = ui.ctx().input(|i| i.modifiers.shift);
 
         let mut table = TableBuilder::new(ui)
             .max_scroll_height(height)
@@ -351,10 +331,16 @@ impl TrackTable {
 
         let (filtered_tracks, selected_track, align_scroll) = {
             let context = self.context.borrow();
-            let filtered = context.cache.tracks.filtered().to_owned();
+            let selected_playlist = context.ui_playlist.selected();
+
+            let filtered_tracks = context
+                .cache
+                .filtered_tracks(selected_playlist.as_ref())
+                .to_vec();
+
             let selected = context.playback.selected_track.clone();
             let align = self.config.borrow().autoplay.align_scroll;
-            (filtered, selected, align)
+            (filtered_tracks, selected, align)
         };
 
         if self.scroll_to_selected {
@@ -380,90 +366,93 @@ impl TrackTable {
             })
             .body(|body| {
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |row| {
-                    self.table_body_row(row);
+                    let index = row.index();
+                    let Some(track) = filtered_tracks.get(index) else {
+                        return;
+                    };
+
+                    self.table_body_row(row, track);
                 });
             });
     }
 
-    fn ui_search(&mut self, ui: &mut egui::Ui) {
-        let mut context = self.context.borrow_mut();
-        let cache_context = &mut context.cache;
+    // fn ui_search(&mut self, ui: &mut egui::Ui) {
+    //     let mut context = self.context.borrow_mut();
+    //     let cache_context = &mut context.cache;
 
-        // TODO: This is inefficient, as if there is no search then this is ran every frame
-        if self.search.text.is_empty() {
-            cache_context.tracks.set_filtered(cache_context.tracks());
-            self.search.yielded_results = false;
-        }
-        // Only recalculate the filtered tracks if the search input has changed
-        // and the previous search yielded some results
+    //     // TODO: This is inefficient, as if there is no search then this is ran every frame
+    //     if self.search.text.is_empty() {
+    //         cache_context.tracks.set_filtered(cache_context.tracks());
+    //         self.search.yielded_results = false;
+    //     }
+    //     // Only recalculate the filtered tracks if the search input has changed
+    //     // and the previous search yielded some results
 
-        // TODO
-        // Keep track of previous search that yielded result such that if we
-        // delete characters to go back to that same search length, then add more characters,
-        // calculation of filtered tracks will begin again
-        else if self.search.changed && !cache_context.tracks.filtered().is_empty() {
-            let search_lower = self.search.text.to_lowercase();
+    //     // TODO
+    //     // Keep track of previous search that yielded result such that if we
+    //     // delete characters to go back to that same search length, then add more characters,
+    //     // calculation of filtered tracks will begin again
+    //     else if self.search.changed && !cache_context.tracks.filtered().is_empty() {
+    //         let search_lower = self.search.text.to_lowercase();
 
-            let start = Instant::now();
+    //         let start = Instant::now();
 
-            let filtered_tracks: Vec<Track> = cache_context
-                .tracks()
-                .iter()
-                .filter_map(|track| {
-                    if track.name.to_lowercase().contains(&search_lower) {
-                        Some(track.clone())
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+    //         let filtered_tracks: Vec<Track> = cache_context
+    //             .tracks()
+    //             .iter()
+    //             .filter_map(|track| {
+    //                 if track.name.to_lowercase().contains(&search_lower) {
+    //                     Some(track.clone())
+    //                 } else {
+    //                     None
+    //                 }
+    //             })
+    //             .collect();
 
-            let duration = start.elapsed();
-            self.search.duration = Some(duration);
-            debug!(
-                "Filtered into {} tracks in {:?}",
-                filtered_tracks.len(),
-                duration
-            );
+    //         let duration = start.elapsed();
+    //         self.search.duration = Some(duration);
+    //         debug!(
+    //             "Filtered into {} tracks in {:?}",
+    //             filtered_tracks.len(),
+    //             duration
+    //         );
 
-            cache_context.tracks.set_filtered(filtered_tracks);
-            self.search.yielded_results = true;
-        }
+    //         cache_context.tracks.set_filtered(filtered_tracks);
+    //         self.search.yielded_results = true;
+    //     }
 
-        let search_text_edit =
-            egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
+    //     let search_text_edit =
+    //         egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
 
-        ui.horizontal(|ui| {
-            let response = ui.add(search_text_edit);
+    //     ui.horizontal(|ui| {
+    //         let response = ui.add(search_text_edit);
 
-            if self.search.focus_requested {
-                response.request_focus();
-                self.search.focus_requested = false;
-            }
+    //         if self.search.focus_requested {
+    //             response.request_focus();
+    //             self.search.focus_requested = false;
+    //         }
 
-            self.search.changed = response.changed();
-            self.search.focused = response.has_focus();
+    //         self.search.changed = response.changed();
+    //         self.search.focused = response.has_focus();
 
-            if let Some(search_duration) = self.search.duration {
-                if self.search.yielded_results {
-                    let filtered_tracks_len = cache_context.tracks.filtered().len();
+    //         if let Some(search_duration) = self.search.duration {
+    //             if self.search.yielded_results {
+    //                 let filtered_tracks_len = cache_context.tracks.filtered().len();
 
-                    ui.label(format!(
-                        "{} results in {:?}",
-                        filtered_tracks_len, search_duration
-                    ));
-                }
-            }
-        });
-    }
+    //                 ui.label(format!(
+    //                     "{} results in {:?}",
+    //                     filtered_tracks_len, search_duration
+    //                 ));
+    //             }
+    //         }
+    //     });
+    // }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
         ui.vertical(|ui: &mut egui::Ui| {
-            ui.horizontal(|ui| {
-                self.ui_search(ui);
-            });
+            // self.ui_search(ui);
 
             ui.separator();
 

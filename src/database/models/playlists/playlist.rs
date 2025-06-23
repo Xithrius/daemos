@@ -12,7 +12,7 @@ use crate::database::models::{
     utils::parse::{parse_date, parse_uuid},
 };
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct Playlist {
     pub id: Uuid,
     pub name: String,
