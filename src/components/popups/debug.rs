@@ -41,11 +41,12 @@ impl LatencyLineGraph {
     const LINE_COLOR: Color32 = Color32::from_rgb(100, 200, 100);
 
     fn latency<'a>(&self, y: &VecDeque<Duration>) -> Line<'a> {
+        let max_x = (MAX_LATENCY_RECORD_COUNT as f64) - 1.0;
         let line_points: PlotPoints = y
             .iter()
             .enumerate()
             .map(|(i, dur)| {
-                let x = i as f64;
+                let x = max_x - (i as f64);
                 let y = dur.as_secs_f64() * 1000.0;
                 [x, y]
             })
