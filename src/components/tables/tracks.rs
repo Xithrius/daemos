@@ -31,6 +31,7 @@ pub struct TrackSearch {
     pub focused: bool,
     pub focus_requested: bool,
     pub duration: Option<Duration>,
+    pub yielded_results: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -391,6 +392,7 @@ impl TrackTable {
         // TODO: This is inefficient, as if there is no search then this is ran every frame
         if self.search.text.is_empty() {
             loaded_context.tracks.set_filtered(loaded_context.tracks());
+            self.search.yielded_results = false;
         }
         // Only recalculate the filtered tracks if the search input has changed
         // and the previous search yielded some results
@@ -425,45 +427,42 @@ impl TrackTable {
             );
 
             loaded_context.tracks.set_filtered(filtered_tracks);
+            self.search.yielded_results = true;
         }
 
         let search_text_edit =
             egui::TextEdit::singleline(&mut self.search.text).hint_text("Search...");
 
-        let response = ui.add(search_text_edit);
+        ui.horizontal(|ui| {
+            let response = ui.add(search_text_edit);
 
-        if self.search.focus_requested {
-            response.request_focus();
-            self.search.focus_requested = false;
-        }
+            if self.search.focus_requested {
+                response.request_focus();
+                self.search.focus_requested = false;
+            }
 
-        self.search.changed = response.changed();
-        self.search.focused = response.has_focus();
+            self.search.changed = response.changed();
+            self.search.focused = response.has_focus();
+
+            if let Some(search_duration) = self.search.duration {
+                if self.search.yielded_results {
+                    let filtered_tracks_len = loaded_context.tracks.filtered().len();
+
+                    ui.label(format!(
+                        "{} results in {:?}",
+                        filtered_tracks_len, search_duration
+                    ));
+                }
+            }
+        });
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
-        let (filtered_tracks_len, tracks_len) = {
-            let loaded_context = &self.context.borrow().playback.loaded;
-            (
-                loaded_context.tracks.filtered().len(),
-                loaded_context.tracks().len(),
-            )
-        };
-
         ui.vertical(|ui: &mut egui::Ui| {
             ui.horizontal(|ui| {
                 self.ui_search(ui);
-
-                if let Some(search_duration) = self.search.duration {
-                    if filtered_tracks_len != tracks_len {
-                        ui.label(format!(
-                            "{} results in {:?}",
-                            filtered_tracks_len, search_duration
-                        ));
-                    }
-                }
             });
 
             ui.separator();
