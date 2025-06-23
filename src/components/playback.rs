@@ -235,7 +235,7 @@ impl PlaybackBar {
 
         let context = self.context.borrow();
 
-        let autoplay_playlist_context = if let Some(playlist) = context.ui_playlist.autoplay() {
+        let autoplay_playlist_context = if let Some(playlist) = context.ui.playlist.autoplay() {
             playlist.name
         } else {
             "All tracks".to_string()

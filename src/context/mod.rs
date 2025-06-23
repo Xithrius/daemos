@@ -25,8 +25,6 @@ pub struct Context {
     pub cache: CacheContext,
     pub playback: PlaybackContext,
     pub ui: UIContext,
-    // TODO: Combine into UIContext
-    pub ui_playlist: UIPlaylistContext,
     pub processing: ProcessingContext,
     pub latency: LatencyContext,
 }

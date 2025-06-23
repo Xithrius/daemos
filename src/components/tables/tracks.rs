@@ -115,11 +115,12 @@ impl TrackTable {
         let new_track_context = SelectedTrackContext::new(track.clone(), row_index, true);
 
         // If we're currently in the context of a playlist
-        let selected_playlist = self.context.borrow().ui_playlist.selected();
+        let selected_playlist = self.context.borrow().ui.playlist.selected();
         // Set autoplay to the playlist we're in (if any)
         self.context
             .borrow_mut()
-            .ui_playlist
+            .ui
+            .playlist
             .set_autoplay(selected_playlist.clone());
 
         if let Some(playlist) = selected_playlist {
@@ -335,7 +336,7 @@ impl TrackTable {
 
         let (filtered_tracks, selected_track, align_scroll) = {
             let context = self.context.borrow();
-            let selected_playlist = context.ui_playlist.selected();
+            let selected_playlist = context.ui.playlist.selected();
 
             let filtered_tracks = context
                 .cache
@@ -385,7 +386,7 @@ impl TrackTable {
     // delete characters to go back to that same search length, then add more characters,
     // calculation of filtered tracks will begin again
     fn ui_search(&mut self, ui: &mut egui::Ui) {
-        let selected_playlist = { self.context.borrow().ui_playlist.selected() };
+        let selected_playlist = { self.context.borrow().ui.playlist.selected() };
 
         let mut context = self.context.borrow_mut();
         let cache_context = &mut context.cache;
