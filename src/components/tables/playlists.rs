@@ -46,11 +46,10 @@ impl PlaylistTable {
             // })
             .body(|body| {
 
-                let num_rows ={ let context = self.context.borrow(); context.playback.loaded.playlists().len()};
-
+                let num_rows ={ let context = self.context.borrow(); context.cache.playlists().len()};
 
                 body.rows(TABLE_ROW_HEIGHT, num_rows, |mut row| {
-                    let playlists = self.context.borrow().playback.loaded.playlists();
+                    let playlists = self.context.borrow().cache.playlists();
                     let row_index = row.index();
                     let Some(playlist) = playlists.get(row_index).cloned() else {
                         return;

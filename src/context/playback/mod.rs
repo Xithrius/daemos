@@ -5,7 +5,7 @@ pub mod control;
 pub use control::ControlContext;
 
 pub mod loaded;
-pub use loaded::LoadedContext;
+pub use loaded::CacheContext;
 
 pub mod selected;
 use std::time::{Duration, Instant};
@@ -22,9 +22,6 @@ pub struct PlaybackContext {
     pub selected_track: Option<SelectedTrackContext>,
     /// What playlist currently is selected for tracks to be autoplayed in
     pub selected_playlist: SelectedPlaylistContext,
-    /// All the tracks and playlists that have been loaded into memory from the database
-    /// It is also possible to modify this loaded data in order to be up to date with database entries
-    pub loaded: LoadedContext,
     pub control: ControlContext,
     pub autoplay: AutoplayContext,
 }

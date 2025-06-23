@@ -97,27 +97,27 @@ impl App {
                 let mut context = self.context.borrow_mut();
 
                 if let Some(playlist) = playlist.as_ref() {
-                    context.playback.loaded.playlists.add(playlist);
+                    context.cache.playlists.add(playlist);
                 }
-                context.playback.loaded.tracks.add(&track);
+                context.cache.tracks.add(&track);
 
                 let playlist_name = playlist.map(|playlist| playlist.name);
                 context.processing.decrement(playlist_name);
             }
             DatabaseEvent::QueryTracks(tracks) => {
                 let mut context = self.context.borrow_mut();
-                let loaded_context = &mut context.playback.loaded;
-                loaded_context.tracks.set(tracks);
+                let cache_context = &mut context.cache;
+                cache_context.tracks.set(tracks);
             }
             DatabaseEvent::InsertPlaylist(playlist) => {
                 let mut context = self.context.borrow_mut();
-                let loaded_context = &mut context.playback.loaded;
-                loaded_context.playlists.add(&playlist);
+                let cache_context = &mut context.cache;
+                cache_context.playlists.add(&playlist);
             }
             DatabaseEvent::QueryPlaylists(playlists) => {
                 let mut context = self.context.borrow_mut();
-                let loaded_context = &mut context.playback.loaded;
-                loaded_context.playlists.set(playlists);
+                let cache_context = &mut context.cache;
+                cache_context.playlists.set(playlists);
             }
         }
     }

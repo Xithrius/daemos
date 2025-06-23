@@ -137,7 +137,7 @@ impl TrackTable {
             .set_autoplay(selected_playlist.clone());
 
         if let Some(playlist) = selected_playlist {
-            let tracks = self.context.borrow().playback.loaded.tracks();
+            let tracks = self.context.borrow().cache.tracks();
             let playlist_state = PlaylistState::new(playlist, tracks);
 
             self.context
@@ -191,7 +191,7 @@ impl TrackTable {
         let tracks = if let Some(playlist_state) = &context.playback.selected_playlist.playlist() {
             &playlist_state.tracks()
         } else {
-            &context.playback.loaded.tracks()
+            &context.cache.tracks()
         };
 
         let Some(index) = track_context.and_then(|track_context| {
@@ -270,7 +270,7 @@ impl TrackTable {
 
         let track = {
             let context = self.context.borrow();
-            let filtered = context.playback.loaded.tracks.filtered();
+            let filtered = context.cache.tracks.filtered();
 
             filtered.get(row_index).cloned()
         };
@@ -351,7 +351,7 @@ impl TrackTable {
 
         let (filtered_tracks, selected_track, align_scroll) = {
             let context = self.context.borrow();
-            let filtered = context.playback.loaded.tracks.filtered().to_owned();
+            let filtered = context.cache.tracks.filtered().to_owned();
             let selected = context.playback.selected_track.clone();
             let align = self.config.borrow().autoplay.align_scroll;
             (filtered, selected, align)
@@ -387,11 +387,11 @@ impl TrackTable {
 
     fn ui_search(&mut self, ui: &mut egui::Ui) {
         let mut context = self.context.borrow_mut();
-        let loaded_context = &mut context.playback.loaded;
+        let cache_context = &mut context.cache;
 
         // TODO: This is inefficient, as if there is no search then this is ran every frame
         if self.search.text.is_empty() {
-            loaded_context.tracks.set_filtered(loaded_context.tracks());
+            cache_context.tracks.set_filtered(cache_context.tracks());
             self.search.yielded_results = false;
         }
         // Only recalculate the filtered tracks if the search input has changed
@@ -401,12 +401,12 @@ impl TrackTable {
         // Keep track of previous search that yielded result such that if we
         // delete characters to go back to that same search length, then add more characters,
         // calculation of filtered tracks will begin again
-        else if self.search.changed && !loaded_context.tracks.filtered().is_empty() {
+        else if self.search.changed && !cache_context.tracks.filtered().is_empty() {
             let search_lower = self.search.text.to_lowercase();
 
             let start = Instant::now();
 
-            let filtered_tracks: Vec<Track> = loaded_context
+            let filtered_tracks: Vec<Track> = cache_context
                 .tracks()
                 .iter()
                 .filter_map(|track| {
@@ -426,7 +426,7 @@ impl TrackTable {
                 duration
             );
 
-            loaded_context.tracks.set_filtered(filtered_tracks);
+            cache_context.tracks.set_filtered(filtered_tracks);
             self.search.yielded_results = true;
         }
 
@@ -446,7 +446,7 @@ impl TrackTable {
 
             if let Some(search_duration) = self.search.duration {
                 if self.search.yielded_results {
-                    let filtered_tracks_len = loaded_context.tracks.filtered().len();
+                    let filtered_tracks_len = cache_context.tracks.filtered().len();
 
                     ui.label(format!(
                         "{} results in {:?}",

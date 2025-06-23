@@ -74,6 +74,7 @@
 - [ ] Filtered tracks in the track table should be a vector of usizes that point to an index in the original tracks vector
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
 - [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)
+- [ ] Adding tracks to another playlist will add them to the UI-selected playlist (reselecting playlist will get rid of render issue)
 
 ## In the future
 

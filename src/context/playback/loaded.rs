@@ -75,12 +75,12 @@ impl LoadedPlaylistsContext {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct LoadedContext {
+pub struct CacheContext {
     pub tracks: LoadedTracksContext,
     pub playlists: LoadedPlaylistsContext,
 }
 
-impl LoadedContext {
+impl CacheContext {
     pub fn tracks(&self) -> Vec<Track> {
         self.tracks.tracks.clone()
     }
