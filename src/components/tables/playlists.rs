@@ -10,8 +10,6 @@ use crate::{
     database::{connection::DatabaseCommand, models::playlists::playlist::Playlist},
 };
 
-const PLAYLIST_TABLE_WIDTH: f32 = 200.0;
-
 #[derive(Debug, Clone)]
 pub struct PlaylistTable {
     context: SharedContext,
@@ -30,9 +28,11 @@ impl PlaylistTable {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let height = ui.available_height();
 
+        let width = ui.available_width();
+
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)
-            .column(Column::auto().at_least(PLAYLIST_TABLE_WIDTH))
+            .column(Column::auto().at_least(width).at_most(width))
             .sense(egui::Sense::click());
 
         table
