@@ -168,7 +168,8 @@ impl App {
                         .processing
                         .add(playlist_name.clone(), folder_tracks.len());
 
-                    let insert_tracks = DatabaseCommand::InsertTracks(folder_tracks, playlist_name);
+                    let insert_tracks =
+                        DatabaseCommand::InsertTracks(folder_tracks, playlist_name, None);
 
                     if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
                         error!("Failed to send insert tracks command to database: {}", err);
@@ -188,7 +189,7 @@ impl App {
             if let Some(selected_file) = select_file_dialog() {
                 self.context.borrow_mut().processing.add(None, 1);
 
-                let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None);
+                let insert_tracks = DatabaseCommand::InsertTracks(vec![selected_file], None, None);
 
                 if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
                     error!("Failed to send insert track command to database: {}", err);

@@ -998,6 +998,7 @@ dependencies = [
  "image",
  "notify-rust",
  "rand 0.9.1",
+ "regex",
  "rfd",
  "rodio",
  "rusqlite",

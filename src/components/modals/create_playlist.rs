@@ -7,7 +7,8 @@ use crate::{
     components::{ComponentChannels, modals::UIModal},
     context::SharedContext,
     database::connection::DatabaseCommand,
-    files::open::{get_folder_tracks, select_folders_dialog},
+    files::open::{get_file_name, get_folder_tracks, select_folders_dialog},
+    utils::regex::RegexExtract,
 };
 
 const DEFAULT_PLAYLIST_MODAL_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];
@@ -18,6 +19,10 @@ const PLAYLIST_MODAL_ID: &str = "create_playlist_modal";
 pub struct CreatePlaylistState {
     name: String,
     track_paths: Vec<PathBuf>,
+    regex_match: String,
+    regex_group: String,
+    regex_extract: Option<RegexExtract>,
+    example_output: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -110,7 +115,14 @@ impl CreatePlaylistModal {
             .add(Some(playlist_name), tracks.len());
 
         let playlist_name = self.playlist_name().to_owned();
-        let insert_tracks = DatabaseCommand::InsertTracks(tracks.to_vec(), Some(playlist_name));
+
+        let regex_extract = self
+            .state
+            .regex_extract
+            .clone()
+            .map(|regex_extract| regex_extract.extract());
+        let insert_tracks =
+            DatabaseCommand::InsertTracks(tracks.to_vec(), Some(playlist_name), regex_extract);
 
         if let Err(err) = self.channels.database_command_tx.send(insert_tracks) {
             error!("Failed to send insert tracks command to database: {}", err);
@@ -137,7 +149,7 @@ impl CreatePlaylistModal {
             ui.separator();
 
             ui.horizontal(|ui| {
-                ui.label("Name:");
+                ui.label("Name");
                 ui.text_edit_singleline(&mut self.state.name);
             });
 
@@ -151,6 +163,59 @@ impl CreatePlaylistModal {
 
                 let selected_text = format!("{} track(s) selected", self.state.track_paths.len());
                 ui.label(selected_text);
+            });
+
+            ui.add_space(10.0);
+
+            ui.vertical(|ui| {
+                let mut apply_clicked = false;
+
+                ui.horizontal(|ui| {
+                    ui.label("Regex group match");
+                    ui.text_edit_singleline(&mut self.state.regex_match);
+                    ui.label("Group");
+                    ui.text_edit_singleline(&mut self.state.regex_group);
+
+                    apply_clicked = ui.button("Apply").clicked();
+                });
+
+                ui.horizontal(|ui| {
+                    if let Some(example_output) = self.state.example_output.as_ref() {
+                        let example_track_name = format!("Example track name: {}", example_output);
+
+                        ui.label(example_track_name);
+                    }
+
+                    if !apply_clicked {
+                        return;
+                    }
+
+                    let Some(first_track) = self.state.track_paths.first() else {
+                        return;
+                    };
+
+                    let Some(track_name) = get_file_name(first_track.to_path_buf()) else {
+                        return;
+                    };
+
+                    let Ok(regex_group) = self.state.regex_group.parse::<usize>() else {
+                        return;
+                    };
+
+                    let regex_extract =
+                        RegexExtract::new(self.state.regex_match.clone(), regex_group).ok();
+                    self.state.regex_extract = regex_extract.clone();
+
+                    let Some(regex_extract) = regex_extract else {
+                        return;
+                    };
+
+                    let Some(example_track) = regex_extract.extract_group(&track_name) else {
+                        return;
+                    };
+
+                    self.state.example_output = Some(example_track);
+                });
             });
 
             ui.separator();

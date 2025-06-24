@@ -15,6 +15,7 @@ use crate::{
     database::hash::hash_file,
     files::open::get_file_name,
     playback::track_metadata::{extract_track_duration, extract_track_metadata},
+    utils::regex::RegexExtract,
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -77,7 +78,11 @@ impl Track {
     /// When creating a new track, the hash of the file is generated, along with a new UUID.
     /// All other attributes of the track are generated with defaults.
     // TODO: Return an enum to tell if a new track has been created, or the old one was returned
-    pub fn create(conn: &Connection, path: PathBuf) -> Result<Option<Track>> {
+    pub fn create(
+        conn: &Connection,
+        path: PathBuf,
+        regex_extract: Option<RegexExtract>,
+    ) -> Result<Option<Track>> {
         let sql = "
             INSERT INTO Tracks
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
@@ -93,8 +98,12 @@ impl Track {
             .context(format!("Failed to get duration from track {:?}", path))?
             .as_secs_f64();
 
-        let name = get_file_name(path.clone())
+        let file_name = get_file_name(path.clone())
             .context(format!("Failed to get track file name from {:?}", path))?;
+
+        let name = regex_extract
+            .and_then(|extract| extract.extract_group(&file_name))
+            .unwrap_or(file_name);
 
         let track = Track {
             path: path.clone(),

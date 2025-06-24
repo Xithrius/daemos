@@ -8,12 +8,16 @@ use thiserror::Error;
 use tracing::{debug, error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
-use crate::database::models::playlists::{playlist::Playlist, playlist_tracks::PlaylistTrack};
+use crate::{
+    database::models::playlists::{playlist::Playlist, playlist_tracks::PlaylistTrack},
+    utils::regex::RegexExtract,
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum DatabaseCommand {
-    /// All tracks to be added, and the optional playlist
-    InsertTracks(Vec<PathBuf>, Option<String>),
+    /// All tracks to be added, the optional playlist, and an optional regex pattern
+    /// along with group position to extract the file name with.
+    InsertTracks(Vec<PathBuf>, Option<String>, Option<(String, usize)>),
     /// Get all tracks within a playlist, if provided then all tracks are returned
     QueryTracks(Option<Playlist>),
     /// Create a new playlist with the specified name
@@ -77,7 +81,14 @@ impl Database {
 
             while let Ok(cmd) = command_rx.recv() {
                 match cmd {
-                    DatabaseCommand::InsertTracks(track_paths, playlist_name) => {
+                    DatabaseCommand::InsertTracks(track_paths, playlist_name, regex_extract) => {
+                        let regex_extract =
+                            if let Some((pattern, group_position)) = regex_extract.clone() {
+                                RegexExtract::new(pattern, group_position).ok()
+                            } else {
+                                None
+                            };
+
                         let playlist = if let Some(playlist_name) = playlist_name {
                             Playlist::create(&conn, playlist_name).unwrap_or_default()
                         } else {
@@ -85,7 +96,8 @@ impl Database {
                         };
 
                         for track_path in track_paths {
-                            let track_result = Track::create(&conn, track_path.clone());
+                            let track_result =
+                                Track::create(&conn, track_path.clone(), regex_extract.clone());
 
                             let track = match track_result {
                                 Ok(Some(track)) => track,
