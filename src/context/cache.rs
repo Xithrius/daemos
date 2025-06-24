@@ -20,7 +20,7 @@ impl CacheContext {
     }
 
     pub fn set_playlist_tracks(&mut self, playlist: Option<Playlist>, mut tracks: Vec<Track>) {
-        tracks.sort_by(|a, b| a.name.cmp(&b.name));
+        tracks.sort_by(|a, b| a.path.cmp(&b.path));
 
         if let Some(playlist) = playlist {
             self.playlist_tracks.insert(playlist, tracks);
@@ -32,14 +32,14 @@ impl CacheContext {
     fn insert_sorted_to_all_tracks(&mut self, track: Track) {
         let pos = self
             .all_tracks
-            .binary_search_by(|other_track| other_track.name.cmp(&track.name))
+            .binary_search_by(|other_track| other_track.path.cmp(&track.path))
             .unwrap_or_else(|e| e);
         self.all_tracks.insert(pos, track);
     }
 
     fn insert_sorted_to_playlist(playlist_tracks: &mut Vec<Track>, track: Track) {
         let pos = playlist_tracks
-            .binary_search_by(|other_track| other_track.name.cmp(&track.name))
+            .binary_search_by(|other_track| other_track.path.cmp(&track.path))
             .unwrap_or_else(|e| e);
         playlist_tracks.insert(pos, track);
     }

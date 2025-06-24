@@ -58,8 +58,6 @@
     - [ ] [Fisher–Yates shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle)
   - [ ] When shuffle is selected, going back a track should go to the one previously played
 
-\* Should be configurable
-
 ## Issues
 
 - [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
@@ -83,9 +81,6 @@
   - [ ] User actions (creating playlists)
   - [ ] Background task completions (finished inserting tracks)
 
-- [ ] Configurable font size
+- [ ] font size\*
 
-## Useful links
-
-- [egui demo](https://www.egui.rs/#demo)
-- [3rd party egui crates](https://github.com/emilk/egui/wiki/3rd-party-egui-crates)
+\* Should be configurable
