@@ -246,9 +246,6 @@ impl eframe::App for App {
             None
         };
 
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
-
         // TODO: Is there a way around this?
         ctx.request_repaint_after(std::time::Duration::from_millis(16));
 
@@ -272,7 +269,7 @@ impl eframe::App for App {
             }
         }
 
-        // TODO: If I have a bunch of input boxes, then this is going to get bad
+        // TODO: If there's a bunch of input boxes, then this is going to get bad
         if ctx.input(|i| i.key_pressed(Key::Space))
             // TODO: Change to UI context
             && !self.components.track_table.search_focused()

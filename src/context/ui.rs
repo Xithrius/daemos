@@ -5,7 +5,7 @@ pub struct UIVisibilityContext {
     create_playlist_modal: bool,
     settings_popup: bool,
     general_debug: bool,
-    debug_playback: bool,
+    playback_debug: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -44,15 +44,15 @@ impl UIContext {
     }
 
     pub fn debug_playback(&self) -> bool {
-        self.visibility.debug_playback
+        self.visibility.playback_debug
     }
 
     pub fn debug_playback_mut(&mut self) -> &mut bool {
-        &mut self.visibility.debug_playback
+        &mut self.visibility.playback_debug
     }
 
     pub fn set_debug_playback(&mut self, visibility: bool) {
-        self.visibility.debug_playback = visibility;
+        self.visibility.playback_debug = visibility;
     }
 
     pub fn visible_playlist_modal(&self) -> bool {
