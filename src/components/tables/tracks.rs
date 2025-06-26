@@ -102,7 +102,7 @@ impl TrackTable {
             return;
         }
 
-        let volume = self.config.borrow().volume.default;
+        let volume = self.config.borrow().playback.volume;
 
         if let Err(err) = self
             .channels
@@ -246,7 +246,7 @@ impl TrackTable {
             return;
         };
 
-        let volume = self.config.borrow().volume.default;
+        let volume = self.config.borrow().playback.volume;
 
         let _ = self
             .channels
@@ -344,7 +344,7 @@ impl TrackTable {
                 .to_vec();
 
             let selected = context.playback.selected_track.clone();
-            let align = self.config.borrow().autoplay.align_scroll;
+            let align = self.config.borrow().ui.align_scroll;
             (filtered_tracks, selected, align)
         };
 

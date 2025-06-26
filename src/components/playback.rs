@@ -50,7 +50,7 @@ impl PlaybackBar {
         context: SharedContext,
         channels: Rc<ComponentChannels>,
     ) -> Self {
-        let config_volume = config.borrow().volume.default;
+        let config_volume = config.borrow().playback.volume;
         context
             .borrow_mut()
             .playback
@@ -144,7 +144,7 @@ impl PlaybackBar {
                 .send(PlayerCommand::SetVolume(volume));
 
             context.playback.control.last_volume_sent = volume;
-            self.config.borrow_mut().volume.default = volume;
+            self.config.borrow_mut().playback.volume = volume;
         }
     }
 

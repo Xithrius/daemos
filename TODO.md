@@ -83,4 +83,6 @@
 
 - [ ] font size\*
 
+- [ ] Crossfade\*
+
 \* Should be configurable

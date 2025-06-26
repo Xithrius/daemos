@@ -9,8 +9,8 @@ fn main() -> eframe::Result {
 
     use crossbeam::channel;
     use daemos::{
-        app::App, channels::Channels, config::load::load_config, database::connection::Database,
-        fonts::set_fonts, logging::initialize_logging, playback::state::Player,
+        app::App, channels::Channels, database::connection::Database, fonts::set_fonts,
+        logging::initialize_logging, playback::state::Player,
     };
     use egui_extras::install_image_loaders;
     use tracing::{error, info};
@@ -18,6 +18,8 @@ fn main() -> eframe::Result {
     initialize_logging().expect("Failed to initialize logger");
 
     let config = {
+        use daemos::config::load_config;
+
         let core_config = load_config().expect("Failed to load config");
         Rc::new(RefCell::new(core_config))
     };

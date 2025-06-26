@@ -27,8 +27,8 @@ impl SettingsPopup {
 
         Self {
             context,
-            selected_theme: c.general.theme,
-            selected_autoplay: c.autoplay.autoplay.clone(),
+            selected_theme: c.ui.theme,
+            selected_autoplay: c.playback.autoplay.clone(),
         }
     }
 
