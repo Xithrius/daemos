@@ -270,7 +270,7 @@ impl PlaybackBar {
         let playback_context = context.playback.clone();
 
         egui::Window::new("Playback Debug Info")
-            .open(context.ui.debug_playback_mut())
+            .open(context.ui.visibility.debug_playback_mut())
             .collapsible(true)
             .resizable(true)
             .default_size([400.0, 250.0])

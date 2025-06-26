@@ -35,14 +35,15 @@ pub struct CreatePlaylistModal {
 
 impl UIModal for CreatePlaylistModal {
     fn visibility(&self) -> bool {
-        self.context.borrow().ui.visible_playlist_modal()
+        self.context.borrow().ui.visibility.playlist_modal()
     }
 
     fn set_visibility(&mut self, visibility: bool) {
         self.context
             .borrow_mut()
             .ui
-            .set_visible_playlist_modal(visibility);
+            .visibility
+            .set_playlist_modal(visibility);
 
         // TODO: Config to save state of modal
         if !visibility {
@@ -132,7 +133,7 @@ impl CreatePlaylistModal {
     pub fn ui(&mut self, ctx: &egui::Context) {
         let show_modal = {
             let context = self.context.borrow();
-            context.ui.visible_playlist_modal()
+            context.ui.visibility.playlist_modal()
         };
 
         if !show_modal {

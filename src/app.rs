@@ -1,4 +1,7 @@
-use std::{rc::Rc, time::Instant};
+use std::{
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
 use egui_dock::{DockArea, DockState};
@@ -229,7 +232,7 @@ impl App {
         }) {
             debug!("`Ctrl + ,` has been used to toggle the settings popup window");
 
-            self.context.borrow_mut().ui.toggle_settings();
+            self.context.borrow_mut().ui.visibility.toggle_settings();
         }
     }
 }
@@ -241,14 +244,14 @@ impl eframe::App for App {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let start = if self.context.borrow().ui.visible_debug() {
+        let start = if self.context.borrow().ui.visibility.debug() {
             Some(Instant::now())
         } else {
             None
         };
 
         // TODO: Is there a way around this?
-        ctx.request_repaint_after(std::time::Duration::from_millis(16));
+        ctx.request_repaint_after(Duration::from_millis(16));
 
         self.handle_database_events();
         self.handle_keybinds(ctx);
@@ -274,7 +277,7 @@ impl eframe::App for App {
         if ctx.input(|i| i.key_pressed(Key::Space))
             // TODO: Change to UI context
             && !self.components.track_table.search_focused()
-            && !self.context.borrow().ui.visible_playlist_modal()
+            && !self.context.borrow().ui.visibility.playlist_modal()
         {
             let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
         }

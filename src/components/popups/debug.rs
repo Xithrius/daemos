@@ -123,14 +123,14 @@ impl DebugPopup {
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.context.borrow().ui.visible_debug() {
+        if !self.context.borrow().ui.visibility.debug() {
             return;
         }
 
         let latencies = self.context.borrow().latency.timings();
 
         egui::Window::new("Debug")
-            .open(self.context.borrow_mut().ui.visible_debug_mut())
+            .open(self.context.borrow_mut().ui.visibility.debug_mut())
             .resizable(true)
             .title_bar(true)
             .show(ctx, |ui| {

@@ -35,7 +35,8 @@ impl MenuBar {
                     self.context
                         .borrow_mut()
                         .ui
-                        .set_visible_playlist_modal(true);
+                        .visibility
+                        .set_playlist_modal(true);
                     ui.close_menu();
                 }
             });
@@ -43,7 +44,7 @@ impl MenuBar {
             ui.separator();
 
             if ui.button("Preferences").clicked() {
-                self.context.borrow_mut().ui.set_visible_settings(true);
+                self.context.borrow_mut().ui.visibility.set_settings(true);
                 ui.close_menu();
             } else if ui.button("Quit").clicked() {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -56,10 +57,14 @@ impl MenuBar {
         ui.menu_button("Window", |ui| {
             ui.menu_button("Debug", |ui| {
                 if ui.button("General").clicked() {
-                    self.context.borrow_mut().ui.set_visible_debug(true);
+                    self.context.borrow_mut().ui.visibility.set_debug(true);
                     ui.close_menu();
                 } else if ui.button("Playback").clicked() {
-                    self.context.borrow_mut().ui.set_debug_playback(true);
+                    self.context
+                        .borrow_mut()
+                        .ui
+                        .visibility
+                        .set_debug_playback(true);
                     ui.close_menu();
                 }
             });

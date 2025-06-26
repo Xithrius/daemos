@@ -8,62 +8,62 @@ pub struct UIVisibilityContext {
     playback_debug: bool,
 }
 
+impl UIVisibilityContext {
+    pub fn settings(&self) -> bool {
+        self.settings_popup
+    }
+
+    pub fn settings_mut(&mut self) -> &mut bool {
+        &mut self.settings_popup
+    }
+
+    pub fn set_settings(&mut self, visibility: bool) {
+        self.settings_popup = visibility;
+    }
+
+    pub fn toggle_settings(&mut self) {
+        self.settings_popup = !self.settings_popup;
+    }
+
+    pub fn debug(&self) -> bool {
+        self.general_debug
+    }
+
+    pub fn debug_mut(&mut self) -> &mut bool {
+        &mut self.general_debug
+    }
+
+    pub fn set_debug(&mut self, visibility: bool) {
+        self.general_debug = visibility;
+    }
+
+    pub fn debug_playback(&self) -> bool {
+        self.playback_debug
+    }
+
+    pub fn debug_playback_mut(&mut self) -> &mut bool {
+        &mut self.playback_debug
+    }
+
+    pub fn set_debug_playback(&mut self, visibility: bool) {
+        self.playback_debug = visibility;
+    }
+
+    pub fn playlist_modal(&self) -> bool {
+        self.create_playlist_modal
+    }
+
+    pub fn playlist_modal_mut(&mut self) -> &mut bool {
+        &mut self.create_playlist_modal
+    }
+
+    pub fn set_playlist_modal(&mut self, visibility: bool) {
+        self.create_playlist_modal = visibility;
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct UIContext {
     pub playlist: UIPlaylistContext,
     pub visibility: UIVisibilityContext,
-}
-
-impl UIContext {
-    pub fn visible_settings(&self) -> bool {
-        self.visibility.settings_popup
-    }
-
-    pub fn visible_settings_mut(&mut self) -> &mut bool {
-        &mut self.visibility.settings_popup
-    }
-
-    pub fn set_visible_settings(&mut self, visibility: bool) {
-        self.visibility.settings_popup = visibility;
-    }
-
-    pub fn visible_debug(&self) -> bool {
-        self.visibility.general_debug
-    }
-
-    pub fn visible_debug_mut(&mut self) -> &mut bool {
-        &mut self.visibility.general_debug
-    }
-
-    pub fn set_visible_debug(&mut self, visibility: bool) {
-        self.visibility.general_debug = visibility;
-    }
-
-    pub fn toggle_settings(&mut self) {
-        self.visibility.settings_popup = !self.visibility.settings_popup;
-    }
-
-    pub fn debug_playback(&self) -> bool {
-        self.visibility.playback_debug
-    }
-
-    pub fn debug_playback_mut(&mut self) -> &mut bool {
-        &mut self.visibility.playback_debug
-    }
-
-    pub fn set_debug_playback(&mut self, visibility: bool) {
-        self.visibility.playback_debug = visibility;
-    }
-
-    pub fn visible_playlist_modal(&self) -> bool {
-        self.visibility.create_playlist_modal
-    }
-
-    pub fn visible_playlist_modal_mut(&mut self) -> &mut bool {
-        &mut self.visibility.create_playlist_modal
-    }
-
-    pub fn set_visible_playlist_modal(&mut self, visibility: bool) {
-        self.visibility.create_playlist_modal = visibility;
-    }
 }

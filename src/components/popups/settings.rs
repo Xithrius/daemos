@@ -33,14 +33,14 @@ impl SettingsPopup {
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.context.borrow().ui.visible_settings() {
+        if !self.context.borrow().ui.visibility.settings() {
             return;
         }
 
         let mut new_autoplay: Option<AutoplayType> = None;
 
         egui::Window::new("Settings")
-            .open(self.context.borrow_mut().ui.visible_settings_mut())
+            .open(self.context.borrow_mut().ui.visibility.settings_mut())
             .resizable(true)
             .title_bar(true)
             .show(ctx, |ui| {
