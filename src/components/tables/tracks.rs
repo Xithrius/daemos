@@ -11,7 +11,7 @@ use tracing::{debug, error};
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
-    config::core::SharedConfig,
+    config::{core::SharedConfig, search::MatcherFn},
     context::{
         AutoplayType, PlayDirection, SharedContext, ShuffleType,
         playback::{PlaylistState, SelectedTrackContext},
@@ -24,7 +24,6 @@ use crate::{
 const INDEX_COLUMN_WIDTH: f32 = 50.0;
 const DURATION_COLUMN_WIDTH: f32 = 100.0;
 
-#[derive(Debug, Clone, Default)]
 pub struct TrackSearch {
     pub text: String,
     pub previous_text: Option<String>,
@@ -33,9 +32,33 @@ pub struct TrackSearch {
     pub focus_requested: bool,
     pub duration: Option<Duration>,
     pub yielded_results: usize,
+    pub matcher: MatcherFn,
 }
 
-#[derive(Debug, Clone)]
+impl Default for TrackSearch {
+    fn default() -> Self {
+        Self {
+            text: String::new(),
+            previous_text: None,
+            changed: false,
+            focused: false,
+            focus_requested: false,
+            duration: None,
+            yielded_results: 0,
+            matcher: Box::new(|_, _| false),
+        }
+    }
+}
+
+impl TrackSearch {
+    pub fn new(config: SharedConfig) -> Self {
+        Self {
+            matcher: config.borrow().search.strategy.get_matcher(),
+            ..Default::default()
+        }
+    }
+}
+
 pub struct TrackTable {
     config: SharedConfig,
     context: SharedContext,
@@ -55,11 +78,13 @@ impl TrackTable {
             .database_command_tx
             .send(DatabaseCommand::QueryTracks(None));
 
+        let search = TrackSearch::new(config.clone());
+
         Self {
             config,
             context,
             channels,
-            search: TrackSearch::default(),
+            search,
             scroll_to_selected: false,
         }
     }
@@ -407,13 +432,14 @@ impl TrackTable {
         self.search.focused = response.has_focus();
 
         if self.search.text != previous_text {
-            let search_text = self.search.text.to_ascii_lowercase();
-
-            let predicate = |track: &Track| {
-                search_text.is_empty() || track.name.to_ascii_lowercase().contains(&search_text)
-            };
-
             let start = Instant::now();
+
+            let search_text = self.search.text.clone();
+
+            let matcher = &self.search.matcher;
+
+            let predicate =
+                |track: &Track| search_text.is_empty() || (matcher)(&search_text, &track.name);
 
             if let Some(filtered) = cache_context.filter_with(&selected_playlist, predicate) {
                 self.search.yielded_results = filtered.len();

@@ -1,6 +1,7 @@
 pub mod core;
 pub mod general;
 pub mod playback;
+pub mod search;
 pub mod ui;
 
 use std::{
