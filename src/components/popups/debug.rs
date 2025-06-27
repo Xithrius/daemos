@@ -17,7 +17,7 @@ fn format_latency_mark(mark: GridMark, _range: &RangeInclusive<f64>) -> String {
     if val < 1.0 {
         format!("{:.0} µs", val * 1000.0)
     } else {
-        format!("{:.1} ms", val)
+        format!("{val:.1} ms")
     }
 }
 
@@ -26,7 +26,7 @@ fn format_latency_label(_series_name: &str, val: &PlotPoint) -> String {
     if y < 1.0 {
         format!("Latency: {:.0} µs", y * 1000.0)
     } else {
-        format!("Latency: {:.2} ms", y)
+        format!("Latency: {y:.2} ms")
     }
 }
 

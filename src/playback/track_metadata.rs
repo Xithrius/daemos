@@ -29,7 +29,7 @@ pub fn extract_track_metadata(file_path: &PathBuf) -> Result<CodecParameters> {
         .tracks()
         .iter()
         .find(|t| t.codec_params.codec != CODEC_TYPE_NULL)
-        .context(format!("No supported audio for track {:?}", file_path))?;
+        .context(format!("No supported audio for track {file_path:?}"))?;
 
     Ok(track.codec_params.clone())
 }

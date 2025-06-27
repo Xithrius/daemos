@@ -81,7 +81,8 @@ impl MenuBar {
         let processing_tracks = self.context.borrow().processing.total();
 
         if processing_tracks > 0 {
-            ui.label(format!("Processing {} track(s)", processing_tracks));
+            let processing_tracks_text = format!("Processing {processing_tracks} track(s)");
+            ui.label(processing_tracks_text);
 
             let spinner = egui::Spinner::new().size(14.0).color(Color32::GRAY);
             ui.add(spinner);

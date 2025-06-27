@@ -243,16 +243,17 @@ impl PlaybackBar {
 
         let autoplay_type = context.playback.autoplay.autoplay();
 
-        let autoplay_text = if matches!(
-            autoplay_type,
-            AutoplayType::Iterative(PlayDirection::Forward)
-        ) {
-            RichText::new(format!("Autoplay: {}", autoplay_playlist_context))
-        } else {
-            RichText::new(format!(
-                "Autoplay {}: {}",
-                autoplay_type, autoplay_playlist_context
-            ))
+        let autoplay_text = {
+            let text = if matches!(
+                autoplay_type,
+                AutoplayType::Iterative(PlayDirection::Forward)
+            ) {
+                format!("Autoplay: {autoplay_playlist_context}")
+            } else {
+                format!("Autoplay {autoplay_type}: {autoplay_playlist_context}")
+            };
+
+            RichText::new(text)
         };
 
         let track_text = RichText::new(&track_context.track.name).strong();
@@ -305,19 +306,19 @@ impl PlaybackBar {
                     ));
 
                     if let Some(base) = control.progress_base {
-                        ui.label(format!("Progress Base: {:.2?}", base));
+                        ui.label(format!("Progress Base: {base:.2?}"));
                     } else {
                         ui.label("Progress Base: None");
                     }
 
                     if let Some(ts) = control.progress_timestamp {
-                        ui.label(format!("Progress Timestamp: {:?}", ts));
+                        ui.label(format!("Progress Timestamp: {ts:?}"));
                     } else {
                         ui.label("Progress Timestamp: None");
                     }
 
                     if let Some(simulated) = control.current_progress() {
-                        ui.label(format!("Simulated Current Progress: {:.2?}", simulated));
+                        ui.label(format!("Simulated Current Progress: {simulated:.2?}"));
                     } else {
                         ui.label("Simulated Current Progress: None");
                     }

@@ -95,11 +95,11 @@ impl Track {
 
         let track_metadata = extract_track_metadata(&path)?;
         let duration_secs = extract_track_duration(track_metadata)
-            .context(format!("Failed to get duration from track {:?}", path))?
+            .context(format!("Failed to get duration from track {path:?}"))?
             .as_secs_f64();
 
         let file_name = get_file_name(path.clone())
-            .context(format!("Failed to get track file name from {:?}", path))?;
+            .context(format!("Failed to get track file name from {path:?}"))?;
 
         let name = regex_extract
             .and_then(|extract| extract.extract_group(&file_name))

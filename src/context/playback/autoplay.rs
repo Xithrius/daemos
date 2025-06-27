@@ -83,7 +83,7 @@ impl fmt::Display for AutoplayType {
             },
         };
 
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 

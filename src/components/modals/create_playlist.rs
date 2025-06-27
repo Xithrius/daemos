@@ -182,7 +182,7 @@ impl CreatePlaylistModal {
 
                 ui.horizontal(|ui| {
                     if let Some(example_output) = self.state.example_output.as_ref() {
-                        let example_track_name = format!("Example track name: {}", example_output);
+                        let example_track_name = format!("Example track name: {example_output}");
 
                         ui.label(example_track_name);
                     }

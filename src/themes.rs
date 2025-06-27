@@ -17,14 +17,16 @@ impl FromStr for AppTheme {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "dark" => Ok(Self::Dark),
-            "latte" => Ok(Self::Latte),
-            "frappe" => Ok(Self::Frappe),
-            "macchiato" => Ok(Self::Macchiato),
-            "mocha" => Ok(Self::Mocha),
+        let value = match s.to_lowercase().as_str() {
+            "dark" => Self::Dark,
+            "latte" => Self::Latte,
+            "frappe" => Self::Frappe,
+            "macchiato" => Self::Macchiato,
+            "mocha" => Self::Mocha,
             _ => bail!("Theme '{}' could not be deserialized", s),
-        }
+        };
+
+        Ok(value)
     }
 }
 
@@ -38,6 +40,6 @@ impl fmt::Display for AppTheme {
             AppTheme::Mocha => "Mocha",
         };
 
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }

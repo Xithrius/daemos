@@ -8,8 +8,8 @@ pub fn human_duration(duration: Duration, include_hours: bool) -> String {
     let seconds = total_secs % 60;
 
     if hours > 0 || include_hours {
-        format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+        format!("{hours:02}:{minutes:02}:{seconds:02}")
     } else {
-        format!("{:02}:{:02}", minutes, seconds)
+        format!("{minutes:02}:{seconds:02}")
     }
 }

@@ -40,7 +40,7 @@ impl fmt::Display for ComponentTab {
             ComponentTab::Tasks => "Tasks",
         };
 
-        write!(f, "{}", label)
+        write!(f, "{label}")
     }
 }
 
