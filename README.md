@@ -2,7 +2,7 @@
 
 # daemos
 
-A modern local-only music player built with [Rust](https://github.com/rust-lang/rust) and [egui](https://github.com/emilk/egui)
+A local-only music player
 
 [![CI][s1]][l1] [![unsafe][s2]][l2] [![MIT][s3]][l3] [![Apache][s4]][l4]
 
@@ -27,3 +27,5 @@ A modern local-only music player built with [Rust](https://github.com/rust-lang/
 If you have any problems, do not hesitate to [submit an issue](https://github.com/Xithrius/daemos/issues/new/choose).
 
 This project follows the guidelines of [Semantic Versioning](https://semver.org/).
+
+Built with [Rust](https://github.com/rust-lang/rust) and [egui](https://github.com/emilk/egui).
