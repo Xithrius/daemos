@@ -78,6 +78,8 @@
   - [ ] User actions (creating playlists)
   - [ ] Background task completions (finished inserting tracks)
 
+- Implement MPRIS via [zbus](https://docs.rs/crate/zbus/5.7.1)/[zbus_macros](https://docs.rs/crate/zbus_macros/5.7.1) to allow operations with playerctl
+
 - [ ] font size\*
 
 - [ ] Crossfade\*

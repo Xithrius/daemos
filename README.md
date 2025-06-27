@@ -18,4 +18,12 @@ A modern local-only music player built with [Rust](https://github.com/rust-lang/
 [s4]: https://img.shields.io/badge/license-Apache-blue.svg
 [l4]: https://github.com/Xithrius/daemos/blob/main/LICENSE-APACHE
 
+<img src="static/assets/preview.png" />
+
 </div>
+
+## More information
+
+If you have any problems, do not hesitate to [submit an issue](https://github.com/Xithrius/daemos/issues/new/choose).
+
+This project follows the guidelines of [Semantic Versioning](https://semver.org/).
