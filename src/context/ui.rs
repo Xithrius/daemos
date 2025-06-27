@@ -1,4 +1,7 @@
-use crate::context::UIPlaylistContext;
+use crate::{
+    config::search::{SearchConfig, SearchMatchingStrategy},
+    context::UIPlaylistContext,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct UIVisibilityContext {
@@ -62,8 +65,33 @@ impl UIVisibilityContext {
     }
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct UISearchContext {
+    matcher: SearchMatchingStrategy,
+}
+
+impl UISearchContext {
+    pub fn matcher(&self) -> &SearchMatchingStrategy {
+        &self.matcher
+    }
+
+    pub fn set_matcher(&mut self, matcher: SearchMatchingStrategy) {
+        self.matcher = matcher;
+    }
+
+    pub fn check_matcher(&mut self, search_config: &SearchConfig) {
+        let current_strategy = &search_config.strategy;
+        if self.matcher == *current_strategy {
+            return;
+        }
+
+        self.matcher = current_strategy.clone();
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct UIContext {
     pub playlist: UIPlaylistContext,
+    pub search: UISearchContext,
     pub visibility: UIVisibilityContext,
 }

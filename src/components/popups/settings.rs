@@ -1,5 +1,5 @@
 use crate::{
-    config::core::SharedConfig,
+    config::{core::SharedConfig, search::SearchMatchingStrategy},
     context::{AutoplayType, PlayDirection, SharedContext, ShuffleType},
     themes::AppTheme,
 };
@@ -13,22 +13,46 @@ const AUTOPLAY_OPTIONS: [AutoplayType; 4] = [
     AutoplayType::Shuffle(ShuffleType::TrueRandom),
 ];
 
+const SEARCH_STRATEGY_OPTIONS: [SearchMatchingStrategy; 3] = [
+    SearchMatchingStrategy::Fuzzy,
+    SearchMatchingStrategy::ContainsExact,
+    SearchMatchingStrategy::ContainsLowercase,
+];
+
+#[derive(Debug, Clone)]
+pub struct SelectedSettings {
+    theme: AppTheme,
+    autoplay: AutoplayType,
+    search: SearchMatchingStrategy,
+}
+
+impl From<SharedConfig> for SelectedSettings {
+    fn from(config: SharedConfig) -> Self {
+        let c = config.borrow();
+
+        Self {
+            theme: c.ui.theme,
+            autoplay: c.playback.autoplay.clone(),
+            search: c.search.strategy.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SettingsPopup {
-    // config: CoreConfig,
+    config: SharedConfig,
     context: SharedContext,
-    selected_theme: AppTheme,
-    selected_autoplay: AutoplayType,
+    selected: SelectedSettings,
 }
 
 impl SettingsPopup {
     pub fn new(config: SharedConfig, context: SharedContext) -> Self {
-        let c = config.borrow();
+        let selected_settings = SelectedSettings::from(config.clone());
 
         Self {
+            config,
             context,
-            selected_theme: c.ui.theme,
-            selected_autoplay: c.playback.autoplay.clone(),
+            selected: selected_settings,
         }
     }
 
@@ -38,6 +62,7 @@ impl SettingsPopup {
         }
 
         let mut new_autoplay: Option<AutoplayType> = None;
+        let mut new_search_strategy: Option<SearchMatchingStrategy> = None;
 
         egui::Window::new("Settings")
             .open(self.context.borrow_mut().ui.visibility.settings_mut())
@@ -53,13 +78,13 @@ impl SettingsPopup {
                         ui.label("Theme");
 
                         egui::ComboBox::from_id_salt("Theme combobox")
-                            .selected_text(format!("{}", self.selected_theme))
+                            .selected_text(format!("{}", self.selected.theme))
                             .show_ui(ui, |ui| {
                                 let mut make_theme_option =
                                     |ui: &mut egui::Ui, label: &str, value: AppTheme| {
                                         if ui
                                             .selectable_value(
-                                                &mut self.selected_theme,
+                                                &mut self.selected.theme,
                                                 value,
                                                 label,
                                             )
@@ -102,13 +127,13 @@ impl SettingsPopup {
                         ui.label("Autoplay");
 
                         egui::ComboBox::from_id_salt("Autoplay combobox")
-                            .selected_text(format!("{}", self.selected_autoplay))
+                            .selected_text(format!("{}", self.selected.autoplay))
                             .show_ui(ui, |ui| {
                                 let mut make_autoplay_option =
                                     |ui: &mut egui::Ui, label: &str, value: AutoplayType| {
                                         if ui
                                             .selectable_value(
-                                                &mut self.selected_autoplay,
+                                                &mut self.selected.autoplay,
                                                 value.clone(),
                                                 label,
                                             )
@@ -127,6 +152,37 @@ impl SettingsPopup {
                                 }
                             });
                     });
+
+                    // Search section
+                    ui.horizontal(|ui| {
+                        ui.label("Search strategy");
+
+                        egui::ComboBox::from_id_salt("Search combobox")
+                            .selected_text(format!("{}", self.selected.search))
+                            .show_ui(ui, |ui| {
+                                let mut make_search_strategy_option =
+                                    |ui: &mut egui::Ui, label: &str, value: SearchMatchingStrategy| {
+                                        if ui
+                                            .selectable_value(
+                                                &mut self.selected.search,
+                                                value.clone(),
+                                                label,
+                                            )
+                                            .clicked()
+                                        {
+                                            new_search_strategy = Some(value);
+                                        }
+                                    };
+
+                                for search_option in SEARCH_STRATEGY_OPTIONS {
+                                    make_search_strategy_option(
+                                        ui,
+                                        &search_option.to_string(),
+                                        search_option,
+                                    );
+                                }
+                            });
+                    });
                 })
             });
 
@@ -136,6 +192,10 @@ impl SettingsPopup {
                 .playback
                 .autoplay
                 .set_autoplay(autoplay);
+        }
+
+        if let Some(search_strategy) = new_search_strategy {
+            self.config.borrow_mut().search.strategy = search_strategy;
         }
     }
 }

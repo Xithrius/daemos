@@ -11,7 +11,10 @@ use tracing::{debug, error};
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};
 use crate::{
     components::ComponentChannels,
-    config::{core::SharedConfig, search::MatcherFn},
+    config::{
+        core::SharedConfig,
+        search::{MatcherFn, SearchMatchingStrategy},
+    },
     context::{
         AutoplayType, PlayDirection, SharedContext, ShuffleType,
         playback::{PlaylistState, SelectedTrackContext},
@@ -32,7 +35,8 @@ pub struct TrackSearch {
     pub focus_requested: bool,
     pub duration: Option<Duration>,
     pub yielded_results: usize,
-    pub matcher: MatcherFn,
+    pub matcher: SearchMatchingStrategy,
+    pub matcher_fn: MatcherFn,
 }
 
 impl Default for TrackSearch {
@@ -45,15 +49,19 @@ impl Default for TrackSearch {
             focus_requested: false,
             duration: None,
             yielded_results: 0,
-            matcher: Box::new(|_, _| false),
+            matcher: SearchMatchingStrategy::default(),
+            matcher_fn: Box::new(|_, _| false),
         }
     }
 }
 
 impl TrackSearch {
     pub fn new(config: SharedConfig) -> Self {
+        let strategy = &config.borrow().search.strategy;
+
         Self {
-            matcher: config.borrow().search.strategy.get_matcher(),
+            matcher: strategy.clone(),
+            matcher_fn: strategy.get_matcher(),
             ..Default::default()
         }
     }
@@ -411,6 +419,18 @@ impl TrackTable {
     // delete characters to go back to that same search length, then add more characters,
     // calculation of filtered tracks will begin again
     fn ui_search(&mut self, ui: &mut egui::Ui) {
+        let mut outdated_search_strategy = false;
+        {
+            let context = self.context.borrow();
+            let current_matcher = context.ui.search.matcher();
+
+            if self.search.matcher != *current_matcher {
+                self.search.matcher = current_matcher.clone();
+                self.search.matcher_fn = self.config.borrow().search.strategy.get_matcher();
+                outdated_search_strategy = true;
+            }
+        }
+
         let selected_playlist = { self.context.borrow().ui.playlist.selected() };
 
         let mut context = self.context.borrow_mut();
@@ -431,12 +451,17 @@ impl TrackTable {
         self.search.changed = response.changed();
         self.search.focused = response.has_focus();
 
-        if self.search.text != previous_text {
+        // If the current search doesn't have the same input as the previous frame, or
+        // the search box isn't empty and the search strategy was changed,
+        // then the filtered tracks vector for the respective playlist are updated
+        if self.search.text != previous_text
+            || (!self.search.text.is_empty() && outdated_search_strategy)
+        {
             let start = Instant::now();
 
             let search_text = self.search.text.clone();
 
-            let matcher = &self.search.matcher;
+            let matcher = &self.search.matcher_fn;
 
             let predicate =
                 |track: &Track| search_text.is_empty() || (matcher)(&search_text, &track.name);

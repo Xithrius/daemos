@@ -140,6 +140,16 @@ impl App {
             }
         }
 
+        // TODO: If there's a bunch of input boxes, then this is going to get bad
+        if ctx.input(|i| i.key_pressed(Key::Space))
+                // TODO: Change to UI context
+                && !self.components.track_table.search_focused()
+                && !self.context.borrow().ui.visibility.playlist_modal()
+        {
+            let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
+            return;
+        }
+
         // Open OS file explorer to select folder of tracks
         if ctx.input_mut(|i| {
             i.consume_shortcut(&KeyboardShortcut {
@@ -235,53 +245,34 @@ impl App {
             self.context.borrow_mut().ui.visibility.toggle_settings();
         }
     }
-}
 
-impl eframe::App for App {
-    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
-    //     eframe::set_value(storage, eframe::APP_KEY, self);
-    // }
+    fn check_search_matcher(&mut self) {
+        let search_config = &self.config.borrow().search;
+        self.context
+            .borrow_mut()
+            .ui
+            .search
+            .check_matcher(search_config);
+    }
 
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let start = if self.context.borrow().ui.visibility.debug() {
-            Some(Instant::now())
-        } else {
-            None
-        };
+    fn handle_player_event_repaint(&mut self, ctx: &egui::Context) {
+        let mut context = self.context.borrow_mut();
 
-        // TODO: Is there a way around this?
-        ctx.request_repaint_after(Duration::from_millis(16));
-
-        self.handle_database_events();
-        self.handle_keybinds(ctx);
-
+        // TODO: Are these repaints necessary?
+        if let Ok(player_event) = self.channels.player_event_rx.try_recv() {
+            context.playback.handle_player_event(player_event.clone());
+            ctx.request_repaint();
+        } else if context
+            .playback
+            .selected_track
+            .as_ref()
+            .is_some_and(|track| track.playing)
         {
-            let mut context = self.context.borrow_mut();
-
-            // TODO: Are these repaints necessary?
-            if let Ok(player_event) = self.channels.player_event_rx.try_recv() {
-                context.playback.handle_player_event(player_event.clone());
-                ctx.request_repaint();
-            } else if context
-                .playback
-                .selected_track
-                .as_ref()
-                .is_some_and(|track| track.playing)
-            {
-                ctx.request_repaint();
-            }
+            ctx.request_repaint();
         }
+    }
 
-        // TODO: If there's a bunch of input boxes, then this is going to get bad
-        if ctx.input(|i| i.key_pressed(Key::Space))
-            // TODO: Change to UI context
-            && !self.components.track_table.search_focused()
-            && !self.context.borrow().ui.visibility.playlist_modal()
-        {
-            let _ = self.channels.player_command_tx.send(PlayerCommand::Toggle);
-        }
-
+    fn ui(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 self.components.top_menu_bar.ui(ctx, ui);
@@ -311,6 +302,31 @@ impl eframe::App for App {
         self.components.settings.ui(ctx);
         self.components.debug.ui(ctx);
         self.components.create_playlist.ui(ctx);
+    }
+}
+
+impl eframe::App for App {
+    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
+    //     eframe::set_value(storage, eframe::APP_KEY, self);
+    // }
+
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let start = if self.context.borrow().ui.visibility.debug() {
+            Some(Instant::now())
+        } else {
+            None
+        };
+
+        // TODO: Is there a way around this?
+        ctx.request_repaint_after(Duration::from_millis(16));
+
+        self.handle_database_events();
+        self.handle_keybinds(ctx);
+        self.check_search_matcher();
+        self.handle_player_event_repaint(ctx);
+
+        self.ui(ctx);
 
         if let Some(start) = start {
             let duration = start.elapsed();

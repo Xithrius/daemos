@@ -32,7 +32,6 @@ impl ControlContext {
     }
 
     pub fn set_volume(&mut self, volume: f32) {
-        // self.last_volume_sent = self.volume;
         self.volume = volume;
     }
 

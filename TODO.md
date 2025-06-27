@@ -33,10 +33,7 @@
 
   - [ ] Tracks
 
-    - [ ] Contains lowercase version
-    - [ ] Fuzzy searching
     - [ ] By attributes
-      - [ ] First, get search by track name working
       - [ ] Attribute dropdown
       - [ ] Combine the two to have track-attribute searching
 
