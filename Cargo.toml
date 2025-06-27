@@ -2,6 +2,15 @@
 name = "daemos"
 version = "0.1.0"
 edition = "2024"
+authors = ["Xithrius <xithrius@gmail.com>"]
+rust-version = "1.88.0"
+description = "A local-only music player "
+documentation = "https://github.com/Xithrius/daemos"
+homepage = "https://github.com/Xithrius/daemos"
+repository = "https://github.com/Xithrius/daemos"
+license = "MIT OR Apache-2.0"
+keywords = ["music", "gui"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 egui = { version = "0.31", features = ["serde"] }

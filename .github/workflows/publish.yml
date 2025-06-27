@@ -16,4 +16,7 @@ jobs:
         env:
             CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+
       - run: cargo publish --allow-dirty
