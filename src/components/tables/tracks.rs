@@ -161,7 +161,7 @@ impl TrackTable {
                 .context
                 .borrow()
                 .cache
-                .playlist_tracks(Some(&playlist))
+                .get_playlist_tracks(Some(&playlist))
                 .map(|tracks| tracks.to_owned())
                 .unwrap_or_default();
             let playlist_state = PlaylistState::new(playlist, tracks);
@@ -219,7 +219,7 @@ impl TrackTable {
         } else {
             &context
                 .cache
-                .playlist_tracks(None)
+                .get_playlist_tracks(None)
                 .map(|tracks| tracks.to_owned())
                 .unwrap_or_default()
         };
