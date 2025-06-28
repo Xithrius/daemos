@@ -37,3 +37,189 @@ pub struct Context {
 }
 
 pub type SharedContext = Rc<RefCell<Context>>;
+
+// Component-specific context accessors
+#[derive(Debug, Clone)]
+pub struct PlaybackContextAccess {
+    context: SharedContext,
+}
+
+impl PlaybackContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_playback<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&PlaybackContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.playback)
+    }
+
+    pub fn with_playback_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut PlaybackContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.playback)
+    }
+
+    pub fn with_cache<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&CacheContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.cache)
+    }
+
+    pub fn with_cache_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut CacheContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.cache)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UIContextAccess {
+    context: SharedContext,
+}
+
+impl UIContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_ui<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&UIContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.ui)
+    }
+
+    pub fn with_ui_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut UIContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.ui)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TableContextAccess {
+    context: SharedContext,
+}
+
+impl TableContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_cache<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&CacheContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.cache)
+    }
+
+    pub fn with_cache_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut CacheContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.cache)
+    }
+
+    pub fn with_playback<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&PlaybackContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.playback)
+    }
+
+    pub fn with_playback_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut PlaybackContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.playback)
+    }
+
+    pub fn with_ui<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&UIContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.ui)
+    }
+
+    pub fn with_ui_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut UIContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.ui)
+    }
+}
+
+// Settings-specific context
+#[derive(Debug, Clone)]
+pub struct SettingsContextAccess {
+    context: SharedContext,
+}
+
+impl SettingsContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_ui<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&UIContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.ui)
+    }
+
+    pub fn with_ui_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut UIContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.ui)
+    }
+}
+
+// Menu-specific context
+#[derive(Debug, Clone)]
+pub struct MenuContextAccess {
+    context: SharedContext,
+}
+
+impl MenuContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_ui<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&UIContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.ui)
+    }
+
+    pub fn with_ui_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut UIContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.ui)
+    }
+}

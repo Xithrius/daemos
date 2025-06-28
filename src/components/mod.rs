@@ -18,7 +18,7 @@ use crate::{
         popups::debug::DebugPopup,
     },
     config::core::SharedConfig,
-    context::SharedContext,
+    context::{MenuContextAccess, SharedContext},
     database::connection::DatabaseCommand,
     playback::state::PlayerCommand,
 };
@@ -83,14 +83,12 @@ impl Components {
         channels: Rc<ComponentChannels>,
     ) -> Self {
         Self {
-            top_menu_bar: MenuBar::new(context.clone()),
+            top_menu_bar: MenuBar::new(MenuContextAccess::new(context.clone())),
             playback_bar: PlaybackBar::new(config.clone(), context.clone(), channels.clone()),
-
             playlist_table: PlaylistTable::new(context.clone(), channels.clone()),
             track_table: TrackTable::new(config.clone(), context.clone(), channels.clone()),
             tag_table: TagTable::default(),
             task_table: TaskTable::default(),
-
             settings: SettingsPopup::new(config.clone(), context.clone()),
             debug: DebugPopup::new(config.clone(), context.clone()),
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),

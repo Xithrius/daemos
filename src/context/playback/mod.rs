@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 pub use selected::{PlaylistState, SelectedPlaylistContext, SelectedTrackContext};
 use tracing::{debug, warn};
 
+use super::{CacheContext, SharedContext};
 use crate::playback::state::PlayerEvent;
 
 #[derive(Debug, Clone, Default)]
@@ -101,5 +102,48 @@ impl PlaybackContext {
                 }
             }
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PlaybackContextAccess {
+    context: SharedContext,
+}
+
+impl PlaybackContextAccess {
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
+    }
+
+    pub fn with_playback<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&PlaybackContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.playback)
+    }
+
+    pub fn with_playback_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut PlaybackContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.playback)
+    }
+
+    pub fn with_cache<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&CacheContext) -> R,
+    {
+        let context = self.context.borrow();
+        f(&context.cache)
+    }
+
+    pub fn with_cache_mut<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut CacheContext) -> R,
+    {
+        let mut context = self.context.borrow_mut();
+        f(&mut context.cache)
     }
 }

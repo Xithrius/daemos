@@ -112,6 +112,7 @@ impl CacheContext {
     /// Once the filtered vector is created, the playlist is set to the new vector in [`Self::filtered_playlist_tracks`].
     /// If playlist is [`None`], the same filtering logic is instead applied to [`Self::all_tracks`],
     /// and any filtered tracks is set on [`Self::filtered_all_tracks`].
+    /// If a new filtered track vector is created, it's also returned.
     ///
     /// An example of a predicate filtering track names down to ones that only contain "foo":
     /// ```
@@ -154,5 +155,26 @@ impl CacheContext {
 
             self.filtered_all_tracks.as_ref()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cache_playlist_track_filtering_none_returns_none() {
+        let mut cache = CacheContext::default();
+        let result = cache.filter_with(&None, |_| true);
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_cache_playlist_track_filtering_some_returns_some() {
+        let mut cache = CacheContext::default();
+        let result = cache.filter_with(&Some(Playlist::default()), |_| true);
+
+        assert!(result.is_some());
     }
 }
