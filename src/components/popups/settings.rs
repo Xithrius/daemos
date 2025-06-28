@@ -63,6 +63,11 @@ impl SettingsPopup {
 
         let mut new_autoplay: Option<AutoplayType> = None;
         let mut new_search_strategy: Option<SearchMatchingStrategy> = None;
+        let mut new_theme: Option<AppTheme> = None;
+
+        let current_theme = self.selected.theme;
+        let current_autoplay = self.selected.autoplay.clone();
+        let current_search = self.selected.search.clone();
 
         egui::Window::new("Settings")
             .open(self.context.borrow_mut().ui.visibility.settings_mut())
@@ -71,122 +76,28 @@ impl SettingsPopup {
             .show(ctx, |ui| {
                 ui.set_min_size(DEFAULT_SETTINGS_WINDOW_SIZE.into());
 
-                // TODO: Figure out how to separate this into methods
                 ui.vertical(|ui| {
-                    // Theme selection
-                    ui.horizontal(|ui| {
-                        ui.label("Theme");
-
-                        egui::ComboBox::from_id_salt("Theme combobox")
-                            .selected_text(format!("{}", self.selected.theme))
-                            .show_ui(ui, |ui| {
-                                let mut make_theme_option =
-                                    |ui: &mut egui::Ui, label: &str, value: AppTheme| {
-                                        if ui
-                                            .selectable_value(
-                                                &mut self.selected.theme,
-                                                value,
-                                                label,
-                                            )
-                                            .clicked()
-                                        {
-                                            match value {
-                                                AppTheme::Dark => {
-                                                    ctx.set_visuals(egui::Visuals::dark());
-                                                }
-                                                AppTheme::Latte => catppuccin_egui::set_theme(
-                                                    ctx,
-                                                    catppuccin_egui::LATTE,
-                                                ),
-                                                AppTheme::Frappe => catppuccin_egui::set_theme(
-                                                    ctx,
-                                                    catppuccin_egui::FRAPPE,
-                                                ),
-                                                AppTheme::Macchiato => catppuccin_egui::set_theme(
-                                                    ctx,
-                                                    catppuccin_egui::MACCHIATO,
-                                                ),
-                                                AppTheme::Mocha => catppuccin_egui::set_theme(
-                                                    ctx,
-                                                    catppuccin_egui::MOCHA,
-                                                ),
-                                            }
-                                        }
-                                    };
-
-                                make_theme_option(ui, "Dark", AppTheme::Dark);
-                                make_theme_option(ui, "Latte", AppTheme::Latte);
-                                make_theme_option(ui, "Frappe", AppTheme::Frappe);
-                                make_theme_option(ui, "Macchiato", AppTheme::Macchiato);
-                                make_theme_option(ui, "Mocha", AppTheme::Mocha);
-                            });
-                    });
-
-                    // Autoplay selection
-                    ui.horizontal(|ui| {
-                        ui.label("Autoplay");
-
-                        egui::ComboBox::from_id_salt("Autoplay combobox")
-                            .selected_text(format!("{}", self.selected.autoplay))
-                            .show_ui(ui, |ui| {
-                                let mut make_autoplay_option =
-                                    |ui: &mut egui::Ui, label: &str, value: AutoplayType| {
-                                        if ui
-                                            .selectable_value(
-                                                &mut self.selected.autoplay,
-                                                value.clone(),
-                                                label,
-                                            )
-                                            .clicked()
-                                        {
-                                            new_autoplay = Some(value);
-                                        }
-                                    };
-
-                                for autoplay_option in AUTOPLAY_OPTIONS {
-                                    make_autoplay_option(
-                                        ui,
-                                        &autoplay_option.to_string(),
-                                        autoplay_option,
-                                    );
-                                }
-                            });
-                    });
-
-                    // Search section
-                    ui.horizontal(|ui| {
-                        ui.label("Search strategy");
-
-                        egui::ComboBox::from_id_salt("Search combobox")
-                            .selected_text(format!("{}", self.selected.search))
-                            .show_ui(ui, |ui| {
-                                let mut make_search_strategy_option =
-                                    |ui: &mut egui::Ui, label: &str, value: SearchMatchingStrategy| {
-                                        if ui
-                                            .selectable_value(
-                                                &mut self.selected.search,
-                                                value.clone(),
-                                                label,
-                                            )
-                                            .clicked()
-                                        {
-                                            new_search_strategy = Some(value);
-                                        }
-                                    };
-
-                                for search_option in SEARCH_STRATEGY_OPTIONS {
-                                    make_search_strategy_option(
-                                        ui,
-                                        &search_option.to_string(),
-                                        search_option,
-                                    );
-                                }
-                            });
-                    });
+                    Self::render_theme_section(ui, current_theme, &mut new_theme);
+                    Self::render_autoplay_section(ui, current_autoplay, &mut new_autoplay);
+                    Self::render_search_section(ui, current_search, &mut new_search_strategy);
                 })
             });
 
+        if let Some(theme) = new_theme {
+            self.selected.theme = theme;
+            match theme {
+                AppTheme::Dark => {
+                    ctx.set_visuals(egui::Visuals::dark());
+                }
+                AppTheme::Latte => catppuccin_egui::set_theme(ctx, catppuccin_egui::LATTE),
+                AppTheme::Frappe => catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE),
+                AppTheme::Macchiato => catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO),
+                AppTheme::Mocha => catppuccin_egui::set_theme(ctx, catppuccin_egui::MOCHA),
+            }
+        }
+
         if let Some(autoplay) = new_autoplay {
+            self.selected.autoplay = autoplay.clone();
             self.context
                 .borrow_mut()
                 .playback
@@ -195,7 +106,96 @@ impl SettingsPopup {
         }
 
         if let Some(search_strategy) = new_search_strategy {
+            self.selected.search = search_strategy.clone();
             self.config.borrow_mut().search.strategy = search_strategy;
         }
+    }
+
+    fn render_theme_section(
+        ui: &mut egui::Ui,
+        current_theme: AppTheme,
+        new_theme: &mut Option<AppTheme>,
+    ) {
+        ui.horizontal(|ui| {
+            ui.label("Theme");
+
+            let mut selected_theme = current_theme;
+            let theme_options = [
+                ("Dark", AppTheme::Dark),
+                ("Latte", AppTheme::Latte),
+                ("Frappe", AppTheme::Frappe),
+                ("Macchiato", AppTheme::Macchiato),
+                ("Mocha", AppTheme::Mocha),
+            ];
+
+            egui::ComboBox::from_id_salt("Theme combobox")
+                .selected_text(format!("{selected_theme}"))
+                .show_ui(ui, |ui| {
+                    for (label, value) in theme_options {
+                        if ui
+                            .selectable_value(&mut selected_theme, value, label)
+                            .clicked()
+                        {
+                            *new_theme = Some(value);
+                        }
+                    }
+                });
+        });
+    }
+
+    fn render_autoplay_section(
+        ui: &mut egui::Ui,
+        current_autoplay: AutoplayType,
+        new_autoplay: &mut Option<AutoplayType>,
+    ) {
+        ui.horizontal(|ui| {
+            ui.label("Autoplay");
+
+            let mut selected_autoplay = current_autoplay;
+            egui::ComboBox::from_id_salt("Autoplay combobox")
+                .selected_text(format!("{selected_autoplay}"))
+                .show_ui(ui, |ui| {
+                    for autoplay_option in AUTOPLAY_OPTIONS {
+                        if ui
+                            .selectable_value(
+                                &mut selected_autoplay,
+                                autoplay_option.clone(),
+                                autoplay_option.to_string(),
+                            )
+                            .clicked()
+                        {
+                            *new_autoplay = Some(autoplay_option);
+                        }
+                    }
+                });
+        });
+    }
+
+    fn render_search_section(
+        ui: &mut egui::Ui,
+        current_search: SearchMatchingStrategy,
+        new_search_strategy: &mut Option<SearchMatchingStrategy>,
+    ) {
+        ui.horizontal(|ui| {
+            ui.label("Search strategy");
+
+            let mut selected_search = current_search;
+            egui::ComboBox::from_id_salt("Search combobox")
+                .selected_text(format!("{selected_search}"))
+                .show_ui(ui, |ui| {
+                    for search_option in SEARCH_STRATEGY_OPTIONS {
+                        if ui
+                            .selectable_value(
+                                &mut selected_search,
+                                search_option.clone(),
+                                search_option.to_string(),
+                            )
+                            .clicked()
+                        {
+                            *new_search_strategy = Some(search_option);
+                        }
+                    }
+                });
+        });
     }
 }
