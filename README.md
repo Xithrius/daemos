@@ -12,14 +12,14 @@ A local-only music player
 [s2]: https://img.shields.io/crates/v/daemos.svg
 [l2]: https://crates.io/crates/daemos
 
-[s2]: https://img.shields.io/badge/unsafe-forbidden-success.svg
-[l2]: https://github.com/rust-secure-code/safety-dance/
+[s3]: https://img.shields.io/badge/unsafe-forbidden-success.svg
+[l3]: https://github.com/rust-secure-code/safety-dance/
 
-[s3]: https://img.shields.io/badge/license-MIT-blue.svg
-[l3]: https://github.com/Xithrius/daemos/blob/main/LICENSE-MIT
+[s4]: https://img.shields.io/badge/license-MIT-blue.svg
+[l4]: https://github.com/Xithrius/daemos/blob/main/LICENSE-MIT
 
-[s4]: https://img.shields.io/badge/license-Apache-blue.svg
-[l4]: https://github.com/Xithrius/daemos/blob/main/LICENSE-APACHE
+[s5]: https://img.shields.io/badge/license-Apache-blue.svg
+[l5]: https://github.com/Xithrius/daemos/blob/main/LICENSE-APACHE
 
 <img src="static/assets/preview.png" />
 
