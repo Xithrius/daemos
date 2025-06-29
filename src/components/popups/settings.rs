@@ -1,8 +1,9 @@
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{
     config::{
         core::{CoreConfig, SharedConfig},
+        save_config,
         search::SearchMatchingStrategy,
     },
     context::{AutoplayType, PlayDirection, SharedContext, ShuffleType},
@@ -34,19 +35,21 @@ pub struct SettingsPopup {
 
 impl SettingsPopup {
     pub fn new(config: SharedConfig, context: SharedContext) -> Self {
-        let selected_config = config.borrow().clone();
+        let selected = config.borrow().clone();
 
         Self {
             config,
             context,
-            selected: selected_config,
+            selected,
             changed: false,
         }
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.context.borrow().ui.visibility.settings() {
-            return;
+        {
+            if !self.context.borrow().ui.visibility.settings() {
+                return;
+            }
         }
 
         let mut changed = self.changed;
@@ -105,6 +108,7 @@ impl SettingsPopup {
         let mut should_close = false;
 
         // Reset to shared config
+
         if cancel_clicked {
             self.selected = self.config.borrow().clone();
             self.changed = false;
@@ -148,7 +152,7 @@ impl SettingsPopup {
         selected_config: &CoreConfig,
         context: &mut SharedContext,
     ) {
-        // Apply theme changes (needed for immediate UI updates)
+        // Theme
         if selected_config.ui.theme != current_config.ui.theme {
             match selected_config.ui.theme {
                 AppTheme::Dark => ctx.set_visuals(egui::Visuals::dark()),
@@ -159,7 +163,7 @@ impl SettingsPopup {
             }
         }
 
-        // Apply autoplay changes (needed for immediate playback updates)
+        // Autoplay
         if selected_config.playback.autoplay != current_config.playback.autoplay {
             context
                 .borrow_mut()
@@ -170,9 +174,10 @@ impl SettingsPopup {
     }
 
     fn save_to_file_system(&self) {
-        // TODO: Implement config saving to file system
-        info!("Saving config to file system - to be implemented");
-        // Future implementation should save self.selected to the config file
+        match save_config(&self.selected) {
+            Ok(()) => info!("Config saved successfully"),
+            Err(err) => error!("Failed to save config: {}", err),
+        }
     }
 
     fn render_theme_section(

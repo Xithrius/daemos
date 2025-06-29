@@ -38,7 +38,7 @@ impl PlaylistTable {
         table.body(|body| {
             let playlist_keys: Vec<_> = {
                 let context = self.context.borrow();
-                context.cache.playlists().cloned().collect()
+                context.storage.playlists().cloned().collect()
             };
 
             let num_rows = playlist_keys.len();

@@ -5,12 +5,13 @@ pub mod search;
 pub mod ui;
 
 use std::{
-    env,
+    env, fs,
     path::{Path, PathBuf},
 };
 
 use color_eyre::{Result, eyre::Context};
 use config::{Config, File};
+use toml;
 use tracing::warn;
 
 use crate::{BINARY_NAME, config::core::CoreConfig};
@@ -58,4 +59,19 @@ pub fn load_config() -> Result<CoreConfig> {
     };
 
     Ok(config)
+}
+
+pub fn save_config(config: &CoreConfig) -> Result<()> {
+    let path = get_config_path()?;
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).context("Failed to create config directory")?;
+    }
+
+    let toml_string =
+        toml::to_string_pretty(config).context("Failed to serialize config to TOML")?;
+
+    fs::write(&path, toml_string).context("Failed to write config file")?;
+
+    Ok(())
 }

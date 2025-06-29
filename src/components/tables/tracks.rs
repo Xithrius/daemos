@@ -160,7 +160,7 @@ impl TrackTable {
             let tracks = self
                 .context
                 .borrow()
-                .cache
+                .storage
                 .get_playlist_tracks(Some(&playlist))
                 .map(|tracks| tracks.to_owned())
                 .unwrap_or_default();
@@ -218,7 +218,7 @@ impl TrackTable {
             &playlist_state.tracks()
         } else {
             &context
-                .cache
+                .storage
                 .get_playlist_tracks(None)
                 .map(|tracks| tracks.to_owned())
                 .unwrap_or_default()
@@ -372,7 +372,7 @@ impl TrackTable {
             let selected_playlist = context.ui.playlist.selected();
 
             let filtered_tracks = context
-                .cache
+                .storage
                 .filtered_tracks(selected_playlist.as_ref())
                 .to_vec();
 
@@ -434,7 +434,7 @@ impl TrackTable {
         let selected_playlist = { self.context.borrow().ui.playlist.selected() };
 
         let mut context = self.context.borrow_mut();
-        let cache_context = &mut context.cache;
+        let storage_context = &mut context.storage;
 
         let previous_text = self.search.text.clone();
 
@@ -466,7 +466,7 @@ impl TrackTable {
             let predicate =
                 |track: &Track| search_text.is_empty() || (matcher)(&search_text, &track.name);
 
-            if let Some(filtered) = cache_context.filter_with(&selected_playlist, predicate) {
+            if let Some(filtered) = storage_context.filter_with(&selected_playlist, predicate) {
                 self.search.yielded_results = filtered.len();
             }
 

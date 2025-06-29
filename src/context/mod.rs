@@ -15,14 +15,14 @@ pub use processing::ProcessingContext;
 pub mod latency;
 pub use latency::LatencyContext;
 
-pub mod cache;
-pub use cache::CacheContext;
+pub mod storage;
+pub use storage::StorageContext;
 
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     /// All the tracks and playlists that have been loaded into memory from the database.
     /// It is also possible to modify this loaded data in order to be up to date with database entries.
-    pub cache: CacheContext,
+    pub storage: StorageContext,
     /// Selected items that are used for currently playing tracks within a playlist,
     /// configured shuffle direction and type from autoplay, and the state of progression
     /// through the playing track along with volume level.

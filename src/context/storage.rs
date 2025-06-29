@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use crate::database::models::{playlists::playlist::Playlist, tracks::Track};
 
 #[derive(Debug, Clone, Default)]
-pub struct CacheContext {
+pub struct StorageContext {
     /// Global playlist for tracks. Tracks that belong to any amount of playlist(s) are included here.
     all_tracks: Vec<Track>,
     /// Filtered version of [`Self::all_tracks`] based on a search input.
@@ -18,7 +18,7 @@ pub struct CacheContext {
     filtered_playlist_tracks: HashMap<Playlist, Vec<Track>>,
 }
 
-impl CacheContext {
+impl StorageContext {
     /// Gets tracks from a playlist in [`Self::playlist_tracks`],
     /// if none is selected then [`Self::all_tracks`] is returned.
     pub fn get_playlist_tracks(&self, playlist: Option<&Playlist>) -> Option<&Vec<Track>> {
@@ -115,16 +115,16 @@ impl CacheContext {
     ///
     /// An example of a predicate filtering track names down to ones that only contain "foo":
     /// ```
-    /// use daemos::{context::CacheContext, database::models::tracks::Track};
+    /// use daemos::{context::StorageContext, database::models::tracks::Track};
     ///
-    /// let mut cache = CacheContext::default();
+    /// let mut storage = StorageContext::default();
     /// let tracks = vec![
     ///     Track { name: "foo 1".to_string(), ..Default::default() },
     ///     Track { name: "bar 2".to_string(), ..Default::default() },
     /// ];
-    /// cache.set_playlist_tracks(None, tracks);
+    /// storage.set_playlist_tracks(None, tracks);
     ///
-    /// let result = cache.filter_with(&None, |track| track.name.contains("foo"));
+    /// let result = storage.filter_with(&None, |track| track.name.contains("foo"));
     /// assert_eq!(result.unwrap().len(), 1);
     /// assert_eq!(result.unwrap()[0].name, "foo 1");
     /// ```
@@ -154,5 +154,56 @@ impl CacheContext {
 
             self.filtered_all_tracks.as_ref()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filter_with_global_tracks() {
+        let mut storage = StorageContext::default();
+
+        let tracks = vec![
+            Track {
+                name: "foo 1".to_string(),
+                ..Default::default()
+            },
+            Track {
+                name: "bar 2".to_string(),
+                ..Default::default()
+            },
+        ];
+        storage.set_playlist_tracks(None, tracks);
+
+        let result = storage.filter_with(&None, |track| track.name.contains("foo"));
+        assert_eq!(result.unwrap().len(), 1);
+        assert_eq!(result.unwrap()[0].name, "foo 1");
+    }
+
+    #[test]
+    fn test_filter_with_playlist_tracks() {
+        let mut storage = StorageContext::default();
+
+        let tracks = vec![
+            Track {
+                name: "song 1".to_string(),
+                ..Default::default()
+            },
+            Track {
+                name: "song 2".to_string(),
+                ..Default::default()
+            },
+        ];
+        let playlist = Playlist {
+            name: "test".to_string(),
+            ..Default::default()
+        };
+        storage.set_playlist_tracks(Some(playlist.clone()), tracks);
+
+        let result = storage.filter_with(&Some(playlist), |track| track.name.contains("song 1"));
+        assert_eq!(result.unwrap().len(), 1);
+        assert_eq!(result.unwrap()[0].name, "song 1");
     }
 }
