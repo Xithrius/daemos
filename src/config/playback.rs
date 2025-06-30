@@ -5,6 +5,7 @@ use crate::context::AutoplayType;
 const DEFAULT_PLAYER_VOLUME: f32 = 0.5;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(default)]
 pub struct PlaybackConfig {
     pub autoplay: AutoplayType,
     pub volume: f32,

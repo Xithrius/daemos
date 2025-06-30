@@ -31,7 +31,6 @@ const VOLUME_IMAGE: egui::ImageSource<'_> = include_image!("../../static/assets/
 const AUTOPLAY_FONT_SIZE: f32 = 12.0;
 
 const NOW_PLAYING_SPACE: f32 = 8.0;
-const DEBUG_WINDOW_HEADER_SPACING: f32 = 5.0;
 const SEEK_AND_AUTOPLAY_SPACING: f32 = 25.0;
 
 const SEEK_BAR_WIDTH_RATIO: f32 = 2.5;
@@ -265,80 +264,7 @@ impl PlaybackBar {
         });
     }
 
-    // TODO: Put into separate widget
-    fn debug_window(&mut self, ui: &mut egui::Ui) {
-        let mut context = self.context.borrow_mut();
-        let playback_context = context.playback.clone();
-
-        egui::Window::new("Playback Debug Info")
-            .open(context.ui.visibility.debug_playback_mut())
-            .collapsible(true)
-            .resizable(true)
-            .default_size([400.0, 250.0])
-            .show(ui.ctx(), |ui| {
-                let track_context = &playback_context.selected_track;
-                let control = &playback_context.control;
-
-                ui.group(|ui| {
-                    ui.label(RichText::new("Track Info").underline().heading());
-                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
-
-                    ui.label(format!("Loaded: {}", track_context.is_some()));
-
-                    if let Some(track_context) = &track_context {
-                        ui.label(format!("Path: {:?}", track_context.track.path));
-                        ui.label(format!(
-                            "Duration: {} seconds",
-                            track_context.track.duration_secs
-                        ));
-                    }
-                });
-
-                ui.separator();
-
-                ui.group(|ui| {
-                    ui.label(RichText::new("Playback State").underline().heading());
-                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
-
-                    ui.label(format!(
-                        "Playing: {:?}",
-                        track_context.as_ref().map(|track| track.playing)
-                    ));
-
-                    if let Some(base) = control.progress_base {
-                        ui.label(format!("Progress Base: {base:.2?}"));
-                    } else {
-                        ui.label("Progress Base: None");
-                    }
-
-                    if let Some(ts) = control.progress_timestamp {
-                        ui.label(format!("Progress Timestamp: {ts:?}"));
-                    } else {
-                        ui.label("Progress Timestamp: None");
-                    }
-
-                    if let Some(simulated) = control.current_progress() {
-                        ui.label(format!("Simulated Current Progress: {simulated:.2?}"));
-                    } else {
-                        ui.label("Simulated Current Progress: None");
-                    }
-                });
-
-                ui.separator();
-
-                ui.group(|ui| {
-                    ui.label(RichText::new("Volume State").underline().heading());
-                    ui.add_space(DEBUG_WINDOW_HEADER_SPACING);
-
-                    ui.label(format!("Volume: {:.2}", control.volume));
-                    ui.label(format!("Last Volume Sent: {:.2}", control.last_volume_sent));
-                });
-            });
-    }
-
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        self.debug_window(ui);
-
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 self.ui_playback_controls(ui);

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::themes::AppTheme;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(default)]
 pub struct UIConfig {
     pub theme: AppTheme,
     pub align_scroll: Option<Align>,

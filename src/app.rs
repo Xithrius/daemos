@@ -132,8 +132,8 @@ impl App {
         if ctx.input(|i| i.key_pressed(Key::F3)) {
             debug!("`F3` Has been used to toggle the debug wireframe");
 
-            let debug = self.config.borrow().general.debug;
-            self.config.borrow_mut().general.debug = !debug;
+            let debug = self.config.borrow().general.debug_wireframe;
+            self.config.borrow_mut().general.debug_wireframe = !debug;
 
             if debug != ctx.debug_on_hover() {
                 ctx.set_debug_on_hover(debug);
@@ -312,13 +312,12 @@ impl eframe::App for App {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let start = if self.context.borrow().ui.visibility.debug() {
+        let start = if self.context.borrow().ui.visibility.performance_debug() {
             Some(Instant::now())
         } else {
             None
         };
 
-        // TODO: Is there a way around this?
         ctx.request_repaint_after(Duration::from_millis(16));
 
         self.handle_database_events();
@@ -330,7 +329,10 @@ impl eframe::App for App {
 
         if let Some(start) = start {
             let duration = start.elapsed();
-            self.context.borrow_mut().latency.add(duration);
+            self.context
+                .borrow_mut()
+                .performance_metrics
+                .add_render_latency(duration);
         }
     }
 }

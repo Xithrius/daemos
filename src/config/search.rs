@@ -26,6 +26,7 @@ impl fmt::Display for SearchMatchingStrategy {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[serde(default)]
 pub struct SearchConfig {
     pub strategy: SearchMatchingStrategy,
 }

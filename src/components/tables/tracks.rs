@@ -205,8 +205,10 @@ impl TrackTable {
         let mut context = self.context.borrow_mut();
 
         // If a button for playback control (forward/backward) was pressed, select that instead of autoplay
+        let mut controlled = false;
         let autoplay_selector =
             if let Some(controlled_autoplay) = context.playback.autoplay.consume_controlled() {
+                controlled = true;
                 controlled_autoplay
             } else {
                 context.playback.autoplay.autoplay().to_owned()
@@ -237,11 +239,13 @@ impl TrackTable {
         };
 
         // Only add a track once it's finished autoplaying, and we're selecting the next track to autoplay
-        context.playback.selected_playlist.add_played_track(index);
+        // or if the user intentionally skipped and the config is set to adding the seen track on skip
+        if !controlled || self.config.borrow().playback.add_to_seen_on_skip {
+            context.playback.selected_playlist.add_played_track(index);
+        }
 
         let tracks_len = tracks.len();
 
-        // TODO: Configurable default autoplay direction
         let new_index = match autoplay_selector {
             AutoplayType::Iterative(play_direction) => match play_direction {
                 PlayDirection::Forward => (index + 1) % tracks_len,

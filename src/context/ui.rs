@@ -7,7 +7,7 @@ use crate::{
 pub struct UIVisibilityContext {
     create_playlist_modal: bool,
     settings_popup: bool,
-    general_debug: bool,
+    performance_debug: bool,
     playback_debug: bool,
 }
 
@@ -28,16 +28,16 @@ impl UIVisibilityContext {
         self.settings_popup = !self.settings_popup;
     }
 
-    pub fn debug(&self) -> bool {
-        self.general_debug
+    pub fn performance_debug(&self) -> bool {
+        self.performance_debug
     }
 
-    pub fn debug_mut(&mut self) -> &mut bool {
-        &mut self.general_debug
+    pub fn performance_debug_mut(&mut self) -> &mut bool {
+        &mut self.performance_debug
     }
 
-    pub fn set_debug(&mut self, visibility: bool) {
-        self.general_debug = visibility;
+    pub fn set_performance_debug(&mut self, visibility: bool) {
+        self.performance_debug = visibility;
     }
 
     pub fn debug_playback(&self) -> bool {

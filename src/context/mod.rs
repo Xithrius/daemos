@@ -12,8 +12,8 @@ pub use playlist::UIPlaylistContext;
 pub mod processing;
 pub use processing::ProcessingContext;
 
-pub mod latency;
-pub use latency::LatencyContext;
+pub mod performance;
+pub use performance::PerformanceMetricsContext;
 
 pub mod storage;
 pub use storage::StorageContext;
@@ -31,9 +31,8 @@ pub struct Context {
     pub ui: UIContext,
     /// Background jobs that are actively processing.
     pub processing: ProcessingContext,
-    /// Main thread UI render latency data.
-    // TODO: Go to nested methods that exist within `App::update`
-    pub latency: LatencyContext,
+    /// Performance-related metrics data (latency, FPS, etc.).
+    pub performance_metrics: PerformanceMetricsContext,
 }
 
 pub type SharedContext = Rc<RefCell<Context>>;

@@ -15,7 +15,7 @@ use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks:
 use crate::{
     components::{
         menu_bar::MenuBar, modals::create_playlist::CreatePlaylistModal, playback::PlaybackBar,
-        popups::debug::DebugPopup,
+        popups::debug::performance::PerformanceMetricsPopup,
     },
     config::core::SharedConfig,
     context::SharedContext,
@@ -72,7 +72,7 @@ pub struct Components {
     pub task_table: TaskTable,
 
     pub settings: SettingsPopup,
-    pub debug: DebugPopup,
+    pub debug: PerformanceMetricsPopup,
     pub create_playlist: CreatePlaylistModal,
 }
 
@@ -92,7 +92,7 @@ impl Components {
             task_table: TaskTable::default(),
 
             settings: SettingsPopup::new(config.clone(), context.clone()),
-            debug: DebugPopup::new(config.clone(), context.clone()),
+            debug: PerformanceMetricsPopup::new(config.clone(), context.clone()),
             create_playlist: CreatePlaylistModal::new(context.clone(), channels.clone()),
         }
     }

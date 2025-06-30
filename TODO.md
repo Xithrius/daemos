@@ -13,21 +13,9 @@
 
 - [ ] Settings
 
-  - [ ] Write to config path
-  - [ ] Default volume on startup
-  - [ ] Default ordering of tracks
-  - [ ] Default folder to open when adding tracks
-  - [ ] Toggle to hash tracks on insert
-  - [ ] (re)calculation of all track hashes
-  - [ ] Validation of tracks
-    - [ ] Timing
-      - [ ] At startup
-      - [ ] Every once in a while
-      - [ ] Check type matching
-        - [ ] Path
-        - [ ] Name
-        - [ ] Hash recalculation
-      - [ ] If invalid, mark with warning and ask user to either correct/remove entry
+  - [ ] Volume on startup
+  - [ ] Ordering of tracks
+  - [ ] Folder to open when adding tracks
 
 - [ ] Searching
 
@@ -48,8 +36,6 @@
 
 - [ ] Autoplay
 
-  - [ ] Iterative
-    - [ ] Reverse button on playback bar\*
   - [ ] Shuffle
     - [ ] Similar tracks (Hash distance?)
     - [ ] [Fisher–Yates shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle)
@@ -57,8 +43,7 @@
 
 ## Issues
 
-- [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls
-- [ ] Hitting playback controls (forward/backward) doesn't contribute to seen list for pseudo random shuffle (make this configurable)
+- [ ] Keep track of previously played tracks such that they can be seen in a recently played tab, and also go back to them in playback controls or double clicking them
 
 ## In the future
 
@@ -72,6 +57,19 @@
 
   - [ ] Offline stats to local storage
     - [ ] Times a track has been played
+
+- [ ] Track hashing
+  - [ ] Button to recalculate all track hashes
+    - [ ] Have a warning of "This might take a while"
+  - [ ] Validation of tracks
+    - [ ] When to do it\*
+      - [ ] At startup
+      - [ ] Every once in a while
+      - [ ] Check type matching
+        - [ ] Path
+        - [ ] Name
+        - [ ] Hash recalculation
+      - [ ] If invalid, mark with warning and ask user to either correct/remove entry
 
 - [ ] [Notifications](https://github.com/ItsEthra/egui-notify)
 

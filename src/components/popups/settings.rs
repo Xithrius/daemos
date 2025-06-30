@@ -108,7 +108,6 @@ impl SettingsPopup {
         let mut should_close = false;
 
         // Reset to shared config
-
         if cancel_clicked {
             self.selected = self.config.borrow().clone();
             self.changed = false;

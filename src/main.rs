@@ -25,11 +25,14 @@ fn main() -> eframe::Result {
     let icon_data = eframe::icon_data::from_png_bytes(include_bytes!("../static/assets/icon.png"))
         .unwrap_or_default();
 
+    let vsync = config.borrow().general.vsync;
+    info!("VSync is {}", if vsync { "enabled" } else { "disabled" });
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([320.0, 240.0])
             .with_icon(icon_data),
-        vsync: config.borrow().general.vsync,
+        vsync,
         ..Default::default()
     };
 
