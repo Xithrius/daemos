@@ -136,8 +136,8 @@ impl SettingsPopup {
     }
 
     fn apply_to_shared_config(&mut self, ctx: &egui::Context) {
-        // Get the current shared config for comparison
-        let current_config = self.config.borrow();
+        // Get the current shared config for comparison and clone it
+        let current_config = self.config.borrow().clone();
 
         // Apply immediate UI/playback changes that need special handling
         Self::apply_immediate_changes(ctx, &current_config, &self.selected, &mut self.context);
