@@ -27,10 +27,7 @@ pub struct PlaylistState {
 
 impl PlaylistState {
     pub fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
-        Self {
-            playlist,
-            tracks,
-        }
+        Self { playlist, tracks }
     }
 
     pub fn playlist(&self) -> Playlist {
