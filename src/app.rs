@@ -274,9 +274,9 @@ impl App {
 
     fn ui(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 self.components.top_menu_bar.ui(ctx, ui);
-            });
+            })
         });
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {

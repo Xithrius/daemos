@@ -57,7 +57,7 @@ impl LatencyLineGraph {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, latencies: &VecDeque<Duration>) {
-        ui.ctx().request_repaint();
+        // ui.ctx().request_repaint();
         self.time += ui.input(|i| i.unstable_dt).at_most(1.0 / 30.0) as f64;
 
         let y_axes = vec![

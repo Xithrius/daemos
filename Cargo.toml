@@ -13,19 +13,21 @@ keywords = ["music", "gui"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-egui = { version = "0.31", features = ["serde"] }
-eframe = { version = "0.31", default-features = false, features = [
+egui = { version = "0.32", features = ["serde"] }
+eframe = { version = "0.32", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "wgpu",          # Use the wgpu rendering backend. Alternative: "glow".
     "persistence",   # Enable restoring app state when restarting the app.
     "wayland",       # To support Linux (and CI)
     "x11",           # To support older Linux distributions (restores one of the default features)
 ] }
-egui_extras = { version = "0.31.1", features = ["image"] }
-catppuccin-egui = { version = "5.5.0", default-features = false, features = [
-    "egui31",
+egui_extras = { version = "0.32.0", features = ["image"] }
+catppuccin-egui = { version = "5.6.0", default-features = false, features = [
+    "egui32",
 ] }
-egui_dock = "0.16.0"
+egui_dock = "0.17.0"
+egui_plot = "0.33.0"
+wgpu = "25" # enables the wgpu default features so we get the default backends
 color-eyre = "0.6.4"
 rfd = "0.15.3"
 tracing = "0.1.41"
@@ -45,7 +47,6 @@ notify-rust = "4.11.7"
 image = { version = "0.25.6", features = ["png"] }
 rand = "0.9.1"
 thiserror = "2.0.12"
-egui_plot = "0.32.1"
 regex = "1.11.1"
 fuzzy-matcher = "0.3.7"
 toml = "0.8.12"

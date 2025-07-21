@@ -1,4 +1,4 @@
-use egui::Color32;
+use egui::{Color32, UiKind};
 
 use crate::context::SharedContext;
 
@@ -37,7 +37,7 @@ impl MenuBar {
                         .ui
                         .visibility
                         .set_playlist_modal(true);
-                    ui.close_menu();
+                    ui.close_kind(UiKind::Menu)
                 }
             });
 
@@ -45,10 +45,10 @@ impl MenuBar {
 
             if ui.button("Preferences").clicked() {
                 self.context.borrow_mut().ui.visibility.set_settings(true);
-                ui.close_menu();
+                ui.close_kind(UiKind::Menu)
             } else if ui.button("Quit").clicked() {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                ui.close_menu();
+                ui.close_kind(UiKind::Menu)
             }
         });
     }
@@ -62,14 +62,14 @@ impl MenuBar {
                         .ui
                         .visibility
                         .set_performance_debug(true);
-                    ui.close_menu();
+                    ui.close_kind(UiKind::Menu)
                 } else if ui.button("Playback").clicked() {
                     self.context
                         .borrow_mut()
                         .ui
                         .visibility
                         .set_debug_playback(true);
-                    ui.close_menu();
+                    ui.close_kind(UiKind::Menu)
                 }
             });
         });
