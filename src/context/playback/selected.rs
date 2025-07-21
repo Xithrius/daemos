@@ -21,16 +21,20 @@ impl SelectedTrackContext {
 
 #[derive(Debug, Clone)]
 pub struct PlaylistState {
-    _playlist: Playlist,
+    playlist: Playlist,
     tracks: Vec<Track>,
 }
 
 impl PlaylistState {
     pub fn new(playlist: Playlist, tracks: Vec<Track>) -> Self {
         Self {
-            _playlist: playlist,
+            playlist,
             tracks,
         }
+    }
+
+    pub fn playlist(&self) -> Playlist {
+        self.playlist.clone()
     }
 
     pub fn tracks(&self) -> Vec<Track> {

@@ -385,11 +385,28 @@ impl TrackTable {
             (filtered_tracks, selected, align)
         };
 
+        // If the currently selected playlist in the UI matches the one that has a track playing
+        let synced_selected_playlist = {
+            let context = self.context.borrow();
+
+            let ui_selected_playlist = context.ui.playlist.selected();
+            let autoplay_selected_playlist = context
+                .playback
+                .selected_playlist
+                .playlist()
+                .map(|playlist_state| playlist_state.playlist());
+
+            ui_selected_playlist == autoplay_selected_playlist
+        };
+
         if self.scroll_to_selected {
-            if let Some(playing_track) = selected_track {
+            if let Some(playing_track) = selected_track
+                && synced_selected_playlist
+            {
                 table = table.scroll_to_row(playing_track.index, align_scroll);
-                self.scroll_to_selected = false;
             }
+
+            self.scroll_to_selected = false;
         }
 
         let num_rows = filtered_tracks.len();
