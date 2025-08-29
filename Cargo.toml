@@ -31,7 +31,7 @@ wgpu = "25" # enables the wgpu default features so we get the default backends
 color-eyre = "0.6.4"
 rfd = "0.15.3"
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 walkdir = "2.5.0"
 serde = { version = "1.0.219", features = ["derive"] }
 rusqlite = { version = "0.35.0", features = ["bundled", "chrono"] }
