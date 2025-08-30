@@ -497,13 +497,13 @@ impl TrackTable {
 
         self.search.previous_text = Some(previous_text);
 
-        if !self.search.text.is_empty() {
-            if let Some(search_duration) = self.search.duration {
-                ui.label(format!(
-                    "{} results in {:?}",
-                    self.search.yielded_results, search_duration
-                ));
-            }
+        if !self.search.text.is_empty()
+            && let Some(search_duration) = self.search.duration
+        {
+            ui.label(format!(
+                "{} results in {:?}",
+                self.search.yielded_results, search_duration
+            ));
         }
     }
 

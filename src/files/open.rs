@@ -32,23 +32,21 @@ pub fn get_folder_tracks<P: AsRef<Path>>(dir: &P, recursive: bool) -> Vec<PathBu
     if recursive {
         for entry in WalkDir::new(dir).into_iter().filter_map(Result::ok) {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(extension) = path.extension().and_then(|e| e.to_str()) {
-                    if ALLOWED_AUDIO_FORMATS.contains(&extension) {
-                        tracks.push(path.to_path_buf());
-                    }
-                }
+            if path.is_file()
+                && let Some(extension) = path.extension().and_then(|e| e.to_str())
+                && ALLOWED_AUDIO_FORMATS.contains(&extension)
+            {
+                tracks.push(path.to_path_buf());
             }
         }
     } else if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.filter_map(Result::ok) {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(extension) = path.extension().and_then(|e| e.to_str()) {
-                    if ALLOWED_AUDIO_FORMATS.contains(&extension) {
-                        tracks.push(path);
-                    }
-                }
+            if path.is_file()
+                && let Some(extension) = path.extension().and_then(|e| e.to_str())
+                && ALLOWED_AUDIO_FORMATS.contains(&extension)
+            {
+                tracks.push(path);
             }
         }
     }

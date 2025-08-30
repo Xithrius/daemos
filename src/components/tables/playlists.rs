@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use egui::Vec2;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 
@@ -26,9 +27,10 @@ impl PlaylistTable {
     }
 
     pub fn ui(&mut self, ui: &mut egui::Ui) {
-        let height = ui.available_height();
-
-        let width = ui.available_width();
+        let Vec2 {
+            x: width,
+            y: height,
+        } = ui.available_size();
 
         let table = TableBuilder::new(ui)
             .max_scroll_height(height)

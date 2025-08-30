@@ -125,12 +125,10 @@ impl Database {
                             let _ = event_tx.send(Ok(insert_track_event));
 
                             if let Some(playlist_id) = playlist.as_ref().map(|playlist| playlist.id)
-                            {
-                                if let Err(err) =
+                                && let Err(err) =
                                     PlaylistTrack::create(&conn, playlist_id, track.id)
-                                {
-                                    error!("Error when inserting track to playlist: {}", err);
-                                }
+                            {
+                                error!("Error when inserting track to playlist: {}", err);
                             }
                         }
                     }
