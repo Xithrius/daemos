@@ -1,14 +1,16 @@
 use std::{path::PathBuf, rc::Rc};
 
+use daemos_core::{
+    connection::DatabaseCommand,
+    utils::{files::get_file_name, regex::RegexExtract},
+};
 use egui::{Id, Modal};
 use tracing::error;
 
 use crate::{
     components::{ComponentChannels, modals::UIModal},
     context::SharedContext,
-    database::connection::DatabaseCommand,
-    files::open::{get_file_name, get_folder_tracks, select_folders_dialog},
-    utils::regex::RegexExtract,
+    files::open::{get_folder_tracks, select_folders_dialog},
 };
 
 const DEFAULT_PLAYLIST_MODAL_WINDOW_SIZE: [f32; 2] = [300.0, 200.0];

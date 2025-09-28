@@ -33,7 +33,6 @@ chrono = { workspace = true }
 blake3 = { workspace = true }
 crossbeam = { workspace = true }
 rodio = { workspace = true }
-symphonia = { workspace = true }
 sysinfo = { workspace = true }
 notify-rust = { workspace = true }
 image = { workspace = true }
@@ -42,6 +41,8 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 fuzzy-matcher = { workspace = true }
 toml = { workspace = true }
+
+daemos-core = { path = "../daemos-core" }
 
 [[bin]]
 name = "daemos"

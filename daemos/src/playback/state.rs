@@ -10,11 +10,12 @@ use crossbeam::{
     channel::{Receiver, Sender},
     utils::Backoff,
 };
+use daemos_core::database::models::tracks::Track;
 use rodio::{Decoder, OutputStream, Sink};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
-use crate::{database::models::tracks::Track, playback::notifications::now_playing};
+use crate::playback::notifications::now_playing;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum PlayerEvent {

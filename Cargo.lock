@@ -1271,6 +1271,7 @@ dependencies = [
  "color-eyre",
  "config",
  "crossbeam",
+ "daemos-core",
  "eframe",
  "egui",
  "egui_dock",
@@ -1285,7 +1286,6 @@ dependencies = [
  "rodio",
  "rusqlite",
  "serde",
- "symphonia",
  "sysinfo",
  "thiserror 2.0.16",
  "toml 0.8.23",
@@ -1294,6 +1294,23 @@ dependencies = [
  "uuid",
  "walkdir",
  "wgpu",
+]
+
+[[package]]
+name = "daemos-core"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "chrono",
+ "color-eyre",
+ "crossbeam",
+ "regex",
+ "rusqlite",
+ "serde",
+ "symphonia",
+ "thiserror 2.0.16",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]

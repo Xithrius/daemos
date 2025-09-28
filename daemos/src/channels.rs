@@ -1,9 +1,7 @@
 use crossbeam::channel::{Receiver, Sender};
+use daemos_core::connection::{DatabaseCommand, DatabaseError, DatabaseEvent};
 
-use crate::{
-    database::connection::{DatabaseCommand, DatabaseError, DatabaseEvent},
-    playback::state::{PlayerCommand, PlayerEvent},
-};
+use crate::playback::state::{PlayerCommand, PlayerEvent};
 
 #[derive(Debug, Clone)]
 pub struct Channels {

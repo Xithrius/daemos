@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use daemos_core::{connection::DatabaseCommand, database::models::tracks::Track};
 use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
 use rand::Rng;
@@ -19,7 +20,6 @@ use crate::{
         AutoplayType, PlayDirection, SharedContext, ShuffleType,
         playback::{PlaylistState, SelectedTrackContext},
     },
-    database::{connection::DatabaseCommand, models::tracks::Track},
     playback::state::PlayerCommand,
     utils::{formatting::human_duration, random::filtered_random_index},
 };

@@ -5,11 +5,9 @@ use std::{
 
 use color_eyre::{Result, eyre::Context};
 
-use crate::BINARY_NAME;
-
 const SQLITE_FILE_NAME: &str = "db.sqlite";
 
-pub fn get_database_storage_path() -> Result<PathBuf> {
+pub fn get_database_storage_path(binary_name: &str) -> Result<PathBuf> {
     let partial_path = match env::consts::OS {
         "linux" | "macos" => {
             let home = env::var("HOME").context("HOME environment variable not found")?;
@@ -22,7 +20,7 @@ pub fn get_database_storage_path() -> Result<PathBuf> {
         _ => unimplemented!(),
     };
 
-    let mut full_path = partial_path.join(BINARY_NAME);
+    let mut full_path = partial_path.join(binary_name);
 
     if !(full_path.is_dir() && full_path.exists()) {
         fs::create_dir_all(&full_path)

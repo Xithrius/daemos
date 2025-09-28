@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use crate::database::models::{playlists::playlist::Playlist, tracks::Track};
+use daemos_core::database::models::{playlists::playlist::Playlist, tracks::Track};
 
 #[derive(Debug, Clone)]
 pub struct SelectedTrackContext {

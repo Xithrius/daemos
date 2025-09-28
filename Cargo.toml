@@ -1,8 +1,24 @@
 [workspace]
-members = ["daemos", "daemos-server"]
+members = ["daemos", "daemos-core", "daemos-server"]
 resolver = "2"
 
 [workspace.dependencies]
+thiserror = "2.0.16"
+color-eyre = "0.6.5"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+walkdir = "2.5.0"
+serde = { version = "1.0.228", features = ["derive"] }
+config = { version = "0.15.17", default-features = false, features = ["toml"] }
+rand = "0.9.2"
+regex = "1.11.3"
+fuzzy-matcher = "0.3.7"
+toml = "0.8.23"
+uuid = { version = "1.18.1", features = ["v4", "fast-rng", "serde"] }
+chrono = { version = "0.4.42", features = ["serde"] }
+blake3 = { version = "1.8.2", features = ["serde"] }
+crossbeam = "0.8.4"
+
 # Client
 egui = { version = "0.32", features = ["serde"] }
 eframe = { version = "0.32", default-features = false, features = [
@@ -20,35 +36,21 @@ egui_dock = "0.17.0"
 egui_plot = "0.33.0"
 wgpu = "25"
 rfd = "0.15.4"
-rusqlite = { version = "0.35.0", features = ["bundled", "chrono"] }
-uuid = { version = "1.18.1", features = ["v4", "fast-rng", "serde"] }
-chrono = { version = "0.4.42", features = ["serde"] }
-blake3 = { version = "1.8.2", features = ["serde"] }
-crossbeam = "0.8.4"
 rodio = { version = "0.20.1", features = ["symphonia-all"] }
 symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.2", features = ["serde"] }
 notify-rust = "4.11.7"
 image = { version = "0.25.8", features = ["png"] }
+reqwest = { version = "0.12.11", features = ["json"] }
+
+# Core
+rusqlite = { version = "0.35.0", features = ["bundled", "chrono"] }
 
 # Server
 tokio = { version = "1.47.1", features = ["rt", "macros", "rt-multi-thread"] }
 actix-web = "4.11.0"
 actix-cors = "0.7.1"
 dotenvy = "0.15.7"
-
-# Both
-thiserror = "2.0.16"
-color-eyre = "0.6.5"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
-walkdir = "2.5.0"
-serde = { version = "1.0.228", features = ["derive"] }
-config = { version = "0.15.17", default-features = false, features = ["toml"] }
-rand = "0.9.2"
-regex = "1.11.3"
-fuzzy-matcher = "0.3.7"
-toml = "0.8.23"
 
 [profile.dev]
 lto = "off"

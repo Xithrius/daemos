@@ -1,15 +1,12 @@
 use std::rc::Rc;
 
+use daemos_core::{connection::DatabaseCommand, database::models::playlists::playlist::Playlist};
 use egui::Vec2;
 use egui_extras::{Column, TableBuilder};
 use tracing::{debug, error};
 
 use super::TABLE_ROW_HEIGHT;
-use crate::{
-    components::ComponentChannels,
-    context::SharedContext,
-    database::{connection::DatabaseCommand, models::playlists::playlist::Playlist},
-};
+use crate::{components::ComponentChannels, context::SharedContext};
 
 #[derive(Debug, Clone)]
 pub struct PlaylistTable {

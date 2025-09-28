@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use daemos_core::connection::{DatabaseCommand, DatabaseError, DatabaseEvent};
 use egui::{Frame, Key, KeyboardShortcut, Modifiers};
 use egui_dock::{DockArea, DockState};
 use tracing::{debug, error};
@@ -12,7 +13,6 @@ use crate::{
     components::{ComponentChannels, ComponentTab, Components, playback::PLAYBACK_BAR_HEIGHT},
     config::core::SharedConfig,
     context::SharedContext,
-    database::connection::{DatabaseCommand, DatabaseError, DatabaseEvent},
     files::open::{get_folder_tracks, select_file_dialog, select_folders_dialog},
     playback::state::PlayerCommand,
 };

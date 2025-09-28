@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
-use crate::database::models::{playlists::playlist::Playlist, tracks::Track};
+use daemos_core::database::models::{playlists::playlist::Playlist, tracks::Track};
 
 #[derive(Debug, Clone, Default)]
 pub struct StorageContext {

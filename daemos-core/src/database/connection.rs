@@ -56,11 +56,13 @@ pub enum DatabaseEvent {
 pub struct Database;
 
 impl Database {
-    pub fn start() -> (
+    pub fn start(
+        binary_name: &str,
+    ) -> (
         Sender<DatabaseCommand>,
         Receiver<Result<DatabaseEvent, DatabaseError>>,
     ) {
-        let database_path = get_database_storage_path().expect("Failed to get DB path");
+        let database_path = get_database_storage_path(binary_name).expect("Failed to get DB path");
 
         let (command_tx, command_rx) = unbounded();
         let (event_tx, event_rx) = unbounded::<Result<DatabaseEvent, DatabaseError>>();

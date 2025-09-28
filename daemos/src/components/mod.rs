@@ -8,6 +8,7 @@ pub mod utils;
 use std::{fmt, rc::Rc};
 
 use crossbeam::channel::Sender;
+use daemos_core::connection::DatabaseCommand;
 use egui_dock::{DockState, NodeIndex, TabViewer};
 use popups::settings::SettingsPopup;
 use tables::{playlists::PlaylistTable, tags::TagTable, tasks::TaskTable, tracks::TrackTable};
@@ -19,7 +20,6 @@ use crate::{
     },
     config::core::SharedConfig,
     context::SharedContext,
-    database::connection::DatabaseCommand,
     playback::state::PlayerCommand,
 };
 

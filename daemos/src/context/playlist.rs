@@ -1,4 +1,4 @@
-use crate::database::models::playlists::playlist::Playlist;
+use daemos_core::database::models::playlists::playlist::Playlist;
 
 #[derive(Debug, Clone, Default)]
 pub struct UIPlaylistContext {

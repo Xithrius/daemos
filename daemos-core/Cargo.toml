@@ -1,0 +1,25 @@
+[package]
+name = "daemos-core"
+version = "0.1.0"
+edition = "2024"
+authors = ["Xithrius <xithrius@gmail.com>"]
+rust-version = "1.89.0"
+description = "Core library for the Daemos music player"
+documentation = "https://github.com/Xithrius/daemos"
+homepage = "https://github.com/Xithrius/daemos"
+repository = "https://github.com/Xithrius/daemos"
+license = "MIT OR Apache-2.0"
+categories = ["command-line-utilities"]
+
+[dependencies]
+rusqlite = { workspace = true }
+chrono = { workspace = true }
+color-eyre = { workspace = true }
+serde = { workspace = true }
+uuid = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+crossbeam = { workspace = true }
+regex = { workspace = true }
+blake3 = { workspace = true }
+symphonia = { workspace = true }

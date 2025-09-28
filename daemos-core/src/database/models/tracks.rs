@@ -13,9 +13,11 @@ use uuid::Uuid;
 use super::utils::parse::{parse_date, parse_uuid};
 use crate::{
     database::hash::hash_file,
-    files::open::get_file_name,
-    playback::track_metadata::{extract_track_duration, extract_track_metadata},
-    utils::regex::RegexExtract,
+    files::get_file_name,
+    utils::{
+        regex::RegexExtract,
+        track_metadata::{extract_track_duration, extract_track_metadata},
+    },
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]

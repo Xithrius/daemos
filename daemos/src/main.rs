@@ -9,9 +9,10 @@ fn main() -> eframe::Result {
 
     use crossbeam::channel;
     use daemos::{
-        app::App, channels::Channels, config::load_config, database::connection::Database,
-        fonts::set_fonts, logging::initialize_logging, playback::state::Player,
+        BINARY_NAME, app::App, channels::Channels, config::load_config, fonts::set_fonts,
+        logging::initialize_logging, playback::state::Player,
     };
+    use daemos_core::database::connection::Database;
     use egui_extras::install_image_loaders;
     use tracing::{error, info};
 
@@ -36,7 +37,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    let (database_command_tx, database_event_rx) = Database::start();
+    let (database_command_tx, database_event_rx) = Database::start(BINARY_NAME);
 
     let (player_command_tx, player_cmd_rx) = channel::unbounded();
     let (player_event_tx, player_event_rx) = channel::unbounded();
