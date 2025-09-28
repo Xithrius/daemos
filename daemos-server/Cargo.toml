@@ -1,0 +1,28 @@
+[package]
+name = "daemos-server"
+version = "0.1.0"
+edition = "2024"
+authors = ["Xithrius <xithrius@gmail.com>"]
+rust-version = "1.89.0"
+description = "Server portion of the Daemos music player"
+documentation = "https://github.com/Xithrius/daemos"
+homepage = "https://github.com/Xithrius/daemos"
+repository = "https://github.com/Xithrius/daemos"
+license = "MIT OR Apache-2.0"
+keywords = ["music", "server", "api"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+actix-web = { workspace = true }
+actix-cors = { workspace = true }
+dotenvy = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+
+[[bin]]
+name = "daemos-server"
+path = "src/main.rs"

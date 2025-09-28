@@ -2,7 +2,7 @@
 
 # daemos
 
-A local-only music player
+A portable music player
 
 [![CI][s1]][l1] [![Latest version][s2]][l2] [![unsafe][s3]][l3] [![MIT][s4]][l4] [![Apache][s5]][l5]
 
