@@ -23,3 +23,4 @@ crossbeam = { workspace = true }
 regex = { workspace = true }
 blake3 = { workspace = true }
 symphonia = { workspace = true }
+tracing-subscriber = { workspace = true }

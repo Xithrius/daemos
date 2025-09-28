@@ -41,6 +41,7 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 fuzzy-matcher = { workspace = true }
 toml = { workspace = true }
+reqwest = { workspace = true }
 
 daemos-core = { path = "../daemos-core" }
 

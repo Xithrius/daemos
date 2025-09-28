@@ -14,11 +14,12 @@ pub mod routers;
 use actix_web::{App, HttpServer, middleware::Logger, web::Data};
 use config::Config;
 use cors::default_cors;
+use daemos_core::utils::logging::initialize_logging_with_default;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
-    tracing_subscriber::fmt::init();
+    initialize_logging_with_default("DAEMOS_SERVER_LOG").expect("Failed to initialize logger");
 
     let config = Config::new("config.toml".to_string());
 

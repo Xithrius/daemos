@@ -10,13 +10,20 @@ fn main() -> eframe::Result {
     use crossbeam::channel;
     use daemos::{
         BINARY_NAME, app::App, channels::Channels, config::load_config, fonts::set_fonts,
-        logging::initialize_logging, playback::state::Player,
+        playback::state::Player,
     };
-    use daemos_core::database::connection::Database;
+    use daemos_core::{database::connection::Database, utils::logging::initialize_logging};
     use egui_extras::install_image_loaders;
-    use tracing::{error, info};
+    use tracing::{error, info, level_filters::LevelFilter};
+    use tracing_subscriber::EnvFilter;
 
-    initialize_logging().expect("Failed to initialize logger");
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(LevelFilter::INFO.into())
+        .with_env_var("DAEMOS_LOG")
+        .from_env_lossy()
+        .add_directive("winit=off".parse().expect("Failed to parse directive"));
+
+    initialize_logging(env_filter).expect("Failed to initialize logger");
 
     let config = {
         let core_config = load_config().expect("Failed to load config");

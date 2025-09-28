@@ -4,7 +4,7 @@ mod not_found;
 use actix_web::{http::StatusCode, web};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/api").configure(health::config))
+    cfg.configure(health::config)
         .default_service(web::get().to(not_found::not_found));
 }
 

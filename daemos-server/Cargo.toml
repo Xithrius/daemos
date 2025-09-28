@@ -23,6 +23,8 @@ tokio = { workspace = true }
 thiserror = { workspace = true }
 toml = { workspace = true }
 
+daemos-core = { path = "../daemos-core" }
+
 [[bin]]
 name = "daemos-server"
 path = "src/main.rs"
