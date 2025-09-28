@@ -3,7 +3,7 @@ use tracing::{error, info};
 use crate::{
     config::{
         core::{CoreConfig, SharedConfig},
-        save_config,
+        persistance::save_config,
         search::SearchMatchingStrategy,
     },
     context::{AutoplayType, PlayDirection, SharedContext, ShuffleType},
@@ -45,6 +45,51 @@ impl SettingsPopup {
         }
     }
 
+    fn save_to_file_system(&self) {
+        match save_config(&self.selected) {
+            Ok(()) => info!("Config saved successfully"),
+            Err(err) => error!("Failed to save config: {}", err),
+        }
+    }
+
+    fn apply_to_shared_config(&mut self, ctx: &egui::Context) {
+        // Get the current shared config for comparison and clone it
+        let current_config = self.config.borrow().clone();
+
+        // Apply immediate UI/playback changes that need special handling
+        Self::apply_immediate_changes(ctx, &current_config, &self.selected, &mut self.context);
+
+        // Replace the entire shared config with the selected config
+        *self.config.borrow_mut() = self.selected.clone();
+    }
+
+    fn apply_immediate_changes(
+        ctx: &egui::Context,
+        current_config: &CoreConfig,
+        selected_config: &CoreConfig,
+        context: &mut SharedContext,
+    ) {
+        // Theme
+        if selected_config.ui.theme != current_config.ui.theme {
+            match selected_config.ui.theme {
+                AppTheme::Dark => ctx.set_visuals(egui::Visuals::dark()),
+                AppTheme::Latte => catppuccin_egui::set_theme(ctx, catppuccin_egui::LATTE),
+                AppTheme::Frappe => catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE),
+                AppTheme::Macchiato => catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO),
+                AppTheme::Mocha => catppuccin_egui::set_theme(ctx, catppuccin_egui::MOCHA),
+            }
+        }
+
+        // Autoplay
+        if selected_config.playback.autoplay != current_config.playback.autoplay {
+            context
+                .borrow_mut()
+                .playback
+                .autoplay
+                .set_autoplay(selected_config.playback.autoplay.clone());
+        }
+    }
+
     pub fn ui(&mut self, ctx: &egui::Context) {
         {
             if !self.context.borrow().ui.visibility.settings() {
@@ -78,7 +123,7 @@ impl SettingsPopup {
                         &mut changed,
                     );
 
-                    Self::render_search_section(
+                    Self::render_search_strategy_section(
                         ui,
                         self.selected.search.strategy.clone(),
                         &mut self.selected.search.strategy,
@@ -88,7 +133,7 @@ impl SettingsPopup {
                     ui.add_space(10.0);
                     ui.separator();
 
-                    Self::render_buttons(
+                    Self::render_final_operation_buttons(
                         ui,
                         &mut changed,
                         &mut ok_clicked,
@@ -131,51 +176,6 @@ impl SettingsPopup {
 
         if should_close {
             self.context.borrow_mut().ui.visibility.set_settings(false);
-        }
-    }
-
-    fn apply_to_shared_config(&mut self, ctx: &egui::Context) {
-        // Get the current shared config for comparison and clone it
-        let current_config = self.config.borrow().clone();
-
-        // Apply immediate UI/playback changes that need special handling
-        Self::apply_immediate_changes(ctx, &current_config, &self.selected, &mut self.context);
-
-        // Replace the entire shared config with the selected config
-        *self.config.borrow_mut() = self.selected.clone();
-    }
-
-    fn apply_immediate_changes(
-        ctx: &egui::Context,
-        current_config: &CoreConfig,
-        selected_config: &CoreConfig,
-        context: &mut SharedContext,
-    ) {
-        // Theme
-        if selected_config.ui.theme != current_config.ui.theme {
-            match selected_config.ui.theme {
-                AppTheme::Dark => ctx.set_visuals(egui::Visuals::dark()),
-                AppTheme::Latte => catppuccin_egui::set_theme(ctx, catppuccin_egui::LATTE),
-                AppTheme::Frappe => catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE),
-                AppTheme::Macchiato => catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO),
-                AppTheme::Mocha => catppuccin_egui::set_theme(ctx, catppuccin_egui::MOCHA),
-            }
-        }
-
-        // Autoplay
-        if selected_config.playback.autoplay != current_config.playback.autoplay {
-            context
-                .borrow_mut()
-                .playback
-                .autoplay
-                .set_autoplay(selected_config.playback.autoplay.clone());
-        }
-    }
-
-    fn save_to_file_system(&self) {
-        match save_config(&self.selected) {
-            Ok(()) => info!("Config saved successfully"),
-            Err(err) => error!("Failed to save config: {}", err),
         }
     }
 
@@ -243,7 +243,7 @@ impl SettingsPopup {
         });
     }
 
-    fn render_search_section(
+    fn render_search_strategy_section(
         ui: &mut egui::Ui,
         current_search: SearchMatchingStrategy,
         selected_search: &mut SearchMatchingStrategy,
@@ -273,7 +273,7 @@ impl SettingsPopup {
         });
     }
 
-    fn render_buttons(
+    fn render_final_operation_buttons(
         ui: &mut egui::Ui,
         changed: &mut bool,
         ok_clicked: &mut bool,

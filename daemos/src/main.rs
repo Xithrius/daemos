@@ -9,8 +9,8 @@ fn main() -> eframe::Result {
 
     use crossbeam::channel;
     use daemos::{
-        BINARY_NAME, app::App, channels::Channels, config::load_config, fonts::set_fonts,
-        playback::state::Player,
+        BINARY_NAME, app::App, channels::Channels, config::persistance::load_config,
+        fonts::set_fonts, playback::state::Player,
     };
     use daemos_core::{database::connection::Database, utils::logging::initialize_logging};
     use egui_extras::install_image_loaders;

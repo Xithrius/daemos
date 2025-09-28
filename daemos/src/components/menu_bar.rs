@@ -43,7 +43,7 @@ impl MenuBar {
 
             ui.separator();
 
-            if ui.button("Preferences").clicked() {
+            if ui.button("Settings").clicked() {
                 self.context.borrow_mut().ui.visibility.set_settings(true);
                 ui.close_kind(UiKind::Menu)
             } else if ui.button("Quit").clicked() {
