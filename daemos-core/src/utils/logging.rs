@@ -3,12 +3,10 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 pub fn initialize_logging(env_filter: EnvFilter) -> Result<()> {
-    let subscriber = tracing_subscriber::fmt()
+    tracing_subscriber::fmt()
         .with_target(false)
         .with_env_filter(env_filter)
-        .finish();
-
-    tracing::subscriber::set_global_default(subscriber)?;
+        .init();
 
     Ok(())
 }

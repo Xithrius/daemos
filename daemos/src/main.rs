@@ -21,7 +21,9 @@ fn main() -> eframe::Result {
         .with_default_directive(LevelFilter::INFO.into())
         .with_env_var("DAEMOS_LOG")
         .from_env_lossy()
-        .add_directive("winit=off".parse().expect("Failed to parse directive"));
+        .add_directive("winit=off".parse().expect("Failed to parse directive"))
+        .add_directive("wgpu=off".parse().expect("Failed to parse directive"))
+        .add_directive("egui=off".parse().expect("Failed to parse directive"));
 
     initialize_logging(env_filter).expect("Failed to initialize logger");
 
