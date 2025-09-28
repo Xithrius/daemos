@@ -41,7 +41,7 @@ symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.2", features = ["serde"] }
 notify-rust = "4.11.7"
 image = { version = "0.25.8", features = ["png"] }
-reqwest = { version = "0.12.11", features = ["json"] }
+reqwest = { version = "0.12.23", features = ["json", "blocking"] }
 
 # Core
 rusqlite = { version = "0.35.0", features = ["bundled", "chrono"] }

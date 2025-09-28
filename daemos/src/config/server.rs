@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-const DEFAULT_SERVER_ADDRESS: &str = "http://localhost:9090";
+const DEFAULT_SERVER_ADDRESS: &str = "http://localhost:7070";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(default)]
 pub struct ServerConfig {
-    enabled: bool,
-    address: String,
+    pub enabled: bool,
+    pub address: String,
 }
 
 impl Default for ServerConfig {
@@ -25,5 +25,13 @@ impl ServerConfig {
 
     pub fn address(&self) -> &str {
         &self.address
+    }
+
+    pub fn set_address(&mut self, address: String) {
+        self.address = address;
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
     }
 }

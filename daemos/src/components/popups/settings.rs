@@ -1,3 +1,8 @@
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+};
+
 use tracing::{error, info};
 
 use crate::{
@@ -26,11 +31,20 @@ const SEARCH_STRATEGY_OPTIONS: [SearchMatchingStrategy; 3] = [
 ];
 
 #[derive(Debug, Clone)]
+pub enum ConnectionTestState {
+    NotTested,
+    Testing,
+    Success,
+    Failed(String),
+}
+
+#[derive(Debug, Clone)]
 pub struct SettingsPopup {
     config: SharedConfig,
     context: SharedContext,
     selected: CoreConfig,
     changed: bool,
+    connection_test_state: Arc<Mutex<ConnectionTestState>>,
 }
 
 impl SettingsPopup {
@@ -42,6 +56,7 @@ impl SettingsPopup {
             context,
             selected,
             changed: false,
+            connection_test_state: Arc::new(Mutex::new(ConnectionTestState::NotTested)),
         }
     }
 
@@ -130,6 +145,13 @@ impl SettingsPopup {
                         &mut changed,
                     );
 
+                    Self::render_server_section(
+                        ui,
+                        &mut self.selected.server,
+                        &mut changed,
+                        &self.connection_test_state,
+                    );
+
                     ui.add_space(10.0);
                     ui.separator();
 
@@ -175,6 +197,10 @@ impl SettingsPopup {
         }
 
         if should_close {
+            // Reset connection test state when closing settings
+            if let Ok(mut state) = self.connection_test_state.lock() {
+                *state = ConnectionTestState::NotTested;
+            }
             self.context.borrow_mut().ui.visibility.set_settings(false);
         }
     }
@@ -270,6 +296,90 @@ impl SettingsPopup {
                         }
                     }
                 });
+        });
+    }
+
+    fn render_server_section(
+        ui: &mut egui::Ui,
+        server_config: &mut crate::config::server::ServerConfig,
+        changed: &mut bool,
+        connection_test_state: &Arc<Mutex<ConnectionTestState>>,
+    ) {
+        ui.horizontal(|ui| {
+            ui.label("Server Address");
+
+            let mut address = server_config.address.clone();
+            let response = ui.text_edit_singleline(&mut address);
+
+            if response.changed() {
+                server_config.set_address(address);
+                *changed = true;
+                // Reset connection test state when address changes
+                if let Ok(mut state) = connection_test_state.lock() {
+                    *state = ConnectionTestState::NotTested;
+                }
+            }
+
+            // Test connection button
+            let test_button = ui.button("Ping");
+            if test_button.clicked() {
+                Self::test_server_connection(&server_config.address, connection_test_state);
+            }
+
+            // Show connection test result
+            if let Ok(state) = connection_test_state.lock() {
+                match &*state {
+                    ConnectionTestState::NotTested => {}
+                    ConnectionTestState::Testing => {
+                        ui.label("Testing...");
+                    }
+                    ConnectionTestState::Success => {
+                        ui.colored_label(egui::Color32::GREEN, "Pong");
+                    }
+                    ConnectionTestState::Failed(error) => {
+                        error!("Failed to ping: {}", error);
+                        ui.colored_label(
+                            egui::Color32::RED,
+                            "Failed to ping, check logs".to_string(),
+                        );
+                    }
+                }
+            }
+        });
+    }
+
+    fn test_server_connection(
+        address: &str,
+        connection_test_state: &Arc<Mutex<ConnectionTestState>>,
+    ) {
+        // Set state to testing
+        if let Ok(mut state) = connection_test_state.lock() {
+            *state = ConnectionTestState::Testing;
+        }
+
+        let address = address.to_string();
+        let state_clone = Arc::clone(connection_test_state);
+
+        // Spawn thread to test connection
+        thread::spawn(move || {
+            let ping_url = format!("{}/health", address);
+
+            match reqwest::blocking::get(&ping_url) {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        if let Ok(mut state) = state_clone.lock() {
+                            *state = ConnectionTestState::Success;
+                        }
+                    } else if let Ok(mut state) = state_clone.lock() {
+                        *state = ConnectionTestState::Failed(format!("HTTP {}", response.status()));
+                    }
+                }
+                Err(err) => {
+                    if let Ok(mut state) = state_clone.lock() {
+                        *state = ConnectionTestState::Failed(err.to_string());
+                    }
+                }
+            }
         });
     }
 
