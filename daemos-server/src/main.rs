@@ -15,8 +15,6 @@ use actix_web::{App, HttpServer, middleware::Logger, web::Data};
 use config::Config;
 use cors::default_cors;
 use daemos_core::logging::initialize_logging_with_default;
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

@@ -1,8 +1,6 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-};
+use std::{sync::Arc, thread};
 
+use parking_lot::Mutex;
 use tracing::{error, info};
 
 use crate::{
@@ -198,9 +196,8 @@ impl SettingsPopup {
 
         if should_close {
             // Reset connection test state when closing settings
-            if let Ok(mut state) = self.connection_test_state.lock() {
-                *state = ConnectionTestState::NotTested;
-            }
+            *self.connection_test_state.lock() = ConnectionTestState::NotTested;
+
             self.context.borrow_mut().ui.visibility.set_settings(false);
         }
     }
@@ -315,9 +312,7 @@ impl SettingsPopup {
                 server_config.set_address(address);
                 *changed = true;
                 // Reset connection test state when address changes
-                if let Ok(mut state) = connection_test_state.lock() {
-                    *state = ConnectionTestState::NotTested;
-                }
+                *connection_test_state.lock() = ConnectionTestState::NotTested;
             }
 
             // Test connection button
@@ -327,22 +322,14 @@ impl SettingsPopup {
             }
 
             // Show connection test result
-            if let Ok(state) = connection_test_state.lock() {
-                match &*state {
-                    ConnectionTestState::NotTested => {}
-                    ConnectionTestState::Testing => {
-                        ui.label("Testing...");
-                    }
-                    ConnectionTestState::Success => {
-                        ui.colored_label(egui::Color32::GREEN, "Pong");
-                    }
-                    ConnectionTestState::Failed(error) => {
-                        error!("Failed to ping: {}", error);
-                        ui.colored_label(
-                            egui::Color32::RED,
-                            "Failed to ping, check logs".to_string(),
-                        );
-                    }
+            let state = connection_test_state.lock();
+            match &*state {
+                ConnectionTestState::NotTested | ConnectionTestState::Testing => {}
+                ConnectionTestState::Success => {
+                    ui.colored_label(egui::Color32::GREEN, "Pong");
+                }
+                ConnectionTestState::Failed(_) => {
+                    ui.colored_label(egui::Color32::RED, "Failed to ping, check logs".to_string());
                 }
             }
         });
@@ -353,9 +340,7 @@ impl SettingsPopup {
         connection_test_state: &Arc<Mutex<ConnectionTestState>>,
     ) {
         // Set state to testing
-        if let Ok(mut state) = connection_test_state.lock() {
-            *state = ConnectionTestState::Testing;
-        }
+        *connection_test_state.lock() = ConnectionTestState::Testing;
 
         let address = address.to_string();
         let state_clone = Arc::clone(connection_test_state);
@@ -367,17 +352,17 @@ impl SettingsPopup {
             match reqwest::blocking::get(&ping_url) {
                 Ok(response) => {
                     if response.status().is_success() {
-                        if let Ok(mut state) = state_clone.lock() {
-                            *state = ConnectionTestState::Success;
-                        }
-                    } else if let Ok(mut state) = state_clone.lock() {
-                        *state = ConnectionTestState::Failed(format!("HTTP {}", response.status()));
+                        *state_clone.lock() = ConnectionTestState::Success;
+                        info!("Ping command to server was successful");
+                    } else {
+                        *state_clone.lock() =
+                            ConnectionTestState::Failed(format!("HTTP {}", response.status()));
+                        error!("Ping command to server failed: {}", response.status());
                     }
                 }
                 Err(err) => {
-                    if let Ok(mut state) = state_clone.lock() {
-                        *state = ConnectionTestState::Failed(err.to_string());
-                    }
+                    *state_clone.lock() = ConnectionTestState::Failed(err.to_string());
+                    error!("Ping command to server failed: {}", err);
                 }
             }
         });
