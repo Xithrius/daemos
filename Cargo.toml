@@ -1,5 +1,5 @@
 [workspace]
-members = ["daemos", "daemos-core", "daemos-server"]
+members = ["daemos", "daemos-core", "daemos-headless", "daemos-server"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -53,6 +53,8 @@ rusqlite = { version = "0.35.0", features = ["bundled", "chrono"] }
 tokio = { version = "1.47.1", features = ["rt", "macros", "rt-multi-thread"] }
 actix-web = "4.11.0"
 actix-cors = "0.7.1"
+actix-files = "0.6.8"
+serde_json = "1.0.145"
 dotenvy = "0.15.7"
 
 [profile.dev]

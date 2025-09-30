@@ -1,10 +1,12 @@
 mod health;
 mod not_found;
+mod tracks;
 
 use actix_web::{http::StatusCode, web};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.configure(health::config)
+        .configure(tracks::config)
         .default_service(web::get().to(not_found::not_found));
 }
 

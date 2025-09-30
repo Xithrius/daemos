@@ -1,0 +1,26 @@
+[package]
+name = "daemos-headless"
+version = "0.1.0"
+edition = "2024"
+authors = ["Xithrius <xithrius@gmail.com>"]
+rust-version = "1.89.0"
+description = "Daemos headless client"
+documentation = "https://github.com/Xithrius/daemos"
+homepage = "https://github.com/Xithrius/daemos"
+repository = "https://github.com/Xithrius/daemos"
+license = "MIT OR Apache-2.0"
+keywords = ["music", "headless", "client", "cli"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+reqwest = { workspace = true, features = ["blocking"] }
+rodio = { workspace = true }
+symphonia = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+color-eyre = { workspace = true }
+parking_lot = { workspace = true }
+
+[[bin]]
+name = "daemos-headless"
+path = "src/main.rs"
