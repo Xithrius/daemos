@@ -16,6 +16,22 @@ pub struct PcmSource {
     pub sample_rate: u32,
 }
 
+impl PcmSource {
+    pub fn new(
+        rx: Receiver<PcmChunk>,
+        buffer: VecDeque<f32>,
+        channels: u16,
+        sample_rate: u32,
+    ) -> Self {
+        Self {
+            rx,
+            buffer,
+            channels,
+            sample_rate,
+        }
+    }
+}
+
 impl Iterator for PcmSource {
     type Item = f32;
 

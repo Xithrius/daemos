@@ -1,11 +1,21 @@
 use std::io::{Read, Seek};
 
+use color_eyre::Result;
 use parking_lot::Mutex;
 use reqwest::blocking::Response;
 use symphonia::core::io::MediaSource;
+use tracing::info;
 
 pub struct HttpSource {
     pub inner: Mutex<Response>,
+}
+
+impl HttpSource {
+    pub fn new(inner: Response) -> Self {
+        Self {
+            inner: Mutex::new(inner),
+        }
+    }
 }
 
 impl Read for HttpSource {
@@ -32,4 +42,20 @@ impl Seek for HttpSource {
             "seek not supported",
         ))
     }
+}
+
+pub fn request_http_stream(track_url: &str) -> Result<HttpSource> {
+    let client = reqwest::blocking::ClientBuilder::new()
+        .timeout(None)
+        .build()?;
+    let resp = client
+        .get(track_url)
+        .header(reqwest::header::ACCEPT, "*/*")
+        .send()?
+        .error_for_status()?;
+    info!("http: connected, status {}", resp.status());
+
+    let source = HttpSource::new(resp);
+
+    Ok(source)
 }
