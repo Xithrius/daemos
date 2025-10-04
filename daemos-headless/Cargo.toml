@@ -13,6 +13,8 @@ keywords = ["music", "headless", "client", "cli"]
 categories = ["command-line-utilities"]
 
 [dependencies]
+daemos-core = { workspace = true }
+
 reqwest = { workspace = true, features = ["blocking"] }
 rodio = { workspace = true }
 symphonia = { workspace = true }
@@ -20,6 +22,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 color-eyre = { workspace = true }
 parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+tracing = { workspace = true }
 
 [[bin]]
 name = "daemos-headless"

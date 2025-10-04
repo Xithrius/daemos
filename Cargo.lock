@@ -1344,12 +1344,15 @@ name = "daemos-headless"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "crossbeam",
+ "daemos-core",
  "parking_lot",
  "reqwest",
  "rodio",
  "serde",
  "serde_json",
  "symphonia",
+ "tracing",
 ]
 
 [[package]]
