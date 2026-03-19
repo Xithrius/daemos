@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Xithrius <xithrius@gmail.com>"]
 rust-version = "1.88.0"
-description = "A local-only music player "
+description = "A local-only music player"
 documentation = "https://github.com/Xithrius/daemos"
 homepage = "https://github.com/Xithrius/daemos"
 repository = "https://github.com/Xithrius/daemos"
@@ -50,3 +50,13 @@ thiserror = "2.0.12"
 regex = "1.11.1"
 fuzzy-matcher = "0.3.7"
 toml = "0.8.12"
+
+[profile.dev]
+lto = "off"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true
+# panic = "abort" # We will NOT use abort. Abort is gross.
