@@ -41,7 +41,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 blake3 = { version = "1.8.3", features = ["serde"] }
 crossbeam = "0.8.4"
 rodio = { version = "0.20.1", features = ["symphonia-all"] }
-symphonia = { version = "0.5.5", features = ["mp3", "flac", "wav"] }
+symphonia = { version = "0.5.4", features = ["mp3", "flac", "wav"] }
 sysinfo = { version = "0.35.2", features = ["serde"] }
 notify-rust = "4.12.0"
 image = { version = "0.25.10", features = ["png"] }
