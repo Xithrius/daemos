@@ -5,7 +5,7 @@ use std::{
 
 use egui::CursorIcon;
 use egui_extras::{Column, TableBuilder, TableRow};
-use rand::Rng;
+use rand::RngExt;
 use tracing::{debug, error};
 
 use super::{TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT};

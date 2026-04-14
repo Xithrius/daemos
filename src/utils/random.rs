@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use rand::Rng;
+use rand::RngExt;
 
 pub fn filtered_random_index(len: usize, excluded: &BTreeSet<usize>) -> Option<usize> {
     if excluded.len() >= len {
