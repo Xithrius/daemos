@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Daemos
+Comment=A local-only music player
+Exec=<HOME_DIR>/.cargo/bin/daemos
+Type=Application
+Categories=Utility;
+
