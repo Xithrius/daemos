@@ -25,6 +25,8 @@ const SEARCH_STRATEGY_OPTIONS: [SearchMatchingStrategy; 3] = [
     SearchMatchingStrategy::ContainsLowercase,
 ];
 
+const DAEMOS_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Debug, Clone)]
 pub struct SettingsPopup {
     config: SharedConfig,
@@ -64,6 +66,8 @@ impl SettingsPopup {
             .min_size(egui::Vec2::from(DEFAULT_SETTINGS_WINDOW_SIZE))
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
+                    ui.label(format!("Daemos version: {}", DAEMOS_VERSION));
+
                     Self::render_theme_section(
                         ui,
                         self.selected.ui.theme,
