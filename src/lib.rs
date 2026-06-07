@@ -11,4 +11,4 @@ pub mod playback;
 pub mod themes;
 pub mod utils;
 
-const BINARY_NAME: &str = "daemos";
+const BINARY_NAME: &str = env!("CARGO_PKG_NAME");
