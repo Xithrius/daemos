@@ -9,8 +9,8 @@ pub use ui::UIContext;
 pub mod playlist;
 pub use playlist::UIPlaylistContext;
 
-pub mod processing;
-pub use processing::ProcessingContext;
+pub mod job_status;
+pub use job_status::JobStatusContext;
 
 pub mod performance;
 pub use performance::PerformanceMetricsContext;
@@ -30,7 +30,7 @@ pub struct Context {
     /// What's currently being shown from the perspective of the UI.
     pub ui: UIContext,
     /// Background jobs that are actively processing.
-    pub processing: ProcessingContext,
+    pub processing: JobStatusContext,
     /// Performance-related metrics data (latency, FPS, etc.).
     pub performance_metrics: PerformanceMetricsContext,
 }
