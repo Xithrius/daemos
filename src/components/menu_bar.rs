@@ -2,7 +2,7 @@ use egui::{Color32, UiKind};
 
 use crate::context::SharedContext;
 
-const GITHUB_REPOSITORY_URL: &str = "https://github.com/Xithrius/daemos";
+const REPOSITORY_URL: &str = env!("CARGO_PKG_REPOSITORY");
 
 #[derive(Debug, Default)]
 pub struct MenuBar {
@@ -77,7 +77,7 @@ impl MenuBar {
 
     fn ui_help(&mut self, ui: &mut egui::Ui) {
         ui.menu_button("Help", |ui| {
-            ui.hyperlink_to("Github Repository", GITHUB_REPOSITORY_URL);
+            ui.hyperlink_to("Repository", REPOSITORY_URL);
         });
     }
 
