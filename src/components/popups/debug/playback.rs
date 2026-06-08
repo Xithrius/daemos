@@ -44,8 +44,8 @@ impl PlaybackDebugPopup {
                     if let Some(track_context) = &track_context {
                         ui.label(format!("Path: {:?}", track_context.track.path));
                         ui.label(format!(
-                            "Duration: {} seconds",
-                            track_context.track.duration_secs
+                            "Duration: {} second(s)",
+                            track_context.track.duration_secs as usize
                         ));
                     }
                 });
@@ -62,21 +62,23 @@ impl PlaybackDebugPopup {
                     ));
 
                     if let Some(base) = control.progress_base {
-                        ui.label(format!("Progress Base: {base:.2?}"));
+                        ui.label(format!("Progress base: {base:.2?}"));
                     } else {
-                        ui.label("Progress Base: None");
+                        ui.label("Progress base: None");
                     }
 
-                    if let Some(ts) = control.progress_timestamp {
-                        ui.label(format!("Progress Timestamp: {ts:?}"));
+                    if let Some(snapshot) = control.progress_snapshot {
+                        // TODO: Make this prettier, current output is of
+                        // Progress snapshot: Instant { tv_sec: 243289, tv_nsec: 299833956 }
+                        ui.label(format!("Progress snapshot: {snapshot:.2?}"));
                     } else {
-                        ui.label("Progress Timestamp: None");
+                        ui.label("Progress snapshot: None");
                     }
 
-                    if let Some(simulated) = control.current_progress() {
-                        ui.label(format!("Simulated Current Progress: {simulated:.2?}"));
+                    if let Some(current_progress) = control.current_progress() {
+                        ui.label(format!("Current Progress: {current_progress:.2?}"));
                     } else {
-                        ui.label("Simulated Current Progress: None");
+                        ui.label("Current Progress: None");
                     }
                 });
 
@@ -87,7 +89,10 @@ impl PlaybackDebugPopup {
                     ui.add_space(WINDOW_HEADER_SPACING);
 
                     ui.label(format!("Volume: {:.2}", control.volume));
-                    ui.label(format!("Last Volume Sent: {:.2}", control.last_volume_sent));
+                    ui.label(format!(
+                        "Last volume snapshot: {:.2}",
+                        control.volume_snapshot
+                    ));
                 });
             });
     }

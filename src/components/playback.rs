@@ -132,7 +132,7 @@ impl PlaybackBar {
         }
 
         let volume = context.playback.control.volume;
-        let last_volume_sent = context.playback.control.last_volume_sent;
+        let last_volume_sent = context.playback.control.volume_snapshot;
 
         let volume_dx = (volume - last_volume_sent).abs();
 
@@ -142,7 +142,7 @@ impl PlaybackBar {
                 .player_command_tx
                 .send(PlayerCommand::SetVolume(volume));
 
-            context.playback.control.last_volume_sent = volume;
+            context.playback.control.volume_snapshot = volume;
             self.config.borrow_mut().playback.volume = volume;
         }
     }
@@ -216,7 +216,7 @@ impl PlaybackBar {
 
         if !control.changing_track && response.drag_stopped() {
             control.progress_base = Some(Duration::from_secs_f64(playback_secs));
-            control.progress_timestamp = Some(Instant::now());
+            control.progress_snapshot = Some(Instant::now());
 
             let _ = self
                 .channels

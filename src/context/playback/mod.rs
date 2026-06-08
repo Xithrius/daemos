@@ -42,7 +42,7 @@ impl PlaybackContext {
                     track_state.playing = true;
                 }
                 self.control.progress_base = Some(Duration::ZERO);
-                self.control.progress_timestamp = Some(Instant::now());
+                self.control.progress_snapshot = Some(Instant::now());
                 self.control.changing_track = false;
             }
             PlayerEvent::TrackPlayingStatus(playing) => {
@@ -55,11 +55,11 @@ impl PlaybackContext {
                 {
                     // Capture how much time has passed
                     if let (Some(base), Some(ts)) =
-                        (self.control.progress_base, self.control.progress_timestamp)
+                        (self.control.progress_base, self.control.progress_snapshot)
                     {
                         let elapsed = Instant::now().duration_since(ts);
                         self.control.progress_base = Some(base + elapsed);
-                        self.control.progress_timestamp = None;
+                        self.control.progress_snapshot = None;
                     }
                 }
 
@@ -70,7 +70,7 @@ impl PlaybackContext {
                         .as_ref()
                         .is_some_and(|track| track.playing)
                 {
-                    self.control.progress_timestamp = Some(Instant::now());
+                    self.control.progress_snapshot = Some(Instant::now());
                 }
 
                 if let Some(track) = self.selected_track.as_mut() {
@@ -88,7 +88,7 @@ impl PlaybackContext {
                         "Track progress desync detected, setting progress base to received player position"
                     );
                     self.control.progress_base = Some(duration);
-                    self.control.progress_timestamp = Some(Instant::now());
+                    self.control.progress_snapshot = Some(Instant::now());
                 }
             }
             PlayerEvent::CurrentVolume(volume) => {
