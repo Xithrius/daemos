@@ -1,31 +1,30 @@
 use egui::RichText;
 
-use crate::{config::core::SharedConfig, context::SharedContext};
+use crate::context::SharedContext;
 
 const DEFAULT_POPUP_SIZE: [f32; 2] = [300.0, 200.0];
 const WINDOW_HEADER_SPACING: f32 = 5.0;
 
 #[derive(Debug, Clone)]
 pub struct PlaybackDebugPopup {
-    _config: SharedConfig,
     context: SharedContext,
 }
 
 impl PlaybackDebugPopup {
-    pub fn new(config: SharedConfig, context: SharedContext) -> Self {
-        Self {
-            _config: config,
-            context,
-        }
+    pub fn new(context: SharedContext) -> Self {
+        Self { context }
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
-        if !self.context.borrow().ui.visibility.debug_playback() {
-            return;
-        }
+        let playback_context = {
+            let context = self.context.borrow();
 
-        let context = self.context.borrow();
-        let playback_context = context.playback.clone();
+            if !self.context.borrow().ui.visibility.debug_playback() {
+                return;
+            }
+
+            context.playback.to_owned()
+        };
 
         egui::Window::new("Playback Debug")
             .open(self.context.borrow_mut().ui.visibility.debug_playback_mut())

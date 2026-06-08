@@ -300,7 +300,8 @@ impl App {
             });
 
         self.components.settings.ui(ctx);
-        self.components.debug.ui(ctx);
+        self.components.performance_metrics.ui(ctx);
+        self.components.playback_debug.ui(ctx);
         self.components.create_playlist.ui(ctx);
     }
 }
