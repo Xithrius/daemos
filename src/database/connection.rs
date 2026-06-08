@@ -5,7 +5,7 @@ use crossbeam::channel::{Receiver, Sender, unbounded};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 use super::{local::get_database_storage_path, models::tracks::Track};
 use crate::{
@@ -89,11 +89,9 @@ impl Database {
                                 None
                             };
 
-                        let playlist = if let Some(playlist_name) = playlist_name {
+                        let playlist = playlist_name.and_then(|playlist_name| {
                             Playlist::create(&conn, playlist_name).unwrap_or_default()
-                        } else {
-                            None
-                        };
+                        });
 
                         for track_path in track_paths {
                             let track_result =
@@ -111,6 +109,7 @@ impl Database {
                                     } else {
                                         DatabaseError::DuplicateTrack(track_path)
                                     };
+
                                     let _ = event_tx.send(Err(duplicate_error));
                                     continue;
                                 }
@@ -145,7 +144,6 @@ impl Database {
                         }
                     }
                     DatabaseCommand::InsertPlaylist(playlist_name) => {
-                        debug!("INSERT PLAYLIST CALLED");
                         let playlist_result = Playlist::create(&conn, playlist_name);
 
                         match playlist_result {
