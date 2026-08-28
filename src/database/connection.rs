@@ -66,6 +66,8 @@ impl Database {
         let (event_tx, event_rx) = unbounded::<Result<DatabaseEvent, DatabaseError>>();
 
         thread::spawn(move || {
+            info!("Spawned database thread");
+
             let conn =
                 Connection::open(&database_path).expect("Failed to open database connection");
 

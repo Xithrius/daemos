@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{format, time::Duration};
 
 pub fn human_duration(duration: Duration, include_hours: bool) -> String {
     let total_secs = duration.as_secs();

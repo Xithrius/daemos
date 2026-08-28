@@ -44,7 +44,7 @@ fn main() -> eframe::Result {
     let (err_tx, err_rx) = channel::bounded(1);
 
     thread::spawn(move || {
-        info!("Spawned player thread");
+        info!("Spawned audio player thread");
 
         let player = match Player::new(player_event_tx, player_cmd_rx) {
             Err(err) => {
