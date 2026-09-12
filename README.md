@@ -1,3 +1,5 @@
+
+
 <div align="center">
 
 # daemos
@@ -27,5 +29,7 @@ A local-only music player
 If you have any problems, do not hesitate to [submit an issue](https://codeberg.org/Xithrius/daemos/issues/new).
 
 This project follows the guidelines of [Semantic Versioning](https://semver.org/).
+
+Requires Rust `1.88.0` or later.
 
 Built with [Rust](https://github.com/rust-lang/rust) and [egui](https://github.com/emilk/egui).
